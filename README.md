@@ -1,10 +1,14 @@
-# Tonik — WordPress Starter Theme
+# Chu — WordPress Theme
 
-> The `develop` branch tracks starter development and it's not a stable code. If you want a stable version, use the [`master`](//github.com/tonik/theme/tree/master) branch or one of the latest [releases](//github.com/tonik/theme/releases).
+初创主题，基于 [Tonik — WordPress Starter Theme](http://labs.tonik.pl/theme/) 创建，通过 WordPress 的 REST API 来提供容易使用的接口。
 
-[![Build Status](https://travis-ci.org/tonik/theme.svg?branch=master)](https://travis-ci.org/tonik/theme) [![Packagist](https://img.shields.io/packagist/dt/tonik/theme.svg)](https://github.com/tonik/theme) [![license](https://img.shields.io/github/license/tonik/theme.svg)](https://github.com/tonik/theme)
+如果对 Tonik 不熟悉，可以参考:
+- [https://github.com/overtrue/api.yike.io/](https://github.com/overtrue/api.yike.io/)
+- [https://github.com/calibur-tv/Hentai](https://github.com/calibur-tv/Hentai)
 
-### Tonik is a WordPress Starter Theme which aims to modernize, organize and enhance some aspects of WordPress theme development.
+### Tonik 功能
+
+Tonik 主要是让 WordPress 开发更现代化。
 
 Take a look at what is waiting for you:
 
@@ -32,17 +36,3 @@ Tonik Starter Theme follows [WordPress recommended requirements](https://wordpre
 ## Documentation
 
 Comprehensive documentation of the starter is available at http://labs.tonik.pl/theme/
-
-## Contributing
-
-Great that you are considering supporting the project. You have a lot of ways to help us grow. We appreciate all contributions, even the smallest.
-
-- Report an issue
-- Propose a feature
-- Send a pull request
-- Star project on the [GitHub](https://github.com/tonik/tonik)
-- Tell about project around your community
-
-## License
-
-The Tonik Starter Theme is licensed under the [MIT license](http://opensource.org/licenses/MIT).

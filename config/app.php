@@ -1,4 +1,6 @@
 <?php
+$dotenv = Dotenv\Dotenv::createUnsafeImmutable(__DIR__ . '/../');
+$dotenv->load();
 
 return [
     /*
@@ -87,4 +89,16 @@ return [
         'Structure/shortcodes.php',
         'Structure/thumbnails.php',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Config files
+    |--------------------------------------------------------------------------
+    |
+    | Determines the theme's templates settings like an extension of the files.
+    | By default, they use `.tpl.php` suffix to distinguish template files
+    | from controllers, but you are free to change it however you like.
+    |
+    */
+    'sms' => require_once __DIR__ . '/../config/sms.php',
 ];

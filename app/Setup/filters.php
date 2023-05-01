@@ -40,3 +40,10 @@ function modify_excerpt_length()
     return 60;
 }
 add_filter('excerpt_length', 'Tonik\Theme\App\Setup\modify_excerpt_length');
+
+/**
+ * rewrite 'wp-json' REST API prefix with 'api'
+ */
+add_filter( 'rest_url_prefix', function() {
+    return 'api';
+});
