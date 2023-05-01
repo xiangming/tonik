@@ -3,10 +3,36 @@
 初创主题，基于 [Tonik — WordPress Starter Theme](http://labs.tonik.pl/theme/) 创建，通过 WordPress 的 REST API 来提供容易使用的接口。
 
 如果对 Tonik 不熟悉，可以参考:
+
 - [https://github.com/overtrue/api.yike.io/](https://github.com/overtrue/api.yike.io/)
 - [https://github.com/calibur-tv/Hentai](https://github.com/calibur-tv/Hentai)
 
-### Tonik 功能
+## 如何使用
+
+### 安装 PHP 依赖
+
+```bash
+composer update
+composer install
+```
+
+### 安装前端依赖
+
+```bash
+yarn
+```
+
+### 生成主题文件
+
+```bash
+yarn dev
+# 或者
+yarn prod
+```
+
+> 注意！如果不生成主题文件，将导致严重错误，进而网站无法访问。
+
+## Tonik 功能
 
 Tonik 主要是让 WordPress 开发更现代化。
 
@@ -33,6 +59,6 @@ Tonik Starter Theme follows [WordPress recommended requirements](https://wordpre
 - [Composer](https://getcomposer.org)
 - [Node.js](https://nodejs.org)
 
-## Documentation
+### Documentation
 
-Comprehensive documentation of the starter is available at http://labs.tonik.pl/theme/
+Comprehensive documentation of the starter is available at <http://labs.tonik.pl/theme/>
