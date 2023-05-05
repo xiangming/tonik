@@ -89,6 +89,7 @@ return [
         'Structure/shortcodes.php',
         'Structure/thumbnails.php',
         'Validators/PhoneValidator.php',
+        'Sms/CaptchaMessage.php',
     ],
 
     /*

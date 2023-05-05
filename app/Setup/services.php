@@ -21,6 +21,7 @@ use Tonik\Gin\Foundation\Theme;
 use WP_Query;
 use Overtrue\EasySms\EasySms;
 use App\Validators\PhoneValidator;
+use App\Sms\CaptchaMessage;
 
 /**
  * Service handler for retrieving posts of specific post type.
@@ -62,9 +63,6 @@ $sceneList = array(
     'SCENE_RESET_PASSWORD', // 用于重置密码
     'SCENE_BIND_PHONE', // 用于绑定手机号
     'SCENE_UNBIND_PHONE', // 用于解绑手机号
-    'SCENE_BIND_MFA', // 用于绑定 MFA
-    'SCENE_VERIFY_MFA', // 用于验证 MFA
-    'SCENE_UNBIND_MFA', // 用于解绑 MFA
     'SCENE_COMPLETE_PHONE', // 用于在注册/登录时补全手机号信息
     'SCENE_IDENTITY_VERIFICATION', // 用于进行用户实名认证
     'SCENE_DELETE_ACCOUNT', // 用于注销账号
@@ -93,14 +91,19 @@ function registerSmsService()
                 $code = mt_rand(1000, 9999);
 
                 $easySms = new EasySms(config('sms'));
+                $message = new CaptchaMessage($code);
 
-                $easySms->send($phoneNumber, [
-                    'content'  => "您的验证码为: {$code}",
-                    'template' => 'SMS_152511386',
-                    'data' => [
-                        'code' => $code
-                    ],
-                ]);
+                $easySms->send($phoneNumber, $message);
+
+                // $easySms->send($phoneNumber, [
+                //     'content'  => "您的验证码为: {$code}",
+                //     'template' => 'SMS_152511386',
+                //     'data' => [
+                //         'code' => $code
+                //     ],
+                // ]);
+
+                return format('发送成功');
             } catch (\Overtrue\EasySms\Exceptions\NoGatewayAvailableException $e) {
                 // $error_msg = $e->getException('aliyun')->getMessage();
                 // $smsLog->error_msg = $error_msg;
