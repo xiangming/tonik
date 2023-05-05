@@ -15,8 +15,8 @@ namespace Tonik\Theme\App\Setup;
 
 use function Tonik\Theme\App\theme;
 use function Tonik\Theme\App\config;
-use function Tonik\Theme\App\format;
-use function Tonik\Theme\App\formatError;
+use function Tonik\Theme\App\resOK;
+use function Tonik\Theme\App\resError;
 use Tonik\Gin\Foundation\Theme;
 use WP_Query;
 use Overtrue\EasySms\EasySms;
@@ -85,7 +85,7 @@ function registerSmsService()
                 // die('phoneNumber');
 
                 if (!PhoneValidator::validate($phoneNumber)) {
-                    return formatError('手机号码格式错误');
+                    return resError('手机号码格式错误');
                 }
                 
                 $code = mt_rand(1000, 9999);
@@ -103,14 +103,14 @@ function registerSmsService()
                 //     ],
                 // ]);
 
-                return format('发送成功');
+                return resOK('发送成功');
             } catch (\Overtrue\EasySms\Exceptions\NoGatewayAvailableException $e) {
                 // $error_msg = $e->getException('aliyun')->getMessage();
                 // $smsLog->error_msg = $error_msg;
                 // $smsLog->status = 0;
                 // $smsLog->save();
-                // return $this->formatError(__('tip.sms.sendErr'));
-                return formatError('发送失败');
+                // return $this->resError(__('tip.sms.sendErr'));
+                return resError('发送失败');
             }
         },
         'args' => array(

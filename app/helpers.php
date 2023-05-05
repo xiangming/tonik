@@ -85,12 +85,12 @@ function asset_path($file)
 /**
  * 接口返回格式化
  */
-function format($message = 'ok', $data = null)
+function resOK($message = 'ok', $data = null)
 {
     print_r(json_encode(['code'=>0, 'message'=>$message, 'data'=>$data]));
     return; 
 }
-function formatError($message = 'error', $data = null)
+function resError($message = 'error', $data = null)
 {
     print_r(json_encode(['code'=>1, 'message'=>$message, 'data'=>$data]));
     return;
