@@ -1,11 +1,12 @@
 # Chu — WordPress Theme
 
-初创主题，基于 [Tonik — WordPress Starter Theme](http://labs.tonik.pl/theme/) 创建，通过 WordPress 的 REST API 来提供容易使用的接口。
+初创.work 的后端 wordpress 主题，基于 [Tonik — WordPress Starter Theme](http://labs.tonik.pl/theme/) 创建，通过 WordPress 的 REST API 来提供容易使用的接口。
 
 如果对 Tonik 不熟悉，可以参考:
 
 - [https://github.com/overtrue/api.yike.io/](https://github.com/overtrue/api.yike.io/)
 - [https://github.com/calibur-tv/Hentai](https://github.com/calibur-tv/Hentai)
+- [https://github.com/qingwuit/qwshop](https://github.com/qingwuit/qwshop)
 
 ## 如何使用
 
