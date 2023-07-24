@@ -88,8 +88,9 @@ return [
         'Structure/taxonomies.php',
         'Structure/shortcodes.php',
         'Structure/thumbnails.php',
-        'Validators/PhoneValidator.php',
+        'Validators/Validator.php',
         'Sms/CaptchaMessage.php',
+        'Sms/SmsService.php',
     ],
 
     /*

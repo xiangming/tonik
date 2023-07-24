@@ -1,6 +1,6 @@
 # 发送短信 `POST`
 
-**URL**: `/api/v1/sendSms/`
+**URL**: `/api/sms/v1/send`
 
 **Method**: `POST`
 

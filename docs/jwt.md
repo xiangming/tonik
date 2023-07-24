@@ -114,7 +114,9 @@ fetch(API_URL, {
 
 ## 结论
 
-我们建议的流程：
+因为 jwt-auth 没有提供 refresh_token，唯一的 token 我们可以作为 access_token 使用。
+
+因此，我们建议的流程：
 
 1. 获取 token 并保存
 2. 使用 token 发起请求
