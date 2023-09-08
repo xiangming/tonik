@@ -1,12 +1,28 @@
 # Chu — WordPress Theme
 
-初创.work 的后端 wordpress 主题，基于 [Tonik — WordPress Starter Theme](http://labs.tonik.pl/theme/) 创建，通过 WordPress 的 REST API 来提供容易使用的接口。
+基础设施后端主题，目前实现的基础设施能力：
+
+- [x] 短信发送
+- [ ] 邮件发送
+- [ ] 图片验证码
+- [ ] 支付接口
+- [ ] 对象存储 token 下发
+
+依赖此主题的产品主题，使用分支开发，方便基础代码共享：
+
+- [x] 打赏项目：feature/fans
+
+## 开发
+
+基于 [Tonik — WordPress Starter Theme](http://labs.tonik.pl/theme/) 创建，通过 WordPress 的 REST API 来提供容易使用的接口。
 
 如果对 Tonik 不熟悉，可以参考:
 
 - [https://github.com/overtrue/api.yike.io/](https://github.com/overtrue/api.yike.io/)
 - [https://github.com/calibur-tv/Hentai](https://github.com/calibur-tv/Hentai)
 - [https://github.com/qingwuit/qwshop](https://github.com/qingwuit/qwshop)
+
+> 注意！开发功能时，尽量与业务解耦并形成独立的文件，已方便其他项目移植使用。
 
 ## 如何使用
 
