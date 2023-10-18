@@ -29,7 +29,6 @@
 ### 安装 PHP 依赖
 
 ```bash
-composer update
 composer install
 ```
 
