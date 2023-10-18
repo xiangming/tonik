@@ -73,7 +73,9 @@ return [
     |
     */
     'autoload' => [
+        'core.php',
         'helpers.php',
+        'jwt.php',
         'Http/assets.php',
         'Http/ajaxes.php',
         'Setup/actions.php',

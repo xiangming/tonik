@@ -32,6 +32,6 @@ if ($ok) {
     // they must be under the same dir path.
     (new Tonik\Gin\Foundation\Autoloader($theme->get('config')))->register();
 
-    // 加载我们自己的脚本
-    require_once __DIR__ . '/includes/fn.php';
+    // // 加载我们自己的脚本
+    // require_once __DIR__ . '/includes/fn.php';
 }

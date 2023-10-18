@@ -81,3 +81,32 @@ function asset_path($file)
 {
     return asset($file)->getUri();
 }
+
+/**
+ * 接口正确返回函数
+ *
+ * @param   $message  接口message
+ * @param   $data     接口data，可选
+ *
+ * @return  标准接口json
+ */
+function resOK($message = 'success', $data = null)
+{
+    print_r(json_encode(['code'=>0, 'message'=>$message, 'data'=>$data]));
+    return; 
+}
+function resError($message = 'error', $data = null)
+{
+    print_r(json_encode(['code'=>1, 'message'=>$message, 'data'=>$data]));
+    return;
+}
+
+/**
+ * 是否admin用户
+ * @since 1.0
+ */
+if ( ! function_exists( 'isAdmin' ) ) {
+    function isAdmin() {
+        return current_user_can( 'manage_options' ) ? true : false;
+    }
+}
