@@ -15,6 +15,16 @@ add_filter( 'rest_url_prefix', function() {
 });
 
 /**
+ * 修改 /token 接口返回值，增加avatar和roles字段
+*/
+add_filter( 'jwt_auth_token_before_dispatch', function( $data, $user ) {
+	$avatar = get_avatar_url( $user->ID );
+	$data['user_roles'] = $user->caps;
+	$data['user_avatar'] = $avatar;
+	return $data;
+}, 10, 3);
+
+/**
  * 从JWT Token里面解析出user id
  * https://developer.wordpress.org/reference/functions/get_user_id_from_string/
  * @param   [type]  $token  [$token description]
