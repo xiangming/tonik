@@ -2,8 +2,8 @@
 
 namespace App\Sms;
 
-use Overtrue\EasySms\Message;
 use Overtrue\EasySms\Contracts\GatewayInterface;
+use Overtrue\EasySms\Message;
 
 class CaptchaMessage extends Message
 {
@@ -42,7 +42,7 @@ class CaptchaMessage extends Message
         //     $this->captchaConfig['template_variable'] => $this->captcha
         // ];
         return [
-            'code' => $this->captcha
+            'code' => $this->captcha,
         ];
     }
 }

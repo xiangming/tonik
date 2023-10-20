@@ -92,12 +92,12 @@ function asset_path($file)
  */
 function resOK($message = 'success', $data = null)
 {
-    print_r(json_encode(['code'=>0, 'message'=>$message, 'data'=>$data]));
-    return; 
+    print_r(json_encode(['code' => 0, 'message' => $message, 'data' => $data]));
+    return;
 }
 function resError($message = 'error', $data = null)
 {
-    print_r(json_encode(['code'=>1, 'message'=>$message, 'data'=>$data]));
+    print_r(json_encode(['code' => 1, 'message' => $message, 'data' => $data]));
     return;
 }
 
@@ -105,8 +105,9 @@ function resError($message = 'error', $data = null)
  * 是否admin用户
  * @since 1.0
  */
-if ( ! function_exists( 'isAdmin' ) ) {
-    function isAdmin() {
-        return current_user_can( 'manage_options' ) ? true : false;
+if (!function_exists('isAdmin')) {
+    function isAdmin()
+    {
+        return current_user_can('manage_options') ? true : false;
     }
 }

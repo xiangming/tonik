@@ -2,8 +2,9 @@
 
 namespace App\Sms;
 
-use Overtrue\EasySms\Message;
 use Overtrue\EasySms\Contracts\GatewayInterface;
+use Overtrue\EasySms\Message;
+
 // use Overtrue\EasySms\Strategies\OrderStrategy;
 
 class OrderPaidMessage extends Message
@@ -33,7 +34,7 @@ class OrderPaidMessage extends Message
     public function getData(GatewayInterface $gateway = null)
     {
         return [
-            'order_no' => $this->order->no
+            'order_no' => $this->order->no,
         ];
     }
 }
