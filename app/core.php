@@ -42,12 +42,14 @@ add_action('rest_api_init', function () {
  * 注意：Changing or removing data from core REST API endpoint responses can break plugins or WordPress core behavior, and should be avoided wherever possible.
  *
  * https://developer.wordpress.org/rest-api/extending-the-rest-api/modifying-responses/
- * 
+ *
  * https://developer.wordpress.org/reference/functions/sanitize_textarea_field/
  */
 add_action('rest_api_init', function () {
     // 新增字段: creating, 正在创造什么？
     register_rest_field('user', 'creating', array(
+        // Show in the WP REST API response. Default: false.
+        'show_in_rest' => true,
         'get_callback' => function ($object, $field, $request) {
             // Get field as single value from post meta.
             return get_user_meta($object['id'], $field, true);
@@ -56,7 +58,6 @@ add_action('rest_api_init', function () {
             // Update the field/meta value.
             update_user_meta($object->ID, $field, $value);
         },
-        'show_in_rest' => true,
         'schema' => array(
             'type' => 'string',
             'arg_options' => array(
@@ -77,6 +78,7 @@ add_action('rest_api_init', function () {
     ));
     // 新增字段: avatar_url, 头像地址
     register_rest_field('user', 'avatar_url', array(
+        'show_in_rest' => true,
         'get_callback' => function ($object, $field, $request) {
             // Get field as single value from post meta.
             return get_user_meta($object['id'], $field, true);
@@ -85,7 +87,6 @@ add_action('rest_api_init', function () {
             // Update the field/meta value.
             update_user_meta($object->ID, $field, $value);
         },
-        'show_in_rest' => true,
         'schema' => array(
             'type' => 'string',
             'arg_options' => array(
@@ -103,6 +104,7 @@ add_action('rest_api_init', function () {
     ));
     // 新增字段: background_image_url, 封面图地址
     register_rest_field('user', 'background_image_url', array(
+        'show_in_rest' => true,
         'get_callback' => function ($object, $field, $request) {
             // Get field as single value from post meta.
             return get_user_meta($object['id'], $field, true);
@@ -111,7 +113,6 @@ add_action('rest_api_init', function () {
             // Update the field/meta value.
             update_user_meta($object->ID, $field, $value);
         },
-        'show_in_rest' => true,
         'schema' => array(
             'type' => 'string',
             'arg_options' => array(
@@ -128,6 +129,7 @@ add_action('rest_api_init', function () {
     ));
     // 新增字段: real, 真实姓名
     register_rest_field('user', 'real', array(
+        'show_in_rest' => true,
         'get_callback' => function ($object, $field, $request) {
             // Get field as single value from post meta.
             return get_user_meta($object['id'], $field, true);
@@ -136,8 +138,6 @@ add_action('rest_api_init', function () {
             // Update the field/meta value.
             update_user_meta($object->ID, $field, $value);
         },
-        // Show in the WP REST API response. Default: false.
-        'show_in_rest' => true,
         'schema' => array(
             'type' => 'string',
             'arg_options' => array(
@@ -154,16 +154,16 @@ add_action('rest_api_init', function () {
     ));
     // 新增字段: phone, 手机号码（国内11位校验）
     register_rest_field('user', 'phone', array(
+        'show_in_rest' => true,
         'get_callback' => function ($object, $field, $request) {
             // Get field as single value from post meta.
             return get_user_meta($object['id'], $field, true);
         },
-        'update_callback' => function ($value, $object, $field) {
-            // Update the field/meta value.
-            update_user_meta($object->ID, $field, $value);
-        },
-        // Show in the WP REST API response. Default: false.
-        'show_in_rest' => true,
+        // // 手机号需要走验证码流程，不能简单设置
+        // 'update_callback' => function ($value, $object, $field) {
+        //     // Update the field/meta value.
+        //     update_user_meta($object->ID, $field, $value);
+        // },
         'schema' => array(
             'type' => 'string',
             'arg_options' => array(
@@ -180,6 +180,7 @@ add_action('rest_api_init', function () {
     ));
     // 新增字段: zfb_id, 支付宝账号
     register_rest_field('user', 'zfb_id', array(
+        'show_in_rest' => true,
         'get_callback' => function ($object, $field, $request) {
             // Get field as single value from post meta.
             return get_user_meta($object['id'], $field, true);
@@ -188,8 +189,6 @@ add_action('rest_api_init', function () {
             // Update the field/meta value.
             update_user_meta($object->ID, $field, $value);
         },
-        // Show in the WP REST API response. Default: false.
-        'show_in_rest' => true,
         'schema' => array(
             'type' => 'string',
             'arg_options' => array(
@@ -206,6 +205,7 @@ add_action('rest_api_init', function () {
     ));
     // 新增字段: wx_id, 微信账号
     register_rest_field('user', 'wx_id', array(
+        'show_in_rest' => true,
         'get_callback' => function ($object, $field, $request) {
             // Get field as single value from post meta.
             return get_user_meta($object['id'], $field, true);
@@ -214,8 +214,6 @@ add_action('rest_api_init', function () {
             // Update the field/meta value.
             update_user_meta($object->ID, $field, $value);
         },
-        // Show in the WP REST API response. Default: false.
-        'show_in_rest' => true,
         'schema' => array(
             'type' => 'string',
             'arg_options' => array(
