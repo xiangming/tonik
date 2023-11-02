@@ -14,10 +14,11 @@ class SmsService
      * @param   [type]  $phoneNumber  手机号，必填
      *
      * https://github.com/qingwuit/qwshop/blob/98d00761dad7c1151c79175d6349b302cf4d63af/app/Qingwuit/Services/SmsService.php
+     * https://github.com/gptlink/gptlink/blob/4f590e81d979833bba409efddaf68b48b6a4a001/gptserver/app/Http/Service/SmsService.php
      *
      * TODO: 支持第二参数：模板ID
      *
-     * @return  发送的结果（失败或者成功）
+     * @return code on success, false on failure
      */
     public static function send($phoneNumber)
     {
@@ -40,11 +41,14 @@ class SmsService
             return $code;
         } catch (\Overtrue\EasySms\Exceptions\NoGatewayAvailableException $e) {
             // $error_msg = $e->getException('aliyun')->getMessage();
+            // resError($error_msg);
+            // exit();
+
             // $smsLog->error_msg = $error_msg;
             // $smsLog->status = 0;
             // $smsLog->save();
             // return $this->resError(__('tip.sms.sendErr'));
-            return 0;
+            return false;
         }
     }
 }

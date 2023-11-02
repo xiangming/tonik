@@ -78,6 +78,8 @@ return [
         'jwt.php',
         'Http/assets.php',
         'Http/ajaxes.php',
+        'Plugins/MailService.php',
+        'Plugins/user-account-center.php',
         'Setup/actions.php',
         'Setup/filters.php',
         'Setup/supports.php',

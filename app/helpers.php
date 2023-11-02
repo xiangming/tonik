@@ -90,14 +90,14 @@ function asset_path($file)
  *
  * @return  标准接口json
  */
-function resOK($message = 'success', $data = null)
+function resOK($message = 'success', $data = null, $code = 0)
 {
-    print_r(json_encode(['code' => 0, 'message' => $message, 'data' => $data]));
+    print_r(json_encode(['code' => $code, 'message' => $message, 'data' => $data]));
     return;
 }
-function resError($message = 'error', $data = null)
+function resError($message = 'error', $data = null, $code = 1)
 {
-    print_r(json_encode(['code' => 1, 'message' => $message, 'data' => $data]));
+    print_r(json_encode(['code' => $code, 'message' => $message, 'data' => $data]));
     return;
 }
 

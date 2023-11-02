@@ -25,11 +25,25 @@ add_filter('jwt_auth_token_before_dispatch', function ($data, $user) {
 }, 10, 3);
 
 /**
+ * 从 api 请求里面获取 jwt-token
+ *
+ * @param   [type]  $request  api请求参数集合
+ *
+ * @return  token on success, false on failure.
+ */
+function getJwtTokenFromRequest($request)
+{
+    $headers = $request->get_headers();
+    $token = $headers['authorization'] ? substr($headers['authorization'][0], 7) : false;
+    return $token;
+}
+
+/**
  * 从JWT Token里面解析出user id
  * https://developer.wordpress.org/reference/functions/get_user_id_from_string/
  * @param   [type]  $token  [$token description]
  *
- * @return  [type]          [return description]
+ * @return  ID on success, false on failure.
  */
 if (!function_exists('getUserIdFromJwtToken')) {
     function getUserIdFromJwtToken($token)
@@ -40,6 +54,6 @@ if (!function_exists('getUserIdFromJwtToken')) {
             return $user->id;
         }
 
-        return 0;
+        return false;
     }
 }
