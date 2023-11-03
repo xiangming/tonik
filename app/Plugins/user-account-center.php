@@ -14,6 +14,17 @@ use function Tonik\Theme\App\resOK;
 define('WP_V2_NAMESPACE', 'wp/v2'); // WP REST API
 
 /**
+ * 生成随机字符串（小写字母和数字）
+ */
+function generateRandomString($length = 5)
+{
+    $randomString = md5(uniqid(rand(), true));
+    $randomString = substr($randomString, 0, $length);
+
+    return $randomString;
+}
+
+/**
  * 通过user meta查找user
  *
  * @usage $user_data = getUserByMeta('phone',$phone);
@@ -119,11 +130,8 @@ function createUser($account = null, $password = null, $role = 'subscriber')
     // 密码格式验证
     Validator::validateLength($password, '密码', 1, 6, 20);
 
-    // 使用MD5值作为用户名
-    // $user_login = md5(); // 太长了，不适合用于URL
-
-    // 使用uniqid随机生成13位用户名：5d64e5db8cfdb
-    $user_login = uniqid();
+    // 随机生成5位用户名
+    $user_login = generateRandomString();
 
     // prepare the default args
     $args = array();
@@ -351,16 +359,17 @@ add_action('rest_api_init', function () {
             $user = getUserByMeta('phone_temp', $account);
             if ($user) {
                 $uid = $user->ID;
-                if (validateCode($uid, $code)) {
-                    // 验证码验证通过，则转正临时账号
-                    updatePhoneFromPhoneTemp($uid);
 
-                    // 更新用户密码
-                    updatePassword($uid, $password);
+                validateCode($uid, $code);
 
-                    resOK('注册成功');
-                    exit();
-                }
+                // 验证码验证通过，则转正临时账号
+                updatePhoneFromPhoneTemp($uid);
+
+                // 更新用户密码
+                updatePassword($uid, $password);
+
+                resOK('注册成功');
+                exit();
             }
 
             resError('注册失败');
