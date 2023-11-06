@@ -26,6 +26,27 @@
 
 ## 如何使用
 
+### 安装插件
+
+ssh 到服务器的 plugins 目录，安装依赖插件：
+
+```bash
+cd /www/wwwroot/dev.chuchuang.work/wp-content/plugins
+git clone https://github.com/fqht/wp-api-jwt-auth.git
+```
+
+### 插件配置
+
+在 wp-config.php 里面加入：
+
+```bash
+/** JWT */
+define('JWT_AUTH_SECRET_KEY', '+|;le|/~n-$XyXf:mE/Ac4SOvm|]FQn&`u}010;ON1adj(J{A(nm/;;P<S6qFXI[');
+define('JWT_AUTH_CORS_ENABLE', true);
+
+/* 好了！请不要再继续编辑。请保存本文件。使用愉快！ */
+```
+
 ### 安装 PHP 依赖
 
 ```bash

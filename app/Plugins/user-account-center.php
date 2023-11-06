@@ -124,11 +124,11 @@ function createUser($account = null, $password = null, $role = 'subscriber')
 
     // 没有传入password时，自动生成一个
     if (!isset($password)) {
-        $password = wp_generate_password(12, false);
+        $password = wp_generate_password(8, false);
     }
 
     // 密码格式验证
-    Validator::validateLength($password, '密码', 1, 6, 20);
+    Validator::validateLength($password, '密码', 6, 20);
 
     // 随机生成5位用户名
     $user_login = generateRandomString();
@@ -212,7 +212,7 @@ function updatePhoneFromPhoneTemp($uid)
 function updatePassword($uid, $password)
 {
     // 密码格式验证
-    Validator::validateLength($password, '密码', true, 6, 20);
+    Validator::validateLength($password, '密码', 6, 20);
 
     // 更新用户密码
     $result = wp_update_user(
@@ -241,7 +241,7 @@ function updatePassword($uid, $password)
 function validateCode($uid, $code)
 {
     // 验证码格式验证
-    Validator::validateInt($code, '验证码', true, 1000, 9999);
+    Validator::validateInt($code, '验证码', 1000, 9999);
 
     // 获取数据库中保存的验证码
     $code_saved = get_user_meta($uid, 'code', true);
@@ -300,18 +300,21 @@ add_action('rest_api_init', function () {
             // 获取验证码
             if (is_email($account)) {
                 // 发送邮箱验证码
-                $code = MailService::sendCodeEmail($account, '重置密码');
+                $code = MailService::sendCodeEmail($account);
             } else if (Validator::isPhone($account)) {
                 // 执行发送手机验证码
                 $code = SmsService::send($account);
             }
 
-            if ($uid && $code) {
-                saveCodeToUserMeta($uid, $code);
-                return resOK('发送成功');
+            if (!$uid || !$code) {
+                resError('发送失败，请稍后重试');
+                exit();
             }
 
-            return resError('发送失败，请稍后重试');
+            saveCodeToUserMeta($uid, $code);
+
+            resOK('发送成功');
+            exit();
         },
         'args' => array(
             'account' => array(
@@ -320,9 +323,7 @@ add_action('rest_api_init', function () {
                 },
             ),
         ),
-        'permission_callback' => function () {
-            return true;
-        },
+        'permission_callback' => '__return_true',
     ));
 
     /**
@@ -388,14 +389,15 @@ add_action('rest_api_init', function () {
             ),
             'password' => array(
                 'validate_callback' => function ($param, $request, $key) {
-                    return Validator::validateLength($param, '密码', true, 6, 20);
+                    return Validator::validateLength($param, '密码', 6, 20);
                 },
             ),
         ),
+        'permission_callback' => '__return_true',
     ));
 
-    // Register a new endpoint: /wp/v2/users/validation
-    register_rest_route(WP_V2_NAMESPACE, '/users/validation', array(
+    // Register a new endpoint: /wp/v2/users/validate
+    register_rest_route(WP_V2_NAMESPACE, '/users/validate', array(
         'methods' => 'GET',
         'callback' => function ($request) {
             $parameters = $request->get_json_params();
@@ -413,9 +415,10 @@ add_action('rest_api_init', function () {
         'args' => array(
             'account' => array(
                 'validate_callback' => function ($param, $request, $key) {
-                    return Validator::isPhone($param);
+                    return is_email($param) || Validator::isPhone($param);
                 },
             ),
         ),
+        'permission_callback' => '__return_true',
     ));
 }, 15);

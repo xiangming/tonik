@@ -13,7 +13,7 @@ add_action('rest_api_init', function () {
         $origin = get_http_origin();
 
         if ($origin) {
-            $my_sites = array('http://localhost:3000', 'http://localhost:3300', 'https://apis.chuchuang.work');
+            $my_sites = array('http://localhost:3000', 'http://localhost:3300', 'https://chuchuang.work');
             if (in_array($origin, $my_sites)) {
                 $origin = esc_url_raw($origin);
                 header('Access-Control-Allow-Origin: ' . $origin);
