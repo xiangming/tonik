@@ -10,7 +10,24 @@
 
 依赖此主题的产品主题，使用分支开发，方便基础代码共享：
 
-- [x] 打赏项目：feature/fans
+- [x] 打赏项目：fans/develop
+
+## 分支管理
+
+使用分支管理会降低开发效率，但是可以让产品更稳定，也方便回滚。
+
+公共代码，跟踪代码仓库服务器：
+
+- master: 预留，未使用。（因为公共代码没有部署的需求）
+- develop: 主分支，跟踪 [origin](git@github.com:xiangming/tonik.git)的 develop 分支。
+- feature/xxx: 独立功能需求开发分支，跟踪 [origin](git@github.com:xiangming/tonik.git)的 feature/xxx 分支。
+
+项目代码，跟踪项目服务器：
+
+- fans/develop: fans 项目开发代码，跟踪 [dev](ssh://git@165.154.22.106:7000/home/data/git/dev.git)的 master 分支。
+- fans/master: fans 项目生产代码，跟踪 [release](ssh://git@165.154.22.106:7000/home/data/git/release.git)的 master 分支。
+
+每次部署，使用 Tag 打版本号。
 
 ## 开发
 
