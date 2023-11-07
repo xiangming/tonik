@@ -73,7 +73,6 @@ return [
     |
     */
     'autoload' => [
-        'core.php',
         'helpers.php',
         'jwt.php',
         'Http/assets.php',
