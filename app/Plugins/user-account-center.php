@@ -9,6 +9,7 @@ use App\Sms\SmsService;
 use App\Validators\Validator;
 use function Tonik\Theme\App\resError;
 use function Tonik\Theme\App\resOK;
+use Gregwar\Captcha\CaptchaBuilder;
 
 // WP REST API 命名空间
 define('WP_V2_NAMESPACE', 'wp/v2'); // WP REST API
@@ -140,16 +141,16 @@ function createUser($account = null, $password = null, $role = 'subscriber')
     $args['display_name'] = $user_login;
     $args['role'] = $role;
 
-    // 是邮箱
-    if (is_email($account)) {
-        $args['display_name'] = explode("@", $account)[0]; // 截取邮箱@前作为昵称
-        // $args['user_email'] = $account; // 邮箱尚未验证，不能转正
-    }
+    // // 是邮箱
+    // if (is_email($account)) {
+    //     $args['display_name'] = explode("@", $account)[0]; // 截取邮箱@前作为昵称
+    //     // $args['user_email'] = $account; // 邮箱尚未验证，不能转正
+    // }
 
-    // 是手机号
-    if (Validator::isPhone($account)) {
-        $args['display_name'] = substr_replace($account, '****', 3, 4); // 隐藏手机号中间四位
-    }
+    // // 是手机号
+    // if (Validator::isPhone($account)) {
+    //     $args['display_name'] = substr_replace($account, '****', 3, 4); // 隐藏手机号中间四位
+    // }
 
     // https://developer.wordpress.org/reference/functions/wp_insert_user/
     $uid = wp_insert_user($args);
@@ -161,16 +162,11 @@ function createUser($account = null, $password = null, $role = 'subscriber')
         exit();
     }
 
-    // save as phone_temp, will transfer to phone after register
+    // 是手机号
     if (Validator::isPhone($account)) {
+        // save as phone_temp, will transfer to phone after register
         update_user_meta($uid, 'phone_temp', $account);
     }
-
-    // if ( is_email($account) ) {
-    //     // 截取邮箱@前作为昵称
-    //     $display_name = explode("@",$account)[0];
-    //     update_user_meta($uid, 'nickname', $display_name);
-    // }
 
     // 账号创建成功，返回用户ID
     return $uid;
@@ -270,10 +266,51 @@ function validateCode($uid, $code)
  */
 add_action('rest_api_init', function () {
     /**
+     * 获取图形验证码
+     */
+    register_rest_route(WP_V2_NAMESPACE, '/users/captcha', array(
+        'methods' => 'POST',
+        'callback' => function ($request) {
+            $parameters = $request->get_json_params();
+            $account = sanitize_text_field($parameters['account']);
+
+            // 账号不存在，则创建新账号
+            $uid = userExists($account);
+            if (!$uid) {
+                // TODO: 不需要创建账号，使用PHP缓存即可：cache()->get($this->getLoginKey($mobile));
+                $uid = createUser($account);
+            }
+
+            // 获取图形验证码
+            $captcha = new CaptchaBuilder();
+            $captcha->build();
+            $code = $captcha->getPhrase();
+
+            if (!$uid || !$code) {
+                resError('图形验证码获取失败，请稍后重试');
+                exit();
+            }
+
+            saveCodeToUserMeta($uid, $code);
+
+            resOK('success', $captcha->inline());
+            exit();
+        },
+        'args' => array(
+            'account' => array(
+                'validate_callback' => function ($param, $request, $key) {
+                    return is_email($param) || Validator::isPhone($param);
+                },
+            ),
+        ),
+        'permission_callback' => '__return_true',
+    ));
+
+    /**
      * 发送短信或者邮件二维码，应用场景：手机号注册、绑定邮箱、绑定手机
      *
-     * 当请求未携带jwt时，判定为注册请求，自动生成phone_temp新用户
-     * 当请求携带jwt时，判定为绑定手机号，向jwt用户添加phone_temp字段
+     * 当账号已存在时，判定为绑定手机号，向账号添加phone_temp字段
+     * 当账号不存在时，判定为注册请求，自动生成phone_temp新账号
      *
      * @param   [string or number]  $account  账号（邮箱、手机或者用户名），必填
      *
@@ -287,14 +324,25 @@ add_action('rest_api_init', function () {
             $parameters = $request->get_json_params();
             $account = sanitize_text_field($parameters['account']);
 
-            // 通过请求头获取用户，否则创建新用户
-            $token = getJwtTokenFromRequest($request);
-            if ($token) {
-                validateToken($token);
-                $uid = getUserIdFromJwtToken($token);
-            } else {
+            // 没有图形验证码字段
+            if (!in_array('captcha', $parameters)) {
+                resError('非法请求');
+                exit();
+            }
+
+            $captcha = sanitize_text_field($parameters['captcha']);
+
+            // 账号不存在，则创建新账号
+            $uid = userExists($account);
+            if (!$uid) {
                 // TODO: 不需要创建账号，使用PHP缓存即可：cache()->get($this->getLoginKey($mobile));
                 $uid = createUser($account);
+            }
+
+            // 校验图形验证码
+            if ($captcha !== get_user_meta($uid, 'captcha', true)) {
+                resError('图形验证码错误');
+                exit();
             }
 
             // 获取验证码
