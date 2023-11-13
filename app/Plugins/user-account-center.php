@@ -11,8 +11,8 @@ use function Tonik\Theme\App\resError;
 use function Tonik\Theme\App\resOK;
 use Gregwar\Captcha\CaptchaBuilder;
 
-// WP REST API 命名空间
-define('WP_V2_NAMESPACE', 'wp/v2'); // WP REST API
+define('WP_V2_NAMESPACE', 'wp/v2'); // WP REST API 接口前缀
+define('NEED_CAPTCHA', 'need_captcha'); // 后端返回该code时，前端需要弹窗显示图形码
 
 /**
  * 生成随机字符串（小写字母和数字）
@@ -23,6 +23,33 @@ function generateRandomString($length = 5)
     $randomString = substr($randomString, 0, $length);
 
     return $randomString;
+}
+
+/**
+ * 生成图形验证码
+ */
+function generateCaptcha($account)
+{
+    // 账号不存在，则创建新账号
+    $uid = userExists($account);
+    if (!$uid) {
+        // TODO: 不需要创建账号，使用PHP缓存即可：cache()->get($this->getLoginKey($mobile));
+        $uid = createUser($account);
+    }
+
+    // 生成图形验证码
+    $captcha = new CaptchaBuilder();
+    $captcha->build();
+    $code = $captcha->getPhrase();
+
+    if (!$uid || !$code) {
+        resError('图形验证码获取失败，请稍后重试');
+        exit();
+    }
+
+    saveCodeToUserMeta($uid, $code);
+
+    return $captcha->inline();
 }
 
 /**
@@ -230,28 +257,26 @@ function updatePassword($uid, $password)
 }
 
 /**
- * 验证验证码
+ * 校验验证码（适用于验证码和图形码）
+ * 注意！需要同时支持数字验证码和图形码
  *
  * @return true on success, exit() on failure
  */
-function validateCode($uid, $code)
+function validateCode($uid, $code, $expired = 1800)
 {
-    // 验证码格式验证
-    Validator::validateInt($code, '验证码', 1000, 9999);
-
     // 获取数据库中保存的验证码
     $code_saved = get_user_meta($uid, 'code', true);
     $code_saved = explode('-', $code_saved);
-    $expired = $code_saved[1] + 1800; // 30分钟有效
+    $expired_time = $code_saved[1] + $expired; // 30分钟有效
     $code_saved = $code_saved[0];
 
-    if ($expired < time()) {
+    if ($expired_time < time()) {
         resError('验证码已失效，请重新获取');
         exit();
     }
 
-    if ($code !== $code_saved) {
-        resError('验证码不正确，请重新输入');
+    if (strcasecmp($code, $code_saved) !== 0) {
+        resError('验证码不正确，请重新输入', $code_saved, $code);
         exit();
     }
 
@@ -274,26 +299,13 @@ add_action('rest_api_init', function () {
             $parameters = $request->get_json_params();
             $account = sanitize_text_field($parameters['account']);
 
-            // 账号不存在，则创建新账号
-            $uid = userExists($account);
-            if (!$uid) {
-                // TODO: 不需要创建账号，使用PHP缓存即可：cache()->get($this->getLoginKey($mobile));
-                $uid = createUser($account);
-            }
+            // 后端数据格式校验
+            Validator::required($account, '手机号');
 
             // 获取图形验证码
-            $captcha = new CaptchaBuilder();
-            $captcha->build();
-            $code = $captcha->getPhrase();
+            $captcha = generateCaptcha($account);
 
-            if (!$uid || !$code) {
-                resError('图形验证码获取失败，请稍后重试');
-                exit();
-            }
-
-            saveCodeToUserMeta($uid, $code);
-
-            resOK('success', $captcha->inline());
+            resOK('success', $captcha);
             exit();
         },
         'args' => array(
@@ -324,13 +336,19 @@ add_action('rest_api_init', function () {
             $parameters = $request->get_json_params();
             $account = sanitize_text_field($parameters['account']);
 
-            // 没有图形验证码字段
-            if (!in_array('captcha', $parameters)) {
-                resError('非法请求');
+            // 后端数据格式校验
+            Validator::required($account, '手机号');
+
+            // 没有图形验证码字段，前端需要弹窗显示图形码
+            if (!array_key_exists('captcha', $parameters)) {
+                resError('请输入图形码', $parameters, NEED_CAPTCHA);
                 exit();
             }
 
             $captcha = sanitize_text_field($parameters['captcha']);
+
+            // 后端数据格式校验
+            Validator::required($captcha, '图形码');
 
             // 账号不存在，则创建新账号
             $uid = userExists($account);
@@ -340,10 +358,7 @@ add_action('rest_api_init', function () {
             }
 
             // 校验图形验证码
-            if ($captcha !== get_user_meta($uid, 'captcha', true)) {
-                resError('图形验证码错误');
-                exit();
-            }
+            validateCode($uid, $captcha);
 
             // 获取验证码
             if (is_email($account)) {
