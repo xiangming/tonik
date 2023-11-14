@@ -52,6 +52,7 @@ if (!function_exists('getUserByMeta')) {
 
 /**
  * 检查验证码获取频率
+ * TODO: 间隔时间随着获取次数递增、设置每个手机号码每天的最大发送量
  *
  * @return 无返回值
  */
@@ -61,11 +62,12 @@ function checkCodeLimit($uid)
     if (!empty($code_saved)) {
         $code_saved = explode('-', $code_saved);
         $expired = $code_saved[1] + 60; // 限制60s获取一次
-        if ($expired > time()) {
+        if (time() < $expired) {
             resError('验证码获取太频繁，请一分钟后再尝试');
             exit();
         }
     }
+    return true;
 }
 
 /**
@@ -296,6 +298,9 @@ add_action('rest_api_init', function () {
                 // TODO: 不需要创建账号，使用PHP缓存即可：cache()->get($this->getLoginKey($mobile));
                 $uid = createUser($account);
             }
+
+            // 频率检查
+            checkCodeLimit($uid);
 
             // 获取验证码
             if (is_email($account)) {
