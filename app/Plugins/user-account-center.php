@@ -4,6 +4,7 @@
  * 注意！不要往这里面加代码！后期可能单独拿出来作为插件使用。
  */
 
+use App\Queue\ASQueue;
 use App\MailService;
 use App\Sms\SmsService;
 use App\Validators\Validator;
@@ -405,7 +406,37 @@ add_action('rest_api_init', function () {
 
             $user_id = userExists($account);
             if ($user_id) {
-                resError('已被注册');
+                resError('用户已经存在');
+                exit();
+            }
+
+            resOK('可以注册');
+            exit();
+        },
+        'args' => array(
+            'account' => array(
+                'validate_callback' => function ($param, $request, $key) {
+                    return is_email($param) || Validator::isPhone($param);
+                },
+            ),
+        ),
+        'permission_callback' => '__return_true',
+    ));
+
+    // Register a new endpoint: /wp/v2/users/test_queue
+    register_rest_route(WP_V2_NAMESPACE, '/users/test_queue', array(
+        'methods' => 'POST',
+        'callback' => function ($request) {
+            $parameters = $request->get_json_params();
+            $account = sanitize_text_field($parameters['account']);
+
+            $user_id = userExists($account);
+            if ($user_id) {
+                $queue = new ASQueue();
+                // $queue->add_async('test_queue', [$account]);
+                $queue->schedule_single(strtotime("+3 minutes"), 'test_queue', [$account]);
+                
+                resError('用户已经存在');
                 exit();
             }
 
@@ -422,3 +453,8 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 }, 15);
+
+add_action('test_queue', function ($account) {
+    // 发送邮箱验证码
+    MailService::sendCodeEmail($account);
+}, 10, 1);

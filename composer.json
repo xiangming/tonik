@@ -8,7 +8,8 @@
     "php": ">=7.0",
     "tonik/gin": "^3.0.0",
     "overtrue/easy-sms": "^2.4",
-    "vlucas/phpdotenv": "^5.5"
+    "vlucas/phpdotenv": "^5.5",
+    "woocommerce/action-scheduler": "^3.6"
   },
   "require-dev": {
     "tonik/cli": "^3.0.0"

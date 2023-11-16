@@ -78,6 +78,7 @@ return [
         'Http/assets.php',
         'Http/ajaxes.php',
         'Plugins/MailService.php',
+        'Plugins/Queue.php',
         'Plugins/user-account-center.php',
         'Setup/actions.php',
         'Setup/filters.php',
