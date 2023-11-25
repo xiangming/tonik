@@ -5,7 +5,7 @@
  */
 
 use App\Queue\ASQueue;
-use App\MailService;
+use App\Services\MailService;
 use App\Sms\SmsService;
 use App\Validators\Validator;
 use function Tonik\Theme\App\resError;
