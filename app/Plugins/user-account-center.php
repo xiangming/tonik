@@ -435,10 +435,52 @@ add_action('rest_api_init', function () {
                 $queue = new ASQueue();
                 // $queue->add_async('test_queue', [$account]);
                 $queue->schedule_single(strtotime("+3 minutes"), 'test_queue', [$account]);
-                
+
                 resError('用户已经存在');
                 exit();
             }
+
+            resOK('可以注册');
+            exit();
+        },
+        'args' => array(
+            'account' => array(
+                'validate_callback' => function ($param, $request, $key) {
+                    return is_email($param) || Validator::isPhone($param);
+                },
+            ),
+        ),
+        'permission_callback' => '__return_true',
+    ));
+
+    // Register a new endpoint: /wp/v2/donation
+    register_rest_route(WP_V2_NAMESPACE, '/donation', array(
+        'methods' => 'POST',
+        'callback' => function ($request) {
+            $parameters = $request->get_json_params();
+            $to = sanitize_text_field($parameters['to']); // 给谁，必填
+            $amount = sanitize_text_field($parameters['amount']); // 金额，必填
+            $account = sanitize_text_field($parameters['account']); // 关联账号，可选
+            $content = sanitize_text_field($parameters['content']); // 打赏留言，可选
+
+            // 后端数据格式校验
+            Validator::required($to, '被打赏人');
+            Validator::required($amount, '金额');
+
+            // 请求参数带账号，则打赏记录关联此账号，而不是当前token账号（帮他人打赏的场景）
+            if ($account) {
+                $user_id = userExists($account);
+                // 填写的账号不存在，则自动创建账号并关联打赏记录
+                if (!$user_id) {
+                    $user_id = createUser($account);
+                }
+            }
+            // TODO: 请求参数没有带账号，是否需要实现匿名打赏的功能？
+            $donation_id = createDonation($user_id, $to, $amount);
+
+            $body = '打赏' . $to; // 微信支付显示的标题
+            $pay = new WechatPayService();
+            $pay->scan($out_trade_no, $body, $amount);
 
             resOK('可以注册');
             exit();

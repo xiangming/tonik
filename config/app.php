@@ -77,6 +77,7 @@ return [
         'jwt.php',
         'Http/assets.php',
         'Http/ajaxes.php',
+        'Plugins/post-type-donation.php',
         'Plugins/user-account-center.php',
         'Services/MailService.php',
         'Services/WechatPayService.php',
