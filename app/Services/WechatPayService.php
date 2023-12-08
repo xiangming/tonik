@@ -39,9 +39,9 @@ class WechatPayService
     {
         $order = [
             'out_trade_no' => $out_trade_no,
-            'total_fee' => $total_fee * 100, // 单位：分 ==> 元
             'body' => $body,
-            'openid' => 'onkVf1FjWS5SBIixxxxxxx', // 转账时需要
+            'total_fee' => $total_fee * 100, // 单位：分 ==> 元
+            // 'openid' => 'onkVf1FjWS5SBIixxxxxxx', // 转账时需要
         ];
 
         $result = Pay::wechat($this->config)->scan($order);

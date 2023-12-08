@@ -30,7 +30,7 @@ class Validator
     }
 
     /**
-     * 验证URL
+     * 验证整数
      *
      * @return true on success, false on failure
      */

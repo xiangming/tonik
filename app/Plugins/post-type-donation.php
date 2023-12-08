@@ -150,28 +150,26 @@ add_action('manage_orders_posts_custom_column', function ($column_name, $id) {
 // add_filter( 'pre_get_posts', 'postsFilter' );
 
 /**
- * 创建打赏订单
- * @param string $from  打赏人
- * @param string $to  被打赏人
+ * 创建打赏订单/记录
+ * @param int $from  打赏人ID
+ * @param int $to  被打赏人ID
  * @param int $amount 打赏金额
+ * @param string $content 打赏留言，可选
  * @return int $orderId
  */
-function createDonation($from, $to, $amount)
+function createDonation($from, $to, $amount, $content)
 {
-    Validator::validateInt($amount * 100, '金额', 1); //0.01不是int而是float
-
-    // $productName = '打赏'.$to; // 微信支付显示的标题
-
     $productId = 1; // 不同产品使用不同的ID，方便在第三方支付后台对应产品
 
-    // 生成订单交易号（日期-产品 ID-用户 ID-随机数）
-    $outTradeNo = current_time('YmdHis') . '-' . $productId . '-' . $from . '-' . $to . '-' . $amount . '-' . rand(1000, 9999);
+    // 生成订单交易号（产品 ID-日期-打赏人ID-被打赏人 ID-随机数）
+    $outTradeNo = $productId . '-' . current_time('YmdHis') . '-' . $from . '-' . $to . '-' . rand(1000, 9999); // 不能超过32位字符
 
     $in_data = array(
-        'post_author'    => $from,
+        'post_author' => $from,
         'post_title' => $outTradeNo,
         'post_status' => 'draft',
         'post_type' => 'donation', // custom-post-type
+        'post_content' => $content,
     );
     // https://developer.wordpress.org/reference/functions/wp_insert_post/
     // If the $postarr parameter has ‘ID’ set to a value, then post will be updated.
@@ -183,18 +181,14 @@ function createDonation($from, $to, $amount)
         return new WP_Error(1, $errmsg);
     }
 
-    // // 保存订单信息
-    // if (isset($productName)) {
-    //     update_post_meta($in_id, 'productName', $productName);
-    // }
-
     if (isset($amount)) {
         update_post_meta($in_id, 'amount', $amount);
     }
 
-    // if (isset($productId)) {
-    //     update_post_meta($in_id, 'productId', $productId);
-    // }
+    if (isset($to)) {
+        update_post_meta($in_id, 'to', $to);
+    }
 
-    return $in_id;
+    // return array("id" => $in_id, "outTradeNo" => $outTradeNo);
+    return $outTradeNo;
 }

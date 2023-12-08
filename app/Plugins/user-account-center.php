@@ -6,6 +6,7 @@
 
 use App\Queue\ASQueue;
 use App\Services\MailService;
+use App\Services\WechatPayService;
 use App\Sms\SmsService;
 use App\Validators\Validator;
 use function Tonik\Theme\App\resError;
@@ -458,7 +459,7 @@ add_action('rest_api_init', function () {
         'methods' => 'POST',
         'callback' => function ($request) {
             $parameters = $request->get_json_params();
-            $to = sanitize_text_field($parameters['to']); // 给谁，必填
+            $to = sanitize_text_field($parameters['to']); // 打给谁，必填
             $amount = sanitize_text_field($parameters['amount']); // 金额，必填
             $account = sanitize_text_field($parameters['account']); // 关联账号，可选
             $content = sanitize_text_field($parameters['content']); // 打赏留言，可选
@@ -466,6 +467,7 @@ add_action('rest_api_init', function () {
             // 后端数据格式校验
             Validator::required($to, '被打赏人');
             Validator::required($amount, '金额');
+            Validator::validateInt($amount, '金额', 1, 5000); // 最大单笔5000元
 
             // 请求参数带账号，则打赏记录关联此账号，而不是当前token账号（帮他人打赏的场景）
             if ($account) {
@@ -476,13 +478,13 @@ add_action('rest_api_init', function () {
                 }
             }
             // TODO: 请求参数没有带账号，是否需要实现匿名打赏的功能？
-            $donation_id = createDonation($user_id, $to, $amount);
+            $out_trade_no = createDonation($user_id, $to, $amount, $content);
 
             $body = '打赏' . $to; // 微信支付显示的标题
             $pay = new WechatPayService();
-            $pay->scan($out_trade_no, $body, $amount);
+            $result = $pay->scan($out_trade_no, $body, $amount);
 
-            resOK('可以注册');
+            resOK('success', $result);
             exit();
         },
         'args' => array(
