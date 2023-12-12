@@ -7,63 +7,90 @@
  * @since 1.0
  */
 
+use function Tonik\Theme\App\config;
+
 /**
- * Custom Post Type Register
+ * Registers `donation` custom post type.
+ *
+ * @return void
  */
 add_action('init', function () {
-    $labels = array(
-        'name' => _x('打赏', 'Post Type General Name', 'text_domain'),
-        'singular_name' => _x('打赏', 'Post Type Singular Name', 'text_domain'),
-        'menu_name' => __('打赏', 'text_domain'),
-        'name_admin_bar' => __('打赏', 'text_domain'),
-        'archives' => __('Item Archives', 'text_domain'),
-        'attributes' => __('Item Attributes', 'text_domain'),
-        'parent_item_colon' => __('Parent 打赏:', 'text_domain'),
-        'all_items' => __('全部打赏', 'text_domain'),
-        'add_new_item' => __('创建新打赏', 'text_domain'),
-        'add_new' => __('创建打赏', 'text_domain'),
-        'new_item' => __('New Item', 'text_domain'),
-        'edit_item' => __('Edit 打赏', 'text_domain'),
-        'update_item' => __('Update 打赏', 'text_domain'),
-        'view_item' => __('View 打赏', 'text_domain'),
-        'view_items' => __('View Orders', 'text_domain'),
-        'search_items' => __('搜索打赏', 'text_domain'),
-        'not_found' => __('No order found', 'text_domain'),
-        'not_found_in_trash' => __('No order found in Trash', 'text_domain'),
-        'featured_image' => __('Featured Image', 'text_domain'),
-        'set_featured_image' => __('Set featured image', 'text_domain'),
-        'remove_featured_image' => __('Remove featured image', 'text_domain'),
-        'use_featured_image' => __('Use as featured image', 'text_domain'),
-        'insert_into_item' => __('Insert into item', 'text_domain'),
-        'uploaded_to_this_item' => __('Uploaded to this item', 'text_domain'),
-        'items_list' => __('Orders list', 'text_domain'),
-        'items_list_navigation' => __('Orders list navigation', 'text_domain'),
-        'filter_items_list' => __('Filter donation list', 'text_domain'),
-    );
-    $args = array(
-        'label' => __('打赏', 'text_domain'),
-        'description' => __('打赏 information pages.', 'text_domain'),
-        'labels' => $labels,
-        'supports' => array('author', 'title', 'custom-fields'),
-        // 'taxonomies'          => array( 'category', 'post_tag' ),
-        'hierarchical' => false,
+    // $labels = array(
+    //     'name' => _x('打赏', 'Post Type General Name', 'text_domain'),
+    //     'singular_name' => _x('打赏', 'Post Type Singular Name', 'text_domain'),
+    //     'menu_name' => __('打赏', 'text_domain'),
+    //     'name_admin_bar' => __('打赏', 'text_domain'),
+    //     'archives' => __('Item Archives', 'text_domain'),
+    //     'attributes' => __('Item Attributes', 'text_domain'),
+    //     'parent_item_colon' => __('Parent 打赏:', 'text_domain'),
+    //     'all_items' => __('全部打赏', 'text_domain'),
+    //     'add_new_item' => __('创建新打赏', 'text_domain'),
+    //     'add_new' => __('创建打赏', 'text_domain'),
+    //     'new_item' => __('New Item', 'text_domain'),
+    //     'edit_item' => __('Edit 打赏', 'text_domain'),
+    //     'update_item' => __('Update 打赏', 'text_domain'),
+    //     'view_item' => __('View 打赏', 'text_domain'),
+    //     'view_items' => __('View Donations', 'text_domain'),
+    //     'search_items' => __('搜索打赏', 'text_domain'),
+    //     'not_found' => __('No donation found', 'text_domain'),
+    //     'not_found_in_trash' => __('No donation found in Trash', 'text_domain'),
+    //     'featured_image' => __('Featured Image', 'text_domain'),
+    //     'set_featured_image' => __('Set featured image', 'text_domain'),
+    //     'remove_featured_image' => __('Remove featured image', 'text_domain'),
+    //     'use_featured_image' => __('Use as featured image', 'text_domain'),
+    //     'insert_into_item' => __('Insert into item', 'text_domain'),
+    //     'uploaded_to_this_item' => __('Uploaded to this item', 'text_domain'),
+    //     'items_list' => __('Donations list', 'text_domain'),
+    //     'items_list_navigation' => __('Donations list navigation', 'text_domain'),
+    //     'filter_items_list' => __('Filter donation list', 'text_domain'),
+    // );
+    // $args = array(
+    //     'label' => __('打赏', 'text_domain'),
+    //     'description' => __('打赏 information pages.', 'text_domain'),
+    //     'labels' => $labels,
+    //     'supports' => array('author', 'title', 'custom-fields'),
+    //     // 'taxonomies'          => array( 'category', 'post_tag' ),
+    //     'hierarchical' => false,
+    //     'public' => true,
+    //     'show_ui' => true,
+    //     'show_in_menu' => true,
+    //     'show_in_rest' => true,
+    //     'menu_position' => 5,
+    //     'show_in_admin_bar' => true,
+    //     'show_in_nav_menus' => true,
+    //     'can_export' => true,
+    //     'has_archive' => true,
+    //     'exclude_from_search' => false,
+    //     'publicly_queryable' => true,
+    //     'capability_type' => 'post',
+    //     'rewrite' => array('slug' => 'donation', 'with_front' => false),
+    //     //'rewrite'             => array( 'slug' => '/', 'with_front' => false )// hide slug in URL
+    // );
+
+    register_post_type('donations', [
+        'description' => __('Collection of donations.', config('textdomain')),
         'public' => true,
-        'show_ui' => true,
-        'show_in_menu' => true,
-        'menu_position' => 5,
-        'show_in_admin_bar' => true,
-        'show_in_nav_menus' => true,
-        'can_export' => true,
-        'has_archive' => true,
-        'exclude_from_search' => false,
-        'publicly_queryable' => true,
-        'capability_type' => 'post',
-        'rewrite' => array('slug' => 'donation', 'with_front' => false),
-        //'rewrite'             => array( 'slug' => '/', 'with_front' => false )// hide slug in URL
-    );
-    register_post_type('orders', $args);
-    flush_rewrite_rules();
-}, 0);
+        'supports' => ['title', 'editor', 'author', 'custom-fields'],
+        'show_in_rest' => true, // 将自动生成一组类似posts的接口
+        'labels' => [
+            'name' => _x('Donations', 'post type general name', config('textdomain')),
+            'singular_name' => _x('Donation', 'post type singular name', config('textdomain')),
+            'menu_name' => _x('Donations', 'admin menu', config('textdomain')),
+            'name_admin_bar' => _x('Donation', 'add new on admin bar', config('textdomain')),
+            'add_new' => _x('Add New', 'donation', config('textdomain')),
+            'add_new_item' => __('Add New Donation', config('textdomain')),
+            'new_item' => __('New Donation', config('textdomain')),
+            'edit_item' => __('Edit Donation', config('textdomain')),
+            'view_item' => __('View Donation', config('textdomain')),
+            'all_items' => __('All Donations', config('textdomain')),
+            'search_items' => __('Search Donations', config('textdomain')),
+            'parent_item_colon' => __('Parent Donations:', config('textdomain')),
+            'not_found' => __('No donations found.', config('textdomain')),
+            'not_found_in_trash' => __('No donations found in Trash.', config('textdomain')),
+        ],
+    ]);
+    // flush_rewrite_rules();
+});
 
 /**
  * 后台文章列表显示打赏信息
@@ -143,7 +170,7 @@ add_action('manage_orders_posts_custom_column', function ($column_name, $id) {
 //  */
 // function postsFilter( $query ) {
 //     if (  $query->is_category() && $query->is_main_query() ) {
-//         $query->set('post_type', array('post', 'order'));
+//         $query->set('post_type', array('post', 'donation'));
 //     }
 //     return $query;
 // }
@@ -157,18 +184,13 @@ add_action('manage_orders_posts_custom_column', function ($column_name, $id) {
  * @param string $content 打赏留言，可选
  * @return int $orderId
  */
-function createDonation($from, $to, $amount, $content)
+function createDonation($from, $to, $amount, $content, $out_trade_no)
 {
-    $productId = 1; // 不同产品使用不同的ID，方便在第三方支付后台对应产品
-
-    // 生成订单交易号（产品 ID-日期-打赏人ID-被打赏人 ID-随机数）
-    $outTradeNo = $productId . '-' . current_time('YmdHis') . '-' . $from . '-' . $to . '-' . rand(1000, 9999); // 不能超过32位字符
-
     $in_data = array(
         'post_author' => $from,
-        'post_title' => $outTradeNo,
+        'post_title' => $out_trade_no,
         'post_status' => 'draft',
-        'post_type' => 'donation', // custom-post-type
+        'post_type' => 'donations', // custom-post-type
         'post_content' => $content,
     );
     // https://developer.wordpress.org/reference/functions/wp_insert_post/
@@ -189,6 +211,5 @@ function createDonation($from, $to, $amount, $content)
         update_post_meta($in_id, 'to', $to);
     }
 
-    // return array("id" => $in_id, "outTradeNo" => $outTradeNo);
-    return $outTradeNo;
+    return $in_id;
 }

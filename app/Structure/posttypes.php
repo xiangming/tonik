@@ -11,7 +11,7 @@ namespace Tonik\Theme\App\Structure;
 | Custom post types allow users to easily create
 | and manage various types of content.
 |
-*/
+ */
 
 use function Tonik\Theme\App\config;
 
@@ -26,6 +26,7 @@ function register_book_post_type()
         'description' => __('Collection of books.', config('textdomain')),
         'public' => true,
         'supports' => ['title', 'editor', 'excerpt', 'thumbnail'],
+        'show_in_rest' => true,
         'labels' => [
             'name' => _x('Books', 'post type general name', config('textdomain')),
             'singular_name' => _x('Book', 'post type singular name', config('textdomain')),

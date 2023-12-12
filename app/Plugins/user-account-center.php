@@ -459,28 +459,44 @@ add_action('rest_api_init', function () {
         'methods' => 'POST',
         'callback' => function ($request) {
             $parameters = $request->get_json_params();
-            $to = sanitize_text_field($parameters['to']); // 打给谁，必填
-            $amount = sanitize_text_field($parameters['amount']); // 金额，必填
-            $account = sanitize_text_field($parameters['account']); // 关联账号，可选
+            $to = sanitize_text_field($parameters['to']); // 被打赏人，必填
+            $amount = sanitize_text_field($parameters['amount']); // 打赏金额，必填
+            $from = sanitize_text_field($parameters['from']); // 打赏人，可选
             $content = sanitize_text_field($parameters['content']); // 打赏留言，可选
 
-            // 后端数据格式校验
-            Validator::required($to, '被打赏人');
-            Validator::required($amount, '金额');
-            Validator::validateInt($amount, '金额', 1, 5000); // 最大单笔5000元
+            // // 后端数据格式校验
+            // Validator::required($to, '被打赏人');
+            // Validator::required($amount, '金额');
+            // Validator::validateInt($amount, '金额', 1, 5000); // 最大单笔5000元
+            // TODO: 一般性校验，使用WP内置方法即可（参考下面的args），不需要额外处理
 
-            // 请求参数带账号，则打赏记录关联此账号，而不是当前token账号（帮他人打赏的场景）
-            if ($account) {
-                $user_id = userExists($account);
+            // 请求参数带账号，则打赏记录关联此账号，而不是当前token账号（可能会帮别人打赏）
+            if ($from) {
+                $from_user_id = userExists($from);
                 // 填写的账号不存在，则自动创建账号并关联打赏记录
-                if (!$user_id) {
-                    $user_id = createUser($account);
+                if (!$from_user_id) {
+                    $from_user_id = createUser($from);
                 }
+            } else {
+                // TODO: 请求参数没有带账号，是否需要实现匿名打赏的功能？
             }
-            // TODO: 请求参数没有带账号，是否需要实现匿名打赏的功能？
-            $out_trade_no = createDonation($user_id, $to, $amount, $content);
 
-            $body = '打赏' . $to; // 微信支付显示的标题
+            // 处理被打赏人
+            $to_user_id = userExists($to);
+            // 不存在，退出
+            if (!$to_user_id) {
+                resError('被打赏人不存在', $to);
+                exit();
+            }
+
+            // 生成订单交易号（日期时间-产品ID-打赏人ID-被打赏人ID-随机数）
+            $productId = '01'; // 不同产品使用不同的ID，方便在第三方支付后台对应产品
+            $out_trade_no = current_time('YmdHis') . '-' . $productId . '-' . $from_user_id . '-' . $to_user_id . '-' . rand(1000, 9999); // 不能超过32位字符
+
+            // TODO: 是否应当在付款之前生成打赏记录？
+            $donation_id = createDonation($from_user_id, $to_user_id, $amount, $content, $out_trade_no);
+
+            $body = '打赏-' . $to; // 微信支付显示的标题
             $pay = new WechatPayService();
             $result = $pay->scan($out_trade_no, $body, $amount);
 
@@ -488,15 +504,36 @@ add_action('rest_api_init', function () {
             exit();
         },
         'args' => array(
-            'account' => array(
+            'from' => [
+                "description" => "打赏人的用户名、邮箱或者手机号。",
+                'type' => "string",
+                'required' => false,
                 'validate_callback' => function ($param, $request, $key) {
                     return is_email($param) || Validator::isPhone($param);
                 },
-            ),
+            ],
+            'to' => [
+                "description" => "被打赏人的用户名、邮箱或者手机号。",
+                'type' => "string",
+                'required' => true,
+            ],
+            'amount' => [
+                "description" => "打赏金额。",
+                'type' => "integer",
+                // 'default' => 10,
+                'minimum' => 1,
+                'maximum' => 5000,
+                'required' => true,
+            ],
+            'content' => [
+                "description" => "打赏留言。",
+                'type' => "string",
+                'required' => false,
+            ],
         ),
         'permission_callback' => '__return_true',
     ));
-}, 15);
+});
 
 add_action('test_queue', function ($account) {
     // 发送邮箱验证码
