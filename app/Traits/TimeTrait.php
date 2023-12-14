@@ -1,5 +1,5 @@
 <?php
-namespace App\Qingwuit\Traits;
+namespace App\Traits;
 
 trait TimeTrait
 {

@@ -70,17 +70,19 @@ return [
     | The components listed below will be automatically loaded on the
     | theme bootstrap by `functions.php` file. Feel free to add your
     | own files to this array which you would like to autoload.
-    |
+    | 
+    | 注意加载有先后顺序
     */
     'autoload' => [
+        'Traits/ResourceTrait.php',
         'helpers.php',
         'jwt.php',
         'Http/assets.php',
         'Http/ajaxes.php',
         'Plugins/post-type-donation.php',
         'Plugins/user-account-center.php',
-        'Services/MailService.php',
         'Services/BaseService.php',
+        'Services/MailService.php',
         'Services/PaymentService.php',
         'Services/WechatPayService.php',
         'Services/Queue.php',
@@ -96,7 +98,6 @@ return [
         'Structure/taxonomies.php',
         'Structure/shortcodes.php',
         'Structure/thumbnails.php',
-        'Traits/ResourceTrait.php',
         'Validators/Validator.php',
         'Sms/CaptchaMessage.php',
         'Sms/SmsService.php',

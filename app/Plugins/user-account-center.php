@@ -500,9 +500,15 @@ add_action('rest_api_init', function () {
             // $pay = new WechatPayService();
             // $result = $pay->scan($out_trade_no, $body, $amount);
             $paymentService = new PaymentService();
-            $result = $paymentService->pay();
+            $rs = $paymentService->pay();
 
-            resOK('success', $result);
+            if (!$rs['status']) {
+                resError($rs['msg']);
+                exit();
+            }
+            // $rs['status'] ? $this->format($rs['data']) : $this->formatError($rs['msg']);
+
+            resOK('success', $rs['data']);
             exit();
         },
         'args' => array(

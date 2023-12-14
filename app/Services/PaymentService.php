@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use BaseService;
 use Yansongda\Pay\Log;
 use Yansongda\Pay\Pay;
 
@@ -178,8 +177,9 @@ class PaymentService extends BaseService
         } catch (\Exception $e) {
             Log::error('[' . $paymentName . ']:' . $e->getMessage());
             wpLog($e->getMessage());
-            resError('调取支付失败');
-            exit();
+            return $this->formatError('调取支付失败');
+            // resError('调取支付失败');
+            // exit();
         }
     }
 

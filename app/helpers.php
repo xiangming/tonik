@@ -90,7 +90,7 @@ function asset_path($file)
  *
  * @return  标准接口json
  */
-function resOK($message = 'success', $data = null, $code = 0)
+function resOK($data = null, $message = 'success', $code = 0)
 {
     print_r(json_encode(['code' => $code, 'message' => $message, 'data' => $data]));
     return;
