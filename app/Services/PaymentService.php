@@ -183,6 +183,28 @@ class PaymentService extends BaseService
         }
     }
 
+    // 支付成功后处理订单
+    public function paySuccess($paymentName = 'balance', $orderPay = null, $result = null)
+    {
+
+        // 如果是充值
+        // TODO:
+
+        // 如果不是充值
+        // 增加销量 - 其他支付回调的时候也要处理一遍
+        // TODO:
+        
+        // 订单状态修改
+        $this->getService('Order', true)->whereIn('id', $orderIds)->update([
+            'order_status' => 2,
+            'pay_time' => now(),
+            'payment_name' => $paymentName,
+        ]);
+
+        // 余额支付需要返回信息 第三方支付需要返回指定信息给回调服务器
+        return $paymentName == 'balance' ? $this->format() : Pay::$paymentName($this->config)->success();
+    }
+
     public function scan($out_trade_no, $body, $total_fee)
     {
         $order = [
