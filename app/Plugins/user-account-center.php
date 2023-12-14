@@ -6,7 +6,7 @@
 
 use App\Queue\ASQueue;
 use App\Services\MailService;
-use App\Services\WechatPayService;
+use App\Services\PaymentService;
 use App\Sms\SmsService;
 use App\Validators\Validator;
 use function Tonik\Theme\App\resError;
@@ -497,8 +497,10 @@ add_action('rest_api_init', function () {
             $donation_id = createDonation($from_user_id, $to_user_id, $amount, $content, $out_trade_no);
 
             $body = '打赏-' . $to; // 微信支付显示的标题
-            $pay = new WechatPayService();
-            $result = $pay->scan($out_trade_no, $body, $amount);
+            // $pay = new WechatPayService();
+            // $result = $pay->scan($out_trade_no, $body, $amount);
+            $paymentService = new PaymentService();
+            $result = $paymentService->pay();
 
             resOK('success', $result);
             exit();
