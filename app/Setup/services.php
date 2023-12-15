@@ -13,18 +13,19 @@ namespace Tonik\Theme\App\Setup;
 |
  */
 
-use function Tonik\Theme\App\theme;
+use App\Services\PaymentService;
 // use Overtrue\EasySms\EasySms;
-use Tonik\Gin\Foundation\Theme;
+use function Tonik\Theme\App\theme;
 // use App\Sms\CaptchaMessage;
+use Tonik\Gin\Foundation\Theme;
 use WP_Query;
 
 /**
- * Service handler for retrieving posts of specific post type.
+ * Binds services
  *
  * @return void
  */
-function bind_books_service()
+function bind_services()
 {
     /**
      * Binds service for retrieving posts of specific post type.
@@ -39,8 +40,12 @@ function bind_books_service()
             'post_type' => 'book',
         ]);
     });
+
+    theme()->bind('payment', function (Theme $theme, $parameters) {
+        return new PaymentService();
+    });
 }
-add_action('init', 'Tonik\Theme\App\Setup\bind_books_service');
+add_action('init', 'Tonik\Theme\App\Setup\bind_services');
 
 /**
  * 发送短信接口

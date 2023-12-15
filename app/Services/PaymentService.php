@@ -186,20 +186,45 @@ class PaymentService extends BaseService
     // 支付成功后处理订单
     public function paySuccess($paymentName = 'balance', $orderPay = null, $result = null)
     {
+        if (empty($orderPay)) return $this->formatError('pay success params $orderPay empty .');
+
+        // 订单已经支付
+        if ($orderPay->pay_status == 1) return $this->formatError(__('tip.order.payed')); 
+
 
         // 如果是充值
-        // TODO:
+        if ($paymentName == 'balance') {
+            // TODO:根据total来更新余额
+        }
 
-        // 如果不是充值
-        // 增加销量 - 其他支付回调的时候也要处理一遍
-        // TODO:
+        if ($paymentName == 'wechat') {
+            if ($result->event_type != 'TRANSACTION.SUCCESS' && $result->resource['ciphertext']['trade_state'] != 'SUCCESS') {
+                Log::error($result);
+                throw new \Exception('wechat pay error - ' . $result->resource['ciphertext']['out_trade_no']);
+            }
+            $trade_no = $result->resource['ciphertext']['transaction_id'];
+        }
+        if ($paymentName == 'alipay') {
+            if ($result->trade_status != 'TRADE_SUCCESS') {
+                Log::error($result);
+                throw new \Exception('alipay pay error - ' . $result->out_trade_no);
+            }
+            $trade_no = $result->trade_no;
+        }
         
+        // 订单信息更新
+        // TODO: 把$trade_no保存到订单、付款时间now()、已支付
+
         // 订单状态修改
         $this->getService('Order', true)->whereIn('id', $orderIds)->update([
             'order_status' => 2,
             'pay_time' => now(),
             'payment_name' => $paymentName,
         ]);
+
+
+        // 增加销量 - 其他支付回调的时候也要处理一遍
+        // TODO:
 
         // 余额支付需要返回信息 第三方支付需要返回指定信息给回调服务器
         return $paymentName == 'balance' ? $this->format() : Pay::$paymentName($this->config)->success();

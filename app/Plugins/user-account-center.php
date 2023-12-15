@@ -11,6 +11,7 @@ use App\Sms\SmsService;
 use App\Validators\Validator;
 use function Tonik\Theme\App\resError;
 use function Tonik\Theme\App\resOK;
+use function Tonik\Theme\App\theme;
 
 // WP REST API 命名空间
 define('WP_V2_NAMESPACE', 'wp/v2'); // WP REST API
@@ -494,12 +495,13 @@ add_action('rest_api_init', function () {
             $out_trade_no = current_time('YmdHis') . '-' . $productId . '-' . $from_user_id . '-' . $to_user_id . '-' . rand(1000, 9999); // 不能超过32位字符
 
             // TODO: 是否应当在付款之前生成打赏记录？
-            $donation_id = createDonation($from_user_id, $to_user_id, $amount, $content, $out_trade_no);
+            // 打赏记录应当在支付成功后的回调里面生成
+            $donation_id = createDonation($from_user_id, $to_user_id, $amount, $content, $order_id);
 
             $body = '打赏-' . $to; // 微信支付显示的标题
             // $pay = new WechatPayService();
             // $result = $pay->scan($out_trade_no, $body, $amount);
-            $paymentService = new PaymentService();
+            $paymentService = theme('payment');
             $rs = $paymentService->pay();
 
             if (!$rs['status']) {
