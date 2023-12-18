@@ -19,6 +19,8 @@ use function Tonik\Theme\App\config;
  * Registers `book` custom post type.
  * 
  * https://developer.wordpress.org/reference/functions/register_post_type/
+ * 
+ * https://developer.wordpress.org/resource/dashicons/
  *
  * @return void
  */
@@ -52,6 +54,7 @@ function register_post_types()
         'supports' => ['author', 'custom-fields'],
         'show_in_rest' => true, // 将自动生成一组类似posts的接口
         'rest_base' => 'orders',
+        'menu_icon' => 'dashicons-text',
         'labels' => [
             'name' => _x('Orders', 'post type general name', config('textdomain')),
             'singular_name' => _x('Order', 'post type singular name', config('textdomain')),

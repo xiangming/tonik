@@ -67,11 +67,13 @@ add_action('init', function () {
     //     //'rewrite'             => array( 'slug' => '/', 'with_front' => false )// hide slug in URL
     // );
 
-    register_post_type('donations', [
+    register_post_type('donation', [
         'description' => __('Collection of donations.', config('textdomain')),
         'public' => true,
         'supports' => ['title', 'editor', 'author', 'custom-fields'],
         'show_in_rest' => true, // 将自动生成一组类似posts的接口
+        'rest_base' => 'donations',
+        'menu_icon' => 'dashicons-coffee',
         'labels' => [
             'name' => _x('Donations', 'post type general name', config('textdomain')),
             'singular_name' => _x('Donation', 'post type singular name', config('textdomain')),
