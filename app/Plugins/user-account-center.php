@@ -540,6 +540,23 @@ add_action('rest_api_init', function () {
         ),
         'permission_callback' => '__return_true',
     ));
+
+    // Register a new endpoint: /wp/v2/payment/notify
+    register_rest_route(WP_V2_NAMESPACE, '/payment/notify', array(
+        'methods' => 'GET',
+        'callback' => function ($request) {
+            // $parameters = $request->get_json_params();
+            // $account = sanitize_text_field($parameters['account']);
+
+            $paymentService = theme('payment');
+            $rs = $paymentService->notify();
+
+            // 输出结果
+            $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
+            exit();
+        },
+        'permission_callback' => '__return_true',
+    ));
 });
 
 add_action('test_queue', function ($account) {

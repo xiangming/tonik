@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use Yansongda\Pay\Pay;
 use function Tonik\Theme\App\wpLog;
+use Yansongda\Pay\Pay;
 
 /**
  * https://github.com/qingwuit/qwshop/blob/0800390867087a691866913eec9c6412c9a08e03/app/Qingwuit/Services/PaymentService.php
@@ -183,11 +183,14 @@ class PaymentService extends BaseService
     // 支付成功后处理订单
     public function paySuccess($paymentName = 'balance', $orderPay = null, $result = null)
     {
-        if (empty($orderPay)) return $this->formatError('pay success params $orderPay empty .');
+        if (empty($orderPay)) {
+            return $this->formatError('pay success params $orderPay empty .');
+        }
 
         // 订单已经支付
-        if ($orderPay->pay_status == 1) return $this->formatError(__('tip.order.payed')); 
-
+        if ($orderPay->pay_status == 1) {
+            return $this->formatError(__('tip.order.payed'));
+        }
 
         // 如果是充值
         if ($paymentName == 'balance') {
@@ -208,7 +211,7 @@ class PaymentService extends BaseService
             }
             $trade_no = $result->trade_no;
         }
-        
+
         // 订单信息更新
         // TODO: 把$trade_no保存到订单、付款时间now()、已支付
 
@@ -218,7 +221,6 @@ class PaymentService extends BaseService
             'pay_time' => now(),
             'payment_name' => $paymentName,
         ]);
-
 
         // 增加销量 - 其他支付回调的时候也要处理一遍
         // TODO:
@@ -285,18 +287,46 @@ class PaymentService extends BaseService
         // }
     }
 
-    public function notify()
+    // 修改配置
+    public function setConfig($paymentName, $device = 'web', $config = 'default')
     {
-        $pay = Pay::wechat($this->config);
+        // TODO: 给证书加上绝对链接
+    }
+
+    /**
+     * 第三方支付回调
+     *
+     * @return  确认回调
+     */
+    public function notify($paymentName = 'wechat', $device = 'scan', $config = 'default')
+    {
+        // $this->setConfig($paymentName, $device, $config);
+        $result = Pay::$paymentName($this->config)->callback(null, ['_config' => $config]);
 
         try {
-            $data = $pay->verify(); // 是的，验签就这么简单！
+            if ($paymentName == 'wechat') {
+                $out_trade_no = $result->resource['ciphertext']['out_trade_no'];
+            }
 
-            Log::debug('Wechat notify', $data->all());
+            if ($paymentName == 'alipay') {
+                $out_trade_no = $result->out_trade_no;
+            }
+
+            if (empty($out_trade_no)) {
+                throw new \Exception('not found out_trade_no');
+            }
+
+            // TODO: 队列处理第三方回调
+            // return Pay::$paymentName($this->config)->success();
+            // return $pay->success()->send(); // laravel 框架中请直接 `return $pay->success()`
+
+            // 触发支付成功后的操作
+            // 1. 通过no拿到order，然后paySuccess
+            // 2. 返回paySuccess结果
+
         } catch (\Exception $e) {
-            // $e->getMessage();
+            wpLog('[' . $paymentName . ']:' . $e->getMessage());
+            return $this->formatError($e->getMessage());
         }
-
-        return $pay->success()->send(); // laravel 框架中请直接 `return $pay->success()`
     }
 }
