@@ -9,9 +9,9 @@
     "tonik/gin": "^3.0.0",
     "overtrue/easy-sms": "^2.4",
     "vlucas/phpdotenv": "^5.5",
-    "chillerlan/php-qrcode": "^4.3",
     "woocommerce/action-scheduler": "^3.6",
-    "yansongda/pay": "~3.5.0"
+    "yansongda/pay": "~3.5.0",
+    "hyperf/pimple": "^2.2"
   },
   "require-dev": {
     "tonik/cli": "^3.0.0"

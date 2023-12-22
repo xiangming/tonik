@@ -4,6 +4,7 @@ namespace App\Sms;
 
 use App\Sms\CaptchaMessage;
 use function Tonik\Theme\App\config;
+use function Tonik\Theme\App\wpLog;
 use Overtrue\EasySms\EasySms;
 
 class SmsService
@@ -40,14 +41,11 @@ class SmsService
 
             return $code;
         } catch (\Overtrue\EasySms\Exceptions\NoGatewayAvailableException $e) {
-            // $error_msg = $e->getException('aliyun')->getMessage();
+            $error_msg = $e->getException('aliyun')->getMessage();
+            wpLog('[SMS send to' . $phoneNumber . ']:' . $error_msg);
             // resError($error_msg);
             // exit();
 
-            // $smsLog->error_msg = $error_msg;
-            // $smsLog->status = 0;
-            // $smsLog->save();
-            // return $this->resError(__('tip.sms.sendErr'));
             return false;
         }
     }

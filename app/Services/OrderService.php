@@ -4,14 +4,22 @@ namespace App\Services;
 
 class OrderService extends BaseService
 {
-    // 获取创建订单前处理订单
+    // 创建订单前处理订单
     public function createOrderBefore()
     {
         // TODO: 格式化商品数据等
     }
 
-    // 创建订单
-    public function createOrder()
+    /**
+     * 创建订单
+     *
+     * @param   [type]  $name    标题
+     * @param   [type]  $amount  金额
+     * @param   [type]  $productId  不同产品使用不同的ID，方便在第三方支付后台对应产品
+     *
+     * @return  [type]           [return description]
+     */
+    public function createOrder($name, $amount)
     {
         // TODO: 格式化商品数据等
 
@@ -20,15 +28,46 @@ class OrderService extends BaseService
         // TODO: 地址验证
 
         // 生成订单号
+        // $out_trade_no = date('YmdHis') . '-' . $productId . '-' . $from_user_id . '-' . $to_user_id . '-' . rand(1000, 9999); // 注意总长度不能超过32位
+        $out_trade_no = date('YmdHis') . mt_rand(10000, 99999);
 
         // 创建订单
+        $in_data = array(
+            // 'post_author'    => $uid,
+            'post_title' => $out_trade_no,
+            'post_status' => 'draft',
+            'post_type' => 'order',
+        );
+        // https://developer.wordpress.org/reference/functions/wp_insert_post/
+        // If the $postarr parameter has ‘ID’ set to a value, then post will be updated.
+        $in_id = wp_insert_post($in_data, true);
 
-    }
+        // 订单创建错误
+        if (is_wp_error($in_id)) {
+            $errmsg = $in_id->get_error_message();
+            // return new WP_Error(1, $errmsg);
+            return $this->formatError($errmsg);
+        }
 
-    // 封装个创建订单的插入方法
-    public function createOrderData($rs, $address_resp, $coupon_id, $userId, $make_rands, $remark)
-    {
+        // 保存订单信息
+        if (isset($name)) {
+            update_post_meta($in_id, 'name', $name);
+        }
 
+        if (isset($amount)) {
+            update_post_meta($in_id, 'amount', $amount);
+        }
+
+        // TODO: 执行成功则删除购物车
+
+        $order_pay_info = [
+            'id' => $in_id,
+            'name' => $name,
+            'amount' => $amount,
+            'out_trade_no' => $out_trade_no,
+        ];
+        
+        return $this->format($order_pay_info);
     }
 
     // 创建订单后处理
@@ -57,8 +96,6 @@ class OrderService extends BaseService
      * @param string $pay_password 如：123456 （非必填,payment_name=balance则需要填写)
      * @param string $recharge 如：1 （非必填）
      * @return void
-     * @Description
-     * @author hg <www.qingwuit.com>
      */
     public function payOrder()
     {
@@ -209,8 +246,6 @@ class OrderService extends BaseService
      * @param [type] $order_status 订单状态
      * @param [type] $auth 用户操作还是管理员操作 user|admin
      * @return void
-     * @Description
-     * @author hg <www.qingwuit.com>
      */
     public function editOrderStatus($order_id, $order_status, $auth = "users")
     {

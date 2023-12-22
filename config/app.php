@@ -83,6 +83,7 @@ return [
         'Plugins/user-account-center.php',
         'Services/BaseService.php',
         'Services/MailService.php',
+        'Services/OrderService.php',
         'Services/PaymentService.php',
         'Services/WechatPayService.php',
         'Services/Queue.php',

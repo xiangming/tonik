@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use Yansongda\Pay\Log;
 use Yansongda\Pay\Pay;
+use function Tonik\Theme\App\wpLog;
 
 /**
  * https://github.com/qingwuit/qwshop/blob/0800390867087a691866913eec9c6412c9a08e03/app/Qingwuit/Services/PaymentService.php
@@ -58,7 +58,7 @@ class PaymentService extends BaseService
                 'notify_url' => 'https://yansongda.cn/wechat/notify',
                 // 选填-公众号 的 app_id
                 // 可在 mp.weixin.qq.com 设置与开发->基本配置->开发者ID(AppID) 查看
-                'mp_app_id' => '2016082000291234',
+                'mp_app_id' => 'wx63b95a5ba3d10f69',
                 // 选填-小程序 的 app_id
                 'mini_app_id' => '',
                 // 选填-app 的 app_id
@@ -84,7 +84,7 @@ class PaymentService extends BaseService
             ],
         ],
         'logger' => [
-            'enable' => false,
+            'enable' => true,
             'file' => './logs/pay.log',
             'level' => 'info', // 建议生产环境等级调整为 info，开发环境为 debug
             'type' => 'single', // optional, 可选 daily.
@@ -100,7 +100,7 @@ class PaymentService extends BaseService
     public function __construct()
     {
         $this->config['wechat']['default']['mch_id'] = getenv('WECHAT_MCH_ID');
-        $this->config['wechat']['default']['mch_secret_key_v2'] = getenv('WECHAT_MCH_SECRET_KEY');
+        $this->config['wechat']['default']['mch_secret_key_v2'] = getenv('WECHAT_MCH_SECRET_KEY_V2');
         $this->config['wechat']['default']['mch_secret_key'] = getenv('WECHAT_MCH_SECRET_KEY');
         $this->config['wechat']['default']['mch_secret_cert'] = getenv('WECHAT_MCH_SECRET_CERT');
         $this->config['wechat']['default']['mch_public_cert_path'] = getenv('WECHAT_MCH_SECRET_CERT_PATH');
@@ -139,13 +139,12 @@ class PaymentService extends BaseService
             $this->payData['name'] = '在线充值';
         }
 
-        // orderPay 的数据进行赋值给payData
         // 微信
         if ($paymentName == 'wechat') {
-            $this->payData['out_trade_no'] = $orderPay['pay_no'];
+            $this->payData['out_trade_no'] = $orderPay['out_trade_no'];
             $this->payData['description'] = $recharge ? $this->payData['name'] : $orderPay['name'];
             $this->payData['amount'] = [
-                'total' => $orderPay['total'] * 100,
+                'total' => $orderPay['amount'] * 100,
             ];
 
             // 小程序和公众号需要openID
@@ -161,9 +160,9 @@ class PaymentService extends BaseService
 
         // 支付宝
         if ($paymentName == 'alipay') {
-            $this->payData['out_trade_no'] = $orderPay['pay_no'];
+            $this->payData['out_trade_no'] = $orderPay['out_trade_no'];
             $this->payData['subject'] = $recharge ? $this->payData['name'] : $orderPay['name'];
-            $this->payData['total_amount'] = $orderPay['total'];
+            $this->payData['total_amount'] = $orderPay['amount'];
         }
 
         try {
@@ -175,11 +174,9 @@ class PaymentService extends BaseService
 
             return $this->format($result);
         } catch (\Exception $e) {
-            Log::error('[' . $paymentName . ']:' . $e->getMessage());
-            wpLog($e->getMessage());
+            // Log::error('[' . $paymentName . ']:' . $e->getMessage());
+            wpLog('[' . $paymentName . ']:' . $e->getMessage());
             return $this->formatError('调取支付失败');
-            // resError('调取支付失败');
-            // exit();
         }
     }
 

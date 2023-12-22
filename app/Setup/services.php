@@ -13,10 +13,9 @@ namespace Tonik\Theme\App\Setup;
 |
  */
 
+use App\Services\OrderService;
 use App\Services\PaymentService;
-// use Overtrue\EasySms\EasySms;
 use function Tonik\Theme\App\theme;
-// use App\Sms\CaptchaMessage;
 use Tonik\Gin\Foundation\Theme;
 use WP_Query;
 
@@ -39,6 +38,10 @@ function bind_services()
         return new WP_Query([
             'post_type' => 'book',
         ]);
+    });
+
+    theme()->bind('order', function (Theme $theme, $parameters) {
+        return new OrderService();
     });
 
     theme()->bind('payment', function (Theme $theme, $parameters) {

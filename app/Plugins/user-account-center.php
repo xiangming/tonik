@@ -6,15 +6,14 @@
 
 use App\Queue\ASQueue;
 use App\Services\MailService;
-use App\Services\PaymentService;
 use App\Sms\SmsService;
 use App\Validators\Validator;
 use function Tonik\Theme\App\resError;
 use function Tonik\Theme\App\resOK;
 use function Tonik\Theme\App\theme;
 
-// WP REST API 命名空间
-define('WP_V2_NAMESPACE', 'wp/v2'); // WP REST API
+define('WP_V2_NAMESPACE', 'wp/v2'); // WP REST API 命名空间
+define('ANONYMITY', 1); // 神秘人ID
 
 /**
  * 生成随机字符串（小写字母和数字）
@@ -462,13 +461,11 @@ add_action('rest_api_init', function () {
             $parameters = $request->get_json_params();
             $to = sanitize_text_field($parameters['to']); // 被打赏人，必填
             $amount = sanitize_text_field($parameters['amount']); // 打赏金额，必填
-            $from = sanitize_text_field($parameters['from']); // 打赏人，可选
+            $from = sanitize_text_field($parameters['from']); // 打赏人，可选，没填则为神秘人
             $content = sanitize_text_field($parameters['content']); // 打赏留言，可选
+            $payment_name = sanitize_text_field($parameters['payment_name'] ?? 'wechat'); // 支付通道，可选
+            $device = sanitize_text_field($parameters['device'] ?? 'scan'); // 支付方式，可选
 
-            // // 后端数据格式校验
-            // Validator::required($to, '被打赏人');
-            // Validator::required($amount, '金额');
-            // Validator::validateInt($amount, '金额', 1, 5000); // 最大单笔5000元
             // TODO: 一般性校验，使用WP内置方法即可（参考下面的args），不需要额外处理
 
             // 请求参数带账号，则打赏记录关联此账号，而不是当前token账号（可能会帮别人打赏）
@@ -479,7 +476,8 @@ add_action('rest_api_init', function () {
                     $from_user_id = createUser($from);
                 }
             } else {
-                // TODO: 请求参数没有带账号，是否需要实现匿名打赏的功能？
+                // 请求参数没有带账号，则统一为神秘人账号
+                $from_user_id = ANONYMITY;
             }
 
             // 处理被打赏人
@@ -490,27 +488,26 @@ add_action('rest_api_init', function () {
                 exit();
             }
 
-            // 生成订单交易号（日期时间-产品ID-打赏人ID-被打赏人ID-随机数）
-            $productId = '01'; // 不同产品使用不同的ID，方便在第三方支付后台对应产品
-            $out_trade_no = current_time('YmdHis') . '-' . $productId . '-' . $from_user_id . '-' . $to_user_id . '-' . rand(1000, 9999); // 不能超过32位字符
+            // 1. 创建order
+            $name = '打赏-' . $to; // 支付通道显示的标题
+            $orderService = theme('order');
+            $rs = $orderService->createOrder($name, $amount);
 
-            // TODO: 是否应当在付款之前生成打赏记录？
-            // 打赏记录应当在支付成功后的回调里面生成
-            $donation_id = createDonation($from_user_id, $to_user_id, $amount, $content, $order_id);
-
-            $body = '打赏-' . $to; // 微信支付显示的标题
-            // $pay = new WechatPayService();
-            // $result = $pay->scan($out_trade_no, $body, $amount);
-            $paymentService = theme('payment');
-            $rs = $paymentService->pay();
-
+            // 创建订单失败
             if (!$rs['status']) {
                 resError($rs['msg']);
                 exit();
             }
-            // $rs['status'] ? $this->format($rs['data']) : $this->formatError($rs['msg']);
 
-            resOK('success', $rs['data']);
+            // 2. 调取第三方支付
+            $paymentService = theme('payment');
+            $rs = $paymentService->pay($payment_name, $device, $rs['data']);
+
+            // // 打赏记录应当在支付成功后的回调里面生成
+            // $donation_id = createDonation($from_user_id, $to_user_id, $amount, $content, $order_id);
+
+            // 3. 输出结果
+            $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
             exit();
         },
         'args' => array(
