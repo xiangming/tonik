@@ -174,54 +174,65 @@ class PaymentService extends BaseService
 
             return $this->format($result);
         } catch (\Exception $e) {
-            // Log::error('[' . $paymentName . ']:' . $e->getMessage());
+            // wpLog('[' . $paymentName . ']:' . $e->getMessage());
             wpLog('[' . $paymentName . ']:' . $e->getMessage());
             return $this->formatError('调取支付失败');
         }
     }
 
     // 支付成功后处理订单
-    public function paySuccess($paymentName = 'balance', $orderPay = null, $result = null)
+    public function paySuccess($paymentName = 'wechat', $orderPay = null, $result = null)
     {
         if (empty($orderPay)) {
             return $this->formatError('pay success params $orderPay empty .');
         }
 
         // 订单已经支付
-        if ($orderPay->pay_status == 1) {
+        if ($orderPay->status == 'publish') {
             return $this->formatError(__('tip.order.payed'));
         }
 
-        // 如果是充值
+        // 如果是余额支付
         if ($paymentName == 'balance') {
-            // TODO:根据total来更新余额
+            // TODO: 根据total来更新余额
+            // TODO: 生成余额记录
         }
 
         if ($paymentName == 'wechat') {
             if ($result->event_type != 'TRANSACTION.SUCCESS' && $result->resource['ciphertext']['trade_state'] != 'SUCCESS') {
-                Log::error($result);
+                wpLog($result);
                 throw new \Exception('wechat pay error - ' . $result->resource['ciphertext']['out_trade_no']);
             }
             $trade_no = $result->resource['ciphertext']['transaction_id'];
         }
         if ($paymentName == 'alipay') {
             if ($result->trade_status != 'TRADE_SUCCESS') {
-                Log::error($result);
+                wpLog($result);
                 throw new \Exception('alipay pay error - ' . $result->out_trade_no);
             }
             $trade_no = $result->trade_no;
         }
 
         // 订单信息更新
-        // TODO: 把$trade_no保存到订单、付款时间now()、已支付
+        // TODO: 把$trade_no保存到订单
+        update_post_status($orderPay->id, 'publish'); // 已支付、付款时间自动更新
+        update_post_meta($orderPay->id, 'method', $paymentName); // 最终成功的支付方式
 
-        // 订单状态修改
-        $this->getService('Order', true)->whereIn('id', $orderIds)->update([
-            'order_status' => 2,
-            'pay_time' => now(),
-            'payment_name' => $paymentName,
-        ]);
+        // 如果是打赏
+        if ($orderPay->type == 'donation') {
+            // $this->getService('MoneyLog')->edit([
+            //     'name' => __('tip.payment.onlineRecharge'),
+            //     'user_id' => $orderPay->belong_id,
+            //     'money' => $orderPay->total,
+            // ]);
 
+            // // 打赏记录应当在支付成功后的回调里面生成
+            // $donation_id = createDonation($from_user_id, $to_user_id, $amount, $content, $order_id);
+
+            return $this->format();
+        }
+
+        // 如果不是充值
         // 增加销量 - 其他支付回调的时候也要处理一遍
         // TODO:
 
@@ -316,14 +327,26 @@ class PaymentService extends BaseService
                 throw new \Exception('not found out_trade_no');
             }
 
-            // TODO: 队列处理第三方回调
-            // return Pay::$paymentName($this->config)->success();
+            // TODO: 使用队列处理第三方回调
+            return Pay::$paymentName($this->config)->success();
             // return $pay->success()->send(); // laravel 框架中请直接 `return $pay->success()`
 
-            // 触发支付成功后的操作
-            // 1. 通过no拿到order，然后paySuccess
-            // 2. 返回paySuccess结果
+            // 1. 通过no拿到orderInfo
+            $orderInfo = theme('order')->getOrderById($out_trade_no);
 
+            // 2. 然后触发支付成功后的操作paySuccess
+            $paySuccessData = theme('payment')->paySuccess($paymentName, $orderInfo, $result);
+
+            // 3. 返回paySuccess结果
+            if (!is_array($paySuccessData)) {
+                return $paySuccessData;
+            }
+
+            if (!$paySuccessData['status']) {
+                throw new \Exception($paySuccessData['msg']);
+            }
+
+            return $paySuccessData;
         } catch (\Exception $e) {
             wpLog('[' . $paymentName . ']:' . $e->getMessage());
             return $this->formatError($e->getMessage());

@@ -19,7 +19,7 @@ class OrderService extends BaseService
      *
      * @return  [type]           [return description]
      */
-    public function createOrder($name, $amount)
+    public function createOrder($name, $amount, $type = 'donation')
     {
         // TODO: 格式化商品数据等
 
@@ -58,15 +58,20 @@ class OrderService extends BaseService
             update_post_meta($in_id, 'amount', $amount);
         }
 
+        if (isset($type)) {
+            update_post_meta($in_id, 'type', $type);
+        }
+
         // TODO: 执行成功则删除购物车
 
         $order_pay_info = [
             'id' => $in_id,
             'name' => $name,
             'amount' => $amount,
+            'type' => $type,
             'out_trade_no' => $out_trade_no,
         ];
-        
+
         return $this->format($order_pay_info);
     }
 
@@ -335,15 +340,33 @@ class OrderService extends BaseService
     }
 
     // // 获取订单
-    public function getOrders($type = "users")
+    public function getOrders($type = "donation")
     {
 
     }
 
-    // 获取订单信息通过订单ID 默认是需要用用户
-    public function getOrderInfoById($id, $auth = 'users')
+    // 获取订单信息通过订单ID 默认是使用out_trade_no
+    public function getOrderById($id)
     {
+        $args = array(
+            'title' => $id,
+            'post_status' => 'any',
+            'post_type' => 'order',
+            // 'fields' => 'ids',
+        );
+        $orders = get_posts($args);
 
+        if ($orders) {
+            $order = $orders[0];
+            $orderId = $orders[0]->id;
+            return array_merge($order, [
+                'name' => get_post_meta($orderId, 'name'),
+                'amount' => get_post_meta($orderId, 'amount'),
+                'type' => get_post_meta($orderId, 'type'),
+            ]);
+        }
+
+        return null;
     }
 
     // 获取订单状态

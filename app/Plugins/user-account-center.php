@@ -484,7 +484,7 @@ add_action('rest_api_init', function () {
             // 1. 创建order
             $name = '打赏-' . $to; // 支付通道显示的标题
             $orderService = theme('order');
-            $rs = $orderService->createOrder($name, $amount);
+            $rs = $orderService->createOrder($name, $amount, 'donation');
 
             // 创建订单失败
             if (!$rs['status']) {
@@ -495,9 +495,6 @@ add_action('rest_api_init', function () {
             // 2. 调取第三方支付
             $paymentService = theme('payment');
             $rs = $paymentService->pay($payment_name, $device, $rs['data']);
-
-            // // 打赏记录应当在支付成功后的回调里面生成
-            // $donation_id = createDonation($from_user_id, $to_user_id, $amount, $content, $order_id);
 
             // 3. 输出结果
             $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);

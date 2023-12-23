@@ -70,7 +70,7 @@ add_action('init', function () {
     register_post_type('donation', [
         'description' => __('Collection of donations.', config('textdomain')),
         'public' => true,
-        'supports' => ['title', 'editor', 'author', 'custom-fields'],
+        'supports' => ['editor', 'author', 'custom-fields'],
         'show_in_rest' => true, // 将自动生成一组类似posts的接口
         'rest_base' => 'donations',
         'menu_icon' => 'dashicons-coffee',
@@ -179,7 +179,7 @@ add_action('manage_orders_posts_custom_column', function ($column_name, $id) {
 // add_filter( 'pre_get_posts', 'postsFilter' );
 
 /**
- * 创建打赏订单/记录
+ * 创建打赏记录
  * @param int $from  打赏人ID
  * @param int $to  被打赏人ID
  * @param int $amount 打赏金额

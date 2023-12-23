@@ -51,7 +51,7 @@ function register_post_types()
     register_post_type('order', [
         'description' => __('Collection of orders.', config('textdomain')),
         'public' => true,
-        'supports' => ['author', 'custom-fields'],
+        'supports' => ['title', 'author', 'custom-fields'],
         'show_in_rest' => true, // 将自动生成一组类似posts的接口
         'rest_base' => 'orders',
         'menu_icon' => 'dashicons-text',
