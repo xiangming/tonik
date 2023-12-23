@@ -4,7 +4,6 @@
  * 注意！不要往这里面加代码！后期可能单独拿出来作为插件使用。
  */
 
-use App\Queue\ASQueue;
 use App\Services\MailService;
 use App\Sms\SmsService;
 use App\Validators\Validator;
@@ -431,17 +430,11 @@ add_action('rest_api_init', function () {
             $parameters = $request->get_json_params();
             $account = sanitize_text_field($parameters['account']);
 
-            $user_id = userExists($account);
-            if ($user_id) {
-                $queue = new ASQueue();
-                // $queue->add_async('test_queue', [$account]);
-                $queue->schedule_single(strtotime("+3 minutes"), 'test_queue', [$account]);
+            $queue = theme('queue');
+            // $queue->add_async('test_queue', [$account]);
+            $queue->schedule_single(strtotime("+3 minutes"), 'test_queue', [$account]);
 
-                resError('用户已经存在');
-                exit();
-            }
-
-            resOK('可以注册');
+            resError('队列添加成功');
             exit();
         },
         'args' => array(

@@ -86,7 +86,7 @@ return [
         'Services/OrderService.php',
         'Services/PaymentService.php',
         'Services/WechatPayService.php',
-        'Services/Queue.php',
+        'Services/QueueService.php',
         'Setup/actions.php',
         'Setup/filters.php',
         'Setup/supports.php',

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Queue;
+namespace App\Services;
 
 use ActionScheduler_Store;
 
-class ASQueue
+class QueueService
 {
     /**
      * Queue shared Group.

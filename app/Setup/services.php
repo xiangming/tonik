@@ -15,12 +15,15 @@ namespace Tonik\Theme\App\Setup;
 
 use App\Services\OrderService;
 use App\Services\PaymentService;
+use App\Services\QueueService;
 use function Tonik\Theme\App\theme;
 use Tonik\Gin\Foundation\Theme;
 use WP_Query;
 
 /**
  * Binds services
+ * 
+ * 通过theme方法快速获取：theme('books');
  *
  * @return void
  */
@@ -46,6 +49,10 @@ function bind_services()
 
     theme()->bind('payment', function (Theme $theme, $parameters) {
         return new PaymentService();
+    });
+
+    theme()->bind('queue', function (Theme $theme, $parameters) {
+        return new QueueService();
     });
 }
 add_action('init', 'Tonik\Theme\App\Setup\bind_services');
