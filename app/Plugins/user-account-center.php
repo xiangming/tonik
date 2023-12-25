@@ -12,7 +12,6 @@ use function Tonik\Theme\App\resOK;
 use function Tonik\Theme\App\theme;
 
 define('WP_V2_NAMESPACE', 'wp/v2'); // WP REST API 命名空间
-define('ANONYMITY', 1); // 神秘人ID
 
 /**
  * 生成随机字符串（小写字母和数字）
@@ -452,25 +451,21 @@ add_action('rest_api_init', function () {
         'methods' => 'POST',
         'callback' => function ($request) {
             $parameters = $request->get_json_params();
+
+            $from = sanitize_text_field($parameters['from']); // 打赏人，必填
             $to = sanitize_text_field($parameters['to']); // 被打赏人，必填
             $amount = sanitize_text_field($parameters['amount']); // 打赏金额，必填
-            $from = sanitize_text_field($parameters['from']); // 打赏人，可选，没填则为神秘人
-            $content = sanitize_text_field($parameters['content']); // 打赏留言，可选
-            $payment_name = sanitize_text_field($parameters['payment_name'] ?? 'wechat'); // 支付通道，可选
-            $device = sanitize_text_field($parameters['device'] ?? 'scan'); // 支付方式，可选
+            $remark = $parameters['remark'] ? sanitize_text_field($parameters['remark']) : null; // 打赏留言，可选
+            $payment_name = $parameters['payment_name'] ? sanitize_text_field($parameters['payment_name']) : 'wechat'; // 支付通道，可选
+            $device = $parameters['device'] ? sanitize_text_field($parameters['device']) : 'scan'; // 支付方式，可选
 
             // TODO: 一般性校验，使用WP内置方法即可（参考下面的args），不需要额外处理
 
-            // 请求参数带账号，则打赏记录关联此账号，而不是当前token账号（可能会帮别人打赏）
-            if ($from) {
-                $from_user_id = userExists($from);
-                // 填写的账号不存在，则自动创建账号并关联打赏记录
-                if (!$from_user_id) {
-                    $from_user_id = createUser($from);
-                }
-            } else {
-                // 请求参数没有带账号，则统一为神秘人账号
-                $from_user_id = ANONYMITY;
+            // 处理打赏人，打赏记录关联此账号，而不是当前token账号（可能会帮别人打赏）
+            $from_user_id = userExists($from);
+            // 填写的账号不存在，则自动创建账号并关联打赏记录
+            if (!$from_user_id) {
+                $from_user_id = createUser($from);
             }
 
             // 处理被打赏人
@@ -484,7 +479,7 @@ add_action('rest_api_init', function () {
             // 1. 创建order
             $name = '打赏-' . $to; // 支付通道显示的标题
             $orderService = theme('order');
-            $rs = $orderService->createOrder($name, $amount, 'donation');
+            $rs = $orderService->createOrder('donation', $amount, $name, $remark, $to_user_id);
 
             // 创建订单失败
             if (!$rs['status']) {
@@ -504,7 +499,7 @@ add_action('rest_api_init', function () {
             'from' => [
                 "description" => "打赏人的用户名、邮箱或者手机号。",
                 'type' => "string",
-                'required' => false,
+                'required' => true,
                 'validate_callback' => function ($param, $request, $key) {
                     return is_email($param) || Validator::isPhone($param);
                 },
@@ -522,7 +517,7 @@ add_action('rest_api_init', function () {
                 'maximum' => 5000,
                 'required' => true,
             ],
-            'content' => [
+            'remark' => [
                 "description" => "打赏留言。",
                 'type' => "string",
                 'required' => false,
@@ -539,7 +534,7 @@ add_action('rest_api_init', function () {
             // $account = sanitize_text_field($parameters['account']);
 
             $paymentService = theme('payment');
-            $rs = $paymentService->notify();
+            $rs = $paymentService->notify('wechat', 'scan');
 
             // 输出结果
             $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);

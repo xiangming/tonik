@@ -188,7 +188,7 @@ class PaymentService extends BaseService
         }
 
         // 订单已经支付
-        if ($orderPay->status == 'publish') {
+        if ($orderPay['status'] == 'publish') {
             return $this->formatError(__('tip.order.payed'));
         }
 
@@ -198,6 +198,7 @@ class PaymentService extends BaseService
             // TODO: 生成余额记录
         }
 
+        // 判断是否支付成功
         if ($paymentName == 'wechat') {
             if ($result->event_type != 'TRANSACTION.SUCCESS' && $result->resource['ciphertext']['trade_state'] != 'SUCCESS') {
                 wpLog($result);
@@ -215,19 +216,22 @@ class PaymentService extends BaseService
 
         // 订单信息更新
         // TODO: 把$trade_no保存到订单
-        update_post_status($orderPay->id, 'publish'); // 已支付、付款时间自动更新
-        update_post_meta($orderPay->id, 'method', $paymentName); // 最终成功的支付方式
+        update_post_status($orderPay['id'], 'publish'); // 已支付（付款时间自动更新）
+        update_post_meta($orderPay['id'], 'method', $paymentName); // 最终成功的支付方式
 
-        // 如果是打赏
-        if ($orderPay->type == 'donation') {
+        // 如果是充值，生成余额变动记录
+        if ($orderPay['type'] == 'recharge') {
             // $this->getService('MoneyLog')->edit([
-            //     'name' => __('tip.payment.onlineRecharge'),
-            //     'user_id' => $orderPay->belong_id,
-            //     'money' => $orderPay->total,
+            //     'name'  =>  __('tip.payment.onlineRecharge'),
+            //     'user_id'  =>  $orderPay['from_user_id'],
+            //     'money'  =>  $orderPay['amount'],
             // ]);
+            return $this->format();
+        }
 
-            // // 打赏记录应当在支付成功后的回调里面生成
-            // $donation_id = createDonation($from_user_id, $to_user_id, $amount, $content, $order_id);
+        // 如果是打赏，生成打赏记录
+        if ($orderPay['type'] == 'donation') {
+            $donation_id = createDonation($orderPay['from_user_id'], $orderPay['to_user_id'], $orderPay['amount'], $orderPay['remark'], $orderPay['id']);
 
             return $this->format();
         }
@@ -235,6 +239,8 @@ class PaymentService extends BaseService
         // 如果不是充值
         // 增加销量 - 其他支付回调的时候也要处理一遍
         // TODO:
+
+        // 分销处理
 
         // 余额支付需要返回信息 第三方支付需要返回指定信息给回调服务器
         return $paymentName == 'balance' ? $this->format() : Pay::$paymentName($this->config)->success();
@@ -328,11 +334,11 @@ class PaymentService extends BaseService
             }
 
             // TODO: 使用队列处理第三方回调
-            return Pay::$paymentName($this->config)->success();
+            // return Pay::$paymentName($this->config)->success();
             // return $pay->success()->send(); // laravel 框架中请直接 `return $pay->success()`
 
             // 1. 通过no拿到orderInfo
-            $orderInfo = theme('order')->getOrderById($out_trade_no);
+            $orderInfo = theme('order')->getOrderByNo($out_trade_no);
 
             // 2. 然后触发支付成功后的操作paySuccess
             $paySuccessData = theme('payment')->paySuccess($paymentName, $orderInfo, $result);

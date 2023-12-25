@@ -70,7 +70,7 @@ add_action('init', function () {
     register_post_type('donation', [
         'description' => __('Collection of donations.', config('textdomain')),
         'public' => true,
-        'supports' => ['editor', 'author', 'custom-fields'],
+        'supports' => ['author', 'custom-fields'],
         'show_in_rest' => true, // 将自动生成一组类似posts的接口
         'rest_base' => 'donations',
         'menu_icon' => 'dashicons-coffee',
@@ -180,20 +180,18 @@ add_action('manage_orders_posts_custom_column', function ($column_name, $id) {
 
 /**
  * 创建打赏记录
- * @param int $from  打赏人ID
- * @param int $to  被打赏人ID
+ * @param int $from_user_id  打赏人ID
+ * @param int $to_user_id  被打赏人ID
  * @param int $amount 打赏金额
- * @param string $content 打赏留言，可选
- * @return int $orderId
+ * @param string $remark 打赏留言，可选
+ * @return int $Id
  */
-function createDonation($from, $to, $amount, $content, $out_trade_no)
+function createDonation($from_user_id, $to_user_id, $amount, $remark, $orderId)
 {
     $in_data = array(
-        'post_author' => $from,
-        'post_title' => $out_trade_no,
-        'post_status' => 'draft',
-        'post_type' => 'donations', // custom-post-type
-        'post_content' => $content,
+        'post_author' => $from_user_id,
+        'post_status' => 'publish', // 支付成功后，打赏记录应当是publish
+        'post_type' => 'donation', // custom-post-type
     );
     // https://developer.wordpress.org/reference/functions/wp_insert_post/
     // If the $postarr parameter has ‘ID’ set to a value, then post will be updated.
@@ -205,12 +203,24 @@ function createDonation($from, $to, $amount, $content, $out_trade_no)
         return new WP_Error(1, $errmsg);
     }
 
+    // 被打赏人
+    if (isset($to_user_id)) {
+        update_post_meta($in_id, 'to', $to_user_id);
+    }
+
+    // 打赏金额
     if (isset($amount)) {
         update_post_meta($in_id, 'amount', $amount);
     }
 
-    if (isset($to)) {
-        update_post_meta($in_id, 'to', $to);
+    // 备注
+    if (isset($remark)) {
+        update_post_meta($in_id, 'remark', $remark);
+    }
+
+    // 关联订单
+    if (isset($orderId)) {
+        update_post_meta($in_id, 'orderId', $orderId);
     }
 
     return $in_id;

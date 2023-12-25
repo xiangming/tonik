@@ -13,13 +13,14 @@ class OrderService extends BaseService
     /**
      * 创建订单
      *
-     * @param   [type]  $name    标题
-     * @param   [type]  $amount  金额
-     * @param   [type]  $productId  不同产品使用不同的ID，方便在第三方支付后台对应产品
+     * @param   [string]  $type    购买的服务类型：打赏（donation）、购买（buy）、充值（recharge）等
+     * @param   [string]  $amount  金额
+     * @param   [string]  $name    购买的服务名称
+     * @param   [string]  $remark  备注留言
      *
      * @return  [type]           [return description]
      */
-    public function createOrder($name, $amount, $type = 'donation')
+    public function createOrder($type, $amount, $name, $remark, $related)
     {
         // TODO: 格式化商品数据等
 
@@ -29,7 +30,7 @@ class OrderService extends BaseService
 
         // 生成订单号
         // $out_trade_no = date('YmdHis') . '-' . $productId . '-' . $from_user_id . '-' . $to_user_id . '-' . rand(1000, 9999); // 注意总长度不能超过32位
-        $out_trade_no = date('YmdHis') . mt_rand(10000, 99999);
+        $out_trade_no = date('YmdHis') . '00' . mt_rand(10000, 99999);
 
         // 创建订单
         $in_data = array(
@@ -49,27 +50,41 @@ class OrderService extends BaseService
             return $this->formatError($errmsg);
         }
 
-        // 保存订单信息
-        if (isset($name)) {
-            update_post_meta($in_id, 'name', $name);
-        }
-
+        // 金额
         if (isset($amount)) {
             update_post_meta($in_id, 'amount', $amount);
         }
 
+        // 服务名称
+        if (isset($name)) {
+            update_post_meta($in_id, 'name', $name);
+        }
+
+        // 服务类型
         if (isset($type)) {
             update_post_meta($in_id, 'type', $type);
+        }
+
+        // 备注
+        if (isset($remark)) {
+            update_post_meta($in_id, 'remark', $remark);
+        }
+
+        // 关联项目
+        if (isset($related)) {
+            update_post_meta($in_id, 'related', $related);
         }
 
         // TODO: 执行成功则删除购物车
 
         $order_pay_info = [
             'id' => $in_id,
-            'name' => $name,
-            'amount' => $amount,
-            'type' => $type,
             'out_trade_no' => $out_trade_no,
+            'amount' => $amount,
+            'name' => $name,
+            'type' => $type,
+            'remark' => $remark,
+            'related' => $related,
         ];
 
         return $this->format($order_pay_info);
@@ -345,68 +360,60 @@ class OrderService extends BaseService
 
     }
 
-    // 获取订单信息通过订单ID 默认是使用out_trade_no
-    public function getOrderById($id)
+    /**
+     * 通过out_trade_no获取订单信息
+     *
+     * @param   [type]  out_trade_no
+     *
+     * @return  [type]  订单信息对象
+     */
+    public function getOrderByNo($no)
     {
         $args = array(
-            'title' => $id,
+            'title' => $no,
             'post_status' => 'any',
             'post_type' => 'order',
             // 'fields' => 'ids',
         );
         $orders = get_posts($args);
 
+        // FIXME: check the orders count
         if ($orders) {
             $order = $orders[0];
-            $orderId = $orders[0]->id;
+            $orderId = $order['id'];
             return array_merge($order, [
+                'from_user_id' => $order['author'],
                 'name' => get_post_meta($orderId, 'name'),
                 'amount' => get_post_meta($orderId, 'amount'),
                 'type' => get_post_meta($orderId, 'type'),
+                'remark' => get_post_meta($orderId, 'remark'),
+                'to_user_id' => get_post_meta($orderId, 'related'),
             ]);
         }
 
         return null;
     }
 
-    // 获取订单状态
-    public function getOrderStatusCn($order_info)
+    // 获取关联项目信息
+    public function getOrderRelatedInfo($order_info)
     {
-        $cn = '未知订单';
-        switch ($order_info['order_status']) {
-            case 0:
-                $cn = __('tip.orderCancel');
+        $result = 'N/A';
+        switch ($order_info['type']) {
+            case 'recharge':
+                $result = '';
                 break;
-            case 1:
-                $cn = __('tip.waitPay');
-                break;
-            case 2:
-                $cn = __('tip.waitSend');
-                break;
-            case 3:
-                $cn = __('tip.orderConfirm');
-                break;
-            case 4:
-                $cn = __('tip.waitComment');
-                break;
-            case 5:
-                if ($order_info['refund']) {
-                    if ($order_info['refund_type'] == 0) {
-                        $cn = __('tip.orderRefund');
-                    } elseif ($order_info['refund_type'] == 1) {
-                        $cn = __('tip.orderReturned');
-                    } else {
-                        $cn = __('tip.orderRefundOver');
+            case 'donation':
+                if ($order_info['related']) {
+                    $related_info = explode('-', $order_info['related']); // 转化为数组
+                    if ($related_info[0] == 'user') {
+                        $result = $related_info[1];
                     }
-                } else {
-                    $cn = __('tip.orderRefund');
                 }
                 break;
-            case 6:
-                $cn = __('tip.orderCompletion');
+            default:
                 break;
         }
-        return $cn;
+        return $result;
     }
 
     // 获取支付类型
