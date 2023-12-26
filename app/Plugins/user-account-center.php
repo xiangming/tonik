@@ -457,7 +457,7 @@ add_action('rest_api_init', function () {
             $amount = sanitize_text_field($parameters['amount']); // 打赏金额，必填
             $remark = $parameters['remark'] ? sanitize_text_field($parameters['remark']) : null; // 打赏留言，可选
             $payment_name = $parameters['payment_name'] ? sanitize_text_field($parameters['payment_name']) : 'wechat'; // 支付通道，可选
-            $device = $parameters['device'] ? sanitize_text_field($parameters['device']) : 'scan'; // 支付方式，可选
+            $device = $parameters['device'] ? sanitize_text_field($parameters['device']) : 'scan'; // 支付设备类型，可选
 
             // TODO: 一般性校验，使用WP内置方法即可（参考下面的args），不需要额外处理
 
@@ -522,6 +522,16 @@ add_action('rest_api_init', function () {
                 'type' => "string",
                 'required' => false,
             ],
+            'payment_name' => [
+                "description" => "支付通道。",
+                'type' => "string",
+                'required' => true,
+            ],
+            'device' => [
+                "description" => "支付设备类型。",
+                'type' => "string",
+                'required' => true,
+            ],
         ),
         'permission_callback' => '__return_true',
     ));
@@ -540,6 +550,36 @@ add_action('rest_api_init', function () {
             $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
             exit();
         },
+        'permission_callback' => '__return_true',
+    ));
+
+    // Register a new endpoint: /wp/v2/payment/find
+    register_rest_route(WP_V2_NAMESPACE, '/payment/find', array(
+        'methods' => 'POST',
+        'callback' => function ($request) {
+            $parameters = $request->get_json_params();
+            $payment_name = $parameters['payment_name'] ? sanitize_text_field($parameters['payment_name']) : 'wechat'; // 支付通道
+            $out_trade_no = $parameters['out_trade_no'] ? sanitize_text_field($parameters['out_trade_no']) : null; // 第三方单号
+
+            $paymentService = theme('payment');
+            $rs = $paymentService->find($payment_name, $out_trade_no);
+
+            // 输出结果
+            $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
+            exit();
+        },
+        'args' => array(
+            'payment_name' => [
+                "description" => "支付通道。",
+                'type' => "string",
+                'required' => true,
+            ],
+            'out_trade_no' => [
+                "description" => "第三方订单号。",
+                'type' => "string",
+                'required' => true,
+            ],
+        ),
         'permission_callback' => '__return_true',
     ));
 });

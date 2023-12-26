@@ -180,9 +180,12 @@ class PaymentService extends BaseService
                 return $this->format($result->getBody()->getContents());
             }
 
-            return $this->format($result);
+            // var_dump($result);
+            // die();
+
+            return $this->format(['code_url' => $result->code_url, 'order_id' => $orderPay['id'], 'out_trade_no' => $orderPay['out_trade_no']]);
+            // return $this->format($result);
         } catch (\Exception $e) {
-            // wpLog('[' . $paymentName . ']:' . $e->getMessage());
             wpLog('[' . $paymentName . ']:' . $e->getMessage());
             return $this->formatError('调取支付失败');
         }
@@ -254,62 +257,38 @@ class PaymentService extends BaseService
         return $paymentName == 'balance' ? $this->format() : Pay::$paymentName($this->config)->success();
     }
 
-    public function scan($out_trade_no, $body, $total_fee)
+    public function find($paymentName = 'wechat', $out_trade_no)
     {
-        $order = [
-            'out_trade_no' => $out_trade_no,
-            'body' => $body,
-            'total_fee' => $total_fee * 100, // 单位：分 ==> 元
-            // 'openid' => 'onkVf1FjWS5SBIixxxxxxx', // 转账时需要
-        ];
+        if (empty($out_trade_no)) {
+            return $this->formatError('out_trade_no empty');
+        }
 
-        $result = Pay::wechat($this->config)->scan($order);
-        $result->out_trade_no = $out_trade_no;
-        // print_r(json_encode($result)); // debug
-        // return $result->code_url; // 二维码内容
-        return $result;
-
-        // {
-        //     "return_code": "SUCCESS",
-        //     "return_msg": "OK",
-        //     "result_code": "SUCCESS",
-        //     "mch_id": "1512637611",
-        //     "appid": "wx63b95a5ba3d10f69",
-        //     "nonce_str": "lqwYuInyNS0Hko7l",
-        //  "out_trade_no": "0020220912081430002216100",
-        //     "sign": "A6F04152883E6CC6692AB6231930E2F2",
-        //     "prepay_id": "wx091430087762831625d5fdb64b36020000",
-        //     "trade_type": "NATIVE",
-        //     "code_url": "weixin://wxpay/bizpayurl?pr=CB8VMJzzz",
-        //  "qrcode_src": "data:image/png;base64,****"
-        // }
-    }
-
-    public function find($out_trade_no)
-    {
-        $order = [
+        // 订单数据配置
+        $this->orderData = [
             'out_trade_no' => $out_trade_no,
         ];
-        // $order = '1514027114';
 
-        $result = Pay::wechat($this->config)->find($order);
-        // print_r(json_encode($result));
-        return $result;
+        try {
+            // $this->setConfig($paymentName, $device, $config);
+            $result = Pay::$paymentName($this->config)->find($this->orderData);
+            // if (in_array($device, ['app', 'wap', 'web'])) {
+            //     return $this->format($result->getBody()->getContents());
+            // }
 
-        // {
-        //     "return_code": "SUCCESS",
-        //     "return_msg": "OK",
-        //     "result_code": "SUCCESS",
-        //     "mch_id": "1512637611",
-        //     "appid": "wx63b95a5ba3d10f69",
-        //     "device_info": [],
-        //     "trade_state": "NOTPAY",
-        //     "total_fee": "3000",
-        //     "out_trade_no": "0020220920083631008427000",
-        //     "trade_state_desc": "订单未支付",
-        //     "nonce_str": "V9dCjNI01HpleeFc",
-        //     "sign": "AB4A3510D5562CF68A7135063EE76388"
-        // }
+            return $this->format($result);
+            // {
+            //     "mch_id": "1512637611",
+            //     "appid": "wx63b95a5ba3d10f69",
+            //     "device_info": [],
+            //     "total_fee": "3000",
+            //     "out_trade_no": "0020220920083631008427000",
+            //     "trade_state": "NOTPAY",
+            //     "trade_state_desc": "订单未支付"
+            // }
+        } catch (\Exception $e) {
+            wpLog('[' . $paymentName . ']:' . $e->getMessage());
+            return $this->formatError('查询支付结果失败');
+        }
     }
 
     // 修改配置
@@ -320,7 +299,7 @@ class PaymentService extends BaseService
 
     /**
      * 第三方支付回调
-     * 
+     *
      * 为保证订单确实支付成功，或者其他人恶意请求notify_url。建议使用者，在接到支付宝和微信异步通知的时候进行一次主动查询。
      *
      * @return  确认回调
