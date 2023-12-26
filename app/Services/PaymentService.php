@@ -86,7 +86,7 @@ class PaymentService extends BaseService
         'logger' => [
             'enable' => true,
             'file' => './logs/pay.log',
-            'level' => 'info', // 建议生产环境等级调整为 info，开发环境为 debug
+            'level' => 'debug', // 建议生产环境等级调整为 info，开发环境为 debug
             'type' => 'single', // optional, 可选 daily.
             'max_file' => 30, // optional, 当 type 为 daily 时有效，默认 30 天
         ],
@@ -99,11 +99,19 @@ class PaymentService extends BaseService
 
     public function __construct()
     {
+        $this->config['alipay']['default']['app_id'] = getenv('ALIPAY_APP_ID');
+        $this->config['alipay']['default']['app_secret_cert'] = getenv('ALIPAY_APP_SECRET_CERT');
+        $this->config['alipay']['default']['app_public_cert_path'] = getenv('ALIPAY_APP_PUBLIC_CERT_PATH');
+        $this->config['alipay']['default']['alipay_public_cert_path'] = getenv('ALIPAY_PUBLIC_CERT_PATH');
+        $this->config['alipay']['default']['alipay_root_cert_path'] = getenv('ALIPAY_ROOT_CERT_PATH');
+        $this->config['alipay']['default']['notify_url'] = getenv('ALIPAY_NOTIFY_URL');
+
         $this->config['wechat']['default']['mch_id'] = getenv('WECHAT_MCH_ID');
         $this->config['wechat']['default']['mch_secret_key_v2'] = getenv('WECHAT_MCH_SECRET_KEY_V2');
         $this->config['wechat']['default']['mch_secret_key'] = getenv('WECHAT_MCH_SECRET_KEY');
         $this->config['wechat']['default']['mch_secret_cert'] = getenv('WECHAT_MCH_SECRET_CERT');
         $this->config['wechat']['default']['mch_public_cert_path'] = getenv('WECHAT_MCH_SECRET_CERT_PATH');
+        $this->config['wechat']['default']['notify_url'] = getenv('WECHAT_NOTIFY_URL');
     }
 
     /**
@@ -312,6 +320,8 @@ class PaymentService extends BaseService
 
     /**
      * 第三方支付回调
+     * 
+     * 为保证订单确实支付成功，或者其他人恶意请求notify_url。建议使用者，在接到支付宝和微信异步通知的时候进行一次主动查询。
      *
      * @return  确认回调
      */
