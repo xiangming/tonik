@@ -37,7 +37,7 @@ class OrderService extends BaseService
             // 'post_author'    => $uid,
             'post_title' => $out_trade_no,
             'post_status' => 'draft',
-            'post_type' => 'order',
+            'post_type' => 'orders',
         );
         // https://developer.wordpress.org/reference/functions/wp_insert_post/
         // If the $postarr parameter has ‘ID’ set to a value, then post will be updated.
@@ -372,7 +372,7 @@ class OrderService extends BaseService
         $args = array(
             'title' => $no,
             'post_status' => 'any',
-            'post_type' => 'order',
+            'post_type' => 'orders',
             // 'fields' => 'ids',
         );
         $orders = get_posts($args);

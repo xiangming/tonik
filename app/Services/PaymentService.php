@@ -180,11 +180,8 @@ class PaymentService extends BaseService
                 return $this->format($result->getBody()->getContents());
             }
 
-            // var_dump($result);
-            // die();
-
-            return $this->format(['code_url' => $result->code_url, 'order_id' => $orderPay['id'], 'out_trade_no' => $orderPay['out_trade_no']]);
-            // return $this->format($result);
+            // return $this->format(['code_url' => $result->code_url, 'order_id' => $orderPay['id'], 'out_trade_no' => $orderPay['out_trade_no']]);
+            return $this->format($result);
         } catch (\Exception $e) {
             wpLog('[' . $paymentName . ']:' . $e->getMessage());
             return $this->formatError('调取支付失败');
@@ -257,7 +254,7 @@ class PaymentService extends BaseService
         return $paymentName == 'balance' ? $this->format() : Pay::$paymentName($this->config)->success();
     }
 
-    public function find($paymentName = 'wechat', $out_trade_no)
+    public function find($paymentName = 'wechat', $out_trade_no = null)
     {
         if (empty($out_trade_no)) {
             return $this->formatError('out_trade_no empty');
