@@ -4,8 +4,7 @@
  * 注意！不要往这里面加代码！后期可能单独拿出来作为插件使用。
  */
 
-use App\Services\MailService;
-use App\Sms\SmsService;
+use App\Services\SmsService;
 use App\Validators\Validator;
 use function Tonik\Theme\App\resError;
 use function Tonik\Theme\App\resOK;
@@ -270,7 +269,7 @@ function validateCode($uid, $code)
  */
 add_action('rest_api_init', function () {
     /**
-     * 发送短信或者邮件二维码，应用场景：手机号注册、绑定邮箱、绑定手机
+     * 发送短信或者邮件验证码，应用场景：手机号注册、绑定邮箱、绑定手机
      *
      * 当请求未携带jwt时，判定为注册请求，自动生成phone_temp新用户
      * 当请求携带jwt时，判定为绑定手机号，向jwt用户添加phone_temp字段
@@ -297,23 +296,33 @@ add_action('rest_api_init', function () {
                 $uid = createUser($account);
             }
 
-            // 获取验证码
-            if (is_email($account)) {
-                // 发送邮箱验证码
-                $code = MailService::sendCodeEmail($account);
-            } else if (Validator::isPhone($account)) {
-                // 执行发送手机验证码
-                $code = SmsService::send($account);
-            }
-
-            if (!$uid || !$code) {
-                resError('发送失败，请稍后重试');
+            if (!$uid) {
+                resError('获取用户信息失败');
                 exit();
             }
 
+            // 发送验证码
+            if (is_email($account)) {
+                // 发送邮箱验证码
+                $mailService = theme('mail');
+                $rs = $mailService->send($account);
+            } else if (Validator::isPhone($account)) {
+                // 执行发送手机验证码
+                $smsService = theme('sms');
+                $rs = $smsService->send($account);
+            }
+
+            // 发送失败
+            if (!$rs['status']) {
+                resError($rs['msg']);
+                exit();
+            }
+
+            // 保存到用户表，用于下次验证
+            $code = $rs['data'];
             saveCodeToUserMeta($uid, $code);
 
-            resOK('发送成功');
+            resOK('发送成功', $code);
             exit();
         },
         'args' => array(
@@ -431,7 +440,7 @@ add_action('rest_api_init', function () {
 
             $queue = theme('queue');
             // $queue->add_async('test_queue', [$account]);
-            $queue->schedule_single(strtotime("+3 minutes"), 'test_queue', [$account]);
+            $queue->schedule_single(strtotime("+2 minutes"), 'test_queue', [$account]);
 
             resError('队列添加成功');
             exit();
@@ -586,5 +595,10 @@ add_action('rest_api_init', function () {
 
 add_action('test_queue', function ($account) {
     // 发送邮箱验证码
-    MailService::sendCodeEmail($account);
+    $mailService = theme('mail');
+    $mailService->send($account);
+
+    // 执行发送手机验证码
+    $smsService = theme('sms');
+    $smsService->send($account);
 }, 10, 1);

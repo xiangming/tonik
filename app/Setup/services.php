@@ -13,9 +13,11 @@ namespace Tonik\Theme\App\Setup;
 |
  */
 
+use App\Services\MailService;
 use App\Services\OrderService;
 use App\Services\PaymentService;
 use App\Services\QueueService;
+use App\Services\SmsService;
 use function Tonik\Theme\App\theme;
 use Tonik\Gin\Foundation\Theme;
 use WP_Query;
@@ -53,6 +55,14 @@ function bind_services()
 
     theme()->bind('queue', function (Theme $theme, $parameters) {
         return new QueueService();
+    });
+
+    theme()->bind('sms', function (Theme $theme, $parameters) {
+        return new SmsService();
+    });
+
+    theme()->bind('mail', function (Theme $theme, $parameters) {
+        return new MailService();
     });
 }
 add_action('init', 'Tonik\Theme\App\Setup\bind_services');

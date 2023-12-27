@@ -383,11 +383,11 @@ class OrderService extends BaseService
             $orderId = $order['id'];
             return array_merge($order, [
                 'from_user_id' => $order['author'],
+                'to_user_id' => get_post_meta($orderId, 'related'),
                 'name' => get_post_meta($orderId, 'name'),
                 'amount' => get_post_meta($orderId, 'amount'),
                 'type' => get_post_meta($orderId, 'type'),
                 'remark' => get_post_meta($orderId, 'remark'),
-                'to_user_id' => get_post_meta($orderId, 'related'),
             ]);
         }
 

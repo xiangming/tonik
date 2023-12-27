@@ -129,8 +129,6 @@ class PaymentService extends BaseService
     {
         if (empty($orderPay)) {
             return $this->formatError('订单信息错误');
-            // resError('订单信息错误');
-            // exit();
         }
 
         // 支付配置
@@ -240,8 +238,6 @@ class PaymentService extends BaseService
         // 如果是打赏，生成打赏记录
         if ($orderPay['type'] == 'donation') {
             $donation_id = createDonation($orderPay['from_user_id'], $orderPay['to_user_id'], $orderPay['amount'], $orderPay['remark'], $orderPay['id']);
-
-            return $this->format();
         }
 
         // 如果不是充值
