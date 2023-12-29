@@ -439,10 +439,11 @@ add_action('rest_api_init', function () {
             $account = sanitize_text_field($parameters['account']);
 
             $queue = theme('queue');
-            // $queue->add_async('test_queue', [$account]);
-            $queue->schedule_single(strtotime("+2 minutes"), 'test_queue', [$account]);
+            $queue->add_async('test_queue', [$account]);
+            // $queue->schedule_single(strtotime("+2 minutes"), 'test_queue', [$account]);
 
-            resError('队列添加成功');
+            // 输出结果
+            $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
             exit();
         },
         'args' => array(
@@ -465,7 +466,7 @@ add_action('rest_api_init', function () {
             $to = sanitize_text_field($parameters['to']); // 被打赏人，必填
             $amount = sanitize_text_field($parameters['amount']); // 打赏金额，必填
             $remark = $parameters['remark'] ? sanitize_text_field($parameters['remark']) : null; // 打赏留言，可选
-            $payment_name = $parameters['payment_name'] ? sanitize_text_field($parameters['payment_name']) : 'wechat'; // 支付通道，可选
+            $payment_name = $parameters['payment_name'] ? sanitize_text_field($parameters['payment_name']) : 'alipay'; // 支付通道，可选
             $device = $parameters['device'] ? sanitize_text_field($parameters['device']) : 'scan'; // 支付设备类型，可选
 
             // TODO: 一般性校验，使用WP内置方法即可（参考下面的args），不需要额外处理
@@ -545,15 +546,15 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
-    // Register a new endpoint: /wp/v2/payment/notify
-    register_rest_route(WP_V2_NAMESPACE, '/payment/notify', array(
+    // Register a new endpoint: /wp/v2/payment/alipay/notify
+    register_rest_route(WP_V2_NAMESPACE, '/payment/alipay/notify', array(
         'methods' => 'GET',
         'callback' => function ($request) {
             // $parameters = $request->get_json_params();
             // $account = sanitize_text_field($parameters['account']);
 
             $paymentService = theme('payment');
-            $rs = $paymentService->notify('wechat', 'scan');
+            $rs = $paymentService->notify('alipay');
 
             // 输出结果
             $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
@@ -567,7 +568,7 @@ add_action('rest_api_init', function () {
         'methods' => 'POST',
         'callback' => function ($request) {
             $parameters = $request->get_json_params();
-            $payment_name = $parameters['payment_name'] ? sanitize_text_field($parameters['payment_name']) : 'wechat'; // 支付通道
+            $payment_name = $parameters['payment_name'] ? sanitize_text_field($parameters['payment_name']) : 'alipay'; // 支付通道
             $out_trade_no = $parameters['out_trade_no'] ? sanitize_text_field($parameters['out_trade_no']) : null; // 第三方单号
 
             $paymentService = theme('payment');
@@ -598,7 +599,11 @@ add_action('test_queue', function ($account) {
     $mailService = theme('mail');
     $mailService->send($account);
 
-    // 执行发送手机验证码
-    $smsService = theme('sms');
-    $smsService->send($account);
+    // // 执行发送手机验证码
+    // $smsService = theme('sms');
+    // $smsService->send($account);
+
+    // // 转账测试
+    // $paymentService = theme('payment');
+    // $paymentService->transfer('alipay', '2023122712345', '0.1', '282818269@qq.com', '向明');
 }, 10, 1);

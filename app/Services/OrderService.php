@@ -415,22 +415,4 @@ class OrderService extends BaseService
         }
         return $result;
     }
-
-    // 获取支付类型
-    public function getOrderPayMentCn($payment_name)
-    {
-        $cn = __('tip.waitPay');
-        switch ($payment_name) {
-            case 'wechat':
-                $cn = __('tip.paymentWechat');
-                break;
-            case 'ali':
-                $cn = __('tip.paymentAli');
-                break;
-            case 'balance':
-                $cn = __('tip.paymentMoney');
-                break;
-        }
-        return $cn;
-    }
 }

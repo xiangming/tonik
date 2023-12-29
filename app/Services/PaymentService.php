@@ -86,7 +86,7 @@ class PaymentService extends BaseService
         'logger' => [
             'enable' => true,
             'file' => './logs/pay.log',
-            'level' => 'debug', // 建议生产环境等级调整为 info，开发环境为 debug
+            'level' => 'info', // 建议生产环境等级调整为 info，开发环境为 debug
             'type' => 'single', // optional, 可选 daily.
             'max_file' => 30, // optional, 当 type 为 daily 时有效，默认 30 天
         ],
@@ -125,7 +125,7 @@ class PaymentService extends BaseService
      *
      * @return  []                     [return description]
      */
-    public function pay($paymentName = 'wechat', $device = 'scan', $orderPay = [], $recharge = false, $config = 'default')
+    public function pay($paymentName = 'alipay', $device = 'scan', $orderPay = [], $recharge = false, $config = 'default')
     {
         if (empty($orderPay)) {
             return $this->formatError('订单信息错误');
@@ -187,7 +187,7 @@ class PaymentService extends BaseService
     }
 
     // 支付成功后处理订单
-    public function paySuccess($paymentName = 'wechat', $orderPay = null, $result = null)
+    public function paySuccess($paymentName = 'alipay', $orderPay = null, $result = null)
     {
         if (empty($orderPay)) {
             return $this->formatError('pay success params $orderPay empty .');
@@ -235,9 +235,14 @@ class PaymentService extends BaseService
             return $this->format();
         }
 
-        // 如果是打赏，生成打赏记录
+        // 如果是打赏，生成打赏记录，安排打款队列
+        // FIXME: 支付成功要100%完成打款，否则要生成打款记录，用于用户手动打款
         if ($orderPay['type'] == 'donation') {
             $donation_id = createDonation($orderPay['from_user_id'], $orderPay['to_user_id'], $orderPay['amount'], $orderPay['remark'], $orderPay['id']);
+
+            // // 加入打款队列
+            // $paymentService = theme('payment');
+            // $rs = $paymentService->transfer('alipay', '2023122712345', '0.1', '282818269@qq.com', '向明');
         }
 
         // 如果不是充值
@@ -250,7 +255,8 @@ class PaymentService extends BaseService
         return $paymentName == 'balance' ? $this->format() : Pay::$paymentName($this->config)->success();
     }
 
-    public function find($paymentName = 'wechat', $out_trade_no = null)
+    // 查询订单支付结果
+    public function find($paymentName = 'alipay', $out_trade_no = null)
     {
         if (empty($out_trade_no)) {
             return $this->formatError('out_trade_no empty');
@@ -284,6 +290,58 @@ class PaymentService extends BaseService
         }
     }
 
+    // 转账到支付宝账户
+    public function transfer($paymentName = 'alipay', $out_trade_no = null, $amount = null, $identity = null, $name = null)
+    {
+        if (empty($out_trade_no)) {
+            return $this->formatError('$out_trade_no empty');
+        }
+
+        if (empty($amount)) {
+            return $this->formatError('$amount empty');
+        }
+
+        if (empty($identity)) {
+            return $this->formatError('$identity empty');
+        }
+
+        if (empty($name)) {
+            return $this->formatError('$name empty');
+        }
+
+        // 订单数据配置
+        $this->orderData = [
+            'out_biz_no' => $out_trade_no,
+            'trans_amount' => $amount,
+            'product_code' => 'TRANS_ACCOUNT_NO_PWD',
+            'biz_scene' => 'DIRECT_TRANSFER',
+            'payee_info' => [
+                'identity' => $identity,
+                'identity_type' => 'ALIPAY_LOGON_ID',
+                'name' => $name,
+            ],
+        ];
+
+        try {
+            // $this->setConfig($paymentName, $device, $config);
+            $result = Pay::$paymentName($this->config)->transfer($this->orderData);
+
+            return $this->format($result);
+            // {
+            //     "mch_id": "1512637611",
+            //     "appid": "wx63b95a5ba3d10f69",
+            //     "device_info": [],
+            //     "total_fee": "3000",
+            //     "out_trade_no": "0020220920083631008427000",
+            //     "trade_state": "NOTPAY",
+            //     "trade_state_desc": "订单未支付"
+            // }
+        } catch (\Exception $e) {
+            wpLog('[' . $paymentName . ']:' . $e->getMessage());
+            return $this->formatError('转账失败');
+        }
+    }
+
     // 修改配置
     public function setConfig($paymentName, $device = 'web', $config = 'default')
     {
@@ -297,7 +355,7 @@ class PaymentService extends BaseService
      *
      * @return  确认回调
      */
-    public function notify($paymentName = 'wechat', $device = 'scan', $config = 'default')
+    public function notify($paymentName = 'alipay', $device = 'scan', $config = 'default')
     {
         // $this->setConfig($paymentName, $device, $config);
         $result = Pay::$paymentName($this->config)->callback(null, ['_config' => $config]);
