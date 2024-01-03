@@ -204,7 +204,7 @@ class PaymentService extends BaseService
             // TODO: 生成余额记录
         }
 
-        // 判断是否支付成功
+        // 判断是否支付成功，未成功则提前退出
         if ($paymentName == 'wechat') {
             if ($result->event_type != 'TRANSACTION.SUCCESS' && $result->resource['ciphertext']['trade_state'] != 'SUCCESS') {
                 wpLog($result);
@@ -221,7 +221,7 @@ class PaymentService extends BaseService
         }
 
         // 订单信息更新
-        // TODO: 把$trade_no保存到订单
+        // TODO: 把$trade_no保存到订单？
         update_post_status($orderPay['id'], 'publish'); // 已支付（付款时间自动更新）
         update_post_meta($orderPay['id'], 'method', $paymentName); // 最终成功的支付方式
 
@@ -233,16 +233,6 @@ class PaymentService extends BaseService
             //     'money'  =>  $orderPay['amount'],
             // ]);
             return $this->format();
-        }
-
-        // 如果是打赏，生成打赏记录，安排打款队列
-        // FIXME: 支付成功要100%完成打款，否则要生成打款记录，用于用户手动打款
-        if ($orderPay['type'] == 'donation') {
-            $donation_id = createDonation($orderPay['from_user_id'], $orderPay['to_user_id'], $orderPay['amount'], $orderPay['remark'], $orderPay['id']);
-
-            // // 加入打款队列
-            // $paymentService = theme('payment');
-            // $rs = $paymentService->transfer('alipay', '2023122712345', '0.1', '282818269@qq.com', '向明');
         }
 
         // 如果不是充值
@@ -284,6 +274,14 @@ class PaymentService extends BaseService
             //     "trade_state": "NOTPAY",
             //     "trade_state_desc": "订单未支付"
             // }
+            // SUCCESS--支付成功
+            // REFUND--转入退款
+            // NOTPAY--未支付
+            // CLOSED--已关闭
+            // REVOKED--已撤销(刷卡支付)
+            // USERPAYING--用户支付中
+            // PAYERROR--支付失败(其他原因，如银行返回失败)
+            // ACCEPT--已接收，等待扣款
         } catch (\Exception $e) {
             wpLog('[' . $paymentName . ']:' . $e->getMessage());
             return $this->formatError('查询支付结果失败');
@@ -380,7 +378,7 @@ class PaymentService extends BaseService
             // 1. 通过no拿到orderInfo
             $orderInfo = theme('order')->getOrderByNo($out_trade_no);
 
-            // 2. 然后触发支付成功后的操作paySuccess
+            // 2. 触发支付成功后的操作paySuccess
             $paySuccessData = theme('payment')->paySuccess($paymentName, $orderInfo, $result);
 
             // 3. 返回paySuccess结果

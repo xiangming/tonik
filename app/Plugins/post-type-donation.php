@@ -70,7 +70,7 @@ add_action('init', function () {
     register_post_type('donation', [
         'description' => __('Collection of donations.', config('textdomain')),
         'public' => true,
-        'supports' => ['author', 'custom-fields'],
+        'supports' => ['title', 'author', 'custom-fields'],
         'show_in_rest' => true, // 将自动生成一组类似posts的接口
         'rest_base' => 'donations',
         'menu_icon' => 'dashicons-coffee',
@@ -184,13 +184,15 @@ add_action('manage_orders_posts_custom_column', function ($column_name, $id) {
  * @param int $to_user_id  被打赏人ID
  * @param int $amount 打赏金额
  * @param string $remark 打赏留言，可选
+ * @param string $orderId 关联订单，可选
+ *
  * @return int $Id
  */
 function createDonation($from_user_id, $to_user_id, $amount, $remark, $orderId)
 {
     $in_data = array(
         'post_author' => $from_user_id,
-        'post_status' => 'publish', // 支付成功后，打赏记录应当是publish
+        'post_status' => 'draft',
         'post_type' => 'donation', // custom-post-type
     );
     // https://developer.wordpress.org/reference/functions/wp_insert_post/
@@ -223,5 +225,13 @@ function createDonation($from_user_id, $to_user_id, $amount, $remark, $orderId)
         update_post_meta($in_id, 'orderId', $orderId);
     }
 
-    return $in_id;
+    $donation_info = [
+        'id' => $in_id,
+        'orderId' => $orderId,
+        'amount' => $amount,
+        'identity' => get_user_meta($to_user_id, 'alipay_id', true), // FIXME: 使用创作者入驻的字段
+        'name' => get_user_meta($to_user_id, 'real_name', true), // FIXME: 使用创作者入驻的字段
+    ];
+
+    return $donation_info;
 }

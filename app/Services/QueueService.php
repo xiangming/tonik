@@ -11,12 +11,10 @@ class QueueService
      *
      * @var string
      */
-    protected $group = 'my-group';
-
-    // public function __construct($group)
-    // {
-    //     $this->group = $group;
-    // }
+    public function __construct($group = 'default-group')
+    {
+        $this->group = $group;
+    }
 
     /**
      * Enqueue an action to run one time, as soon as possible

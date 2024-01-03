@@ -17,6 +17,7 @@ class OrderService extends BaseService
      * @param   [string]  $amount  金额
      * @param   [string]  $name    购买的服务名称
      * @param   [string]  $remark  备注留言
+     * @param   [string]  $related 关联项目，
      *
      * @return  [type]           [return description]
      */
