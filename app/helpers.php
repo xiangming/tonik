@@ -100,21 +100,3 @@ function resError($message = 'error', $data = null, $code = 1)
     print_r(json_encode(['code' => $code, 'message' => $message, 'data' => $data]));
     return;
 }
-
-/**
- * 向 /wp-content/debug.log 写入log
- * 需要在wp-config.php中开启配置项（建议只在需要调试时才开启，否则会导致网站报错）
- * @since 1.0
- */
-if (!function_exists('wpLog')) {
-    function wpLog($log)
-    {
-        if (true === WP_DEBUG) {
-            if (is_array($log) || is_object($log)) {
-                error_log(print_r($log, true));
-            } else {
-                error_log($log);
-            }
-        }
-    }
-}

@@ -125,46 +125,44 @@ function statusHook($new_status, $old_status, $post)
 
                     // 普通订单支付成功
                     default:
-                        // 获取职位ID
-                        $pid = get_post_meta($id, 'productId', true);
+                        // // 获取职位ID
+                        // $pid = get_post_meta($id, 'productId', true);
 
-                        // 更新职位状态
-                        update_post_status($pid, 'publish');
+                        // // 更新职位状态
+                        // update_post_status($pid, 'publish');
 
-                        // 更新职位数据
-                        update_post_meta($pid, 'job_highlight', 1);
-                        // update_post_meta($pid, 'job_push_email', 1);
+                        // // 更新职位数据
+                        // update_post_meta($pid, 'job_highlight', 1);
+                        // // update_post_meta($pid, 'job_push_email', 1);
 
-                        // 获取置顶列表
-                        $stickies = get_option('sticky_posts');
-                        // 置顶此职位
-                        if (!is_array($stickies)) {
-                            $stickies = array($pid);
-                        }
+                        // // 获取置顶列表
+                        // $stickies = get_option('sticky_posts');
+                        // // 置顶此职位
+                        // if (!is_array($stickies)) {
+                        //     $stickies = array($pid);
+                        // }
 
-                        if (!in_array($pid, $stickies)) {
-                            $stickies[] = $pid;
-                        }
+                        // if (!in_array($pid, $stickies)) {
+                        //     $stickies[] = $pid;
+                        // }
 
-                        update_option('sticky_posts', $stickies);
+                        // update_option('sticky_posts', $stickies);
 
-                        // 更新职位发布时间为当前时间（先存草稿后支付，时间需要修正）
-                        $result = wp_update_post(
-                            array(
-                                'ID' => $pid,
-                                'post_date' => current_time('mysql'),
-                            )
-                        );
+                        // // 更新职位发布时间为当前时间（先存草稿后支付，时间需要修正）
+                        // $result = wp_update_post(
+                        //     array(
+                        //         'ID' => $pid,
+                        //         'post_date' => current_time('mysql'),
+                        //     )
+                        // );
 
-                        // 更新错误
-                        if (is_wp_error($result)) {
-                            $errmsg = $result->get_error_message();
+                        // // 更新错误
+                        // if (is_wp_error($result)) {
+                        //     $errmsg = $result->get_error_message();
 
-                            wpLog('statusHook错误：无法更新职位发布时间');
-
-                            // print_r(json_encode(array('status'=>'fail', 'message'=>$errmsg)));
-                            // exit();
-                        }
+                        //     // print_r(json_encode(array('status'=>'fail', 'message'=>$errmsg)));
+                        //     // exit();
+                        // }
 
                         // // 赠送额度：三送一
                         // $uid = get_post_field('post_author',$pid);

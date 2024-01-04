@@ -12,7 +12,7 @@ return [
     | namespace for gettext strings across theme. Remember, this value must
     | be in sync with `Text Domain:` entry inside style.css theme file.
     |
-    */
+     */
     'textdomain' => 'tonik',
 
     /*
@@ -24,9 +24,9 @@ return [
     | By default, they use `.tpl.php` suffix to distinguish template files
     | from controllers, but you are free to change it however you like.
     |
-    */
+     */
     'templates' => [
-        'extension' => '.tpl.php'
+        'extension' => '.tpl.php',
     ],
 
     /*
@@ -38,7 +38,7 @@ return [
     | they use WordPress `get_template_directory` functions and
     | probably you don't need make any changes in here.
     |
-    */
+     */
     'paths' => [
         'directory' => get_template_directory(),
         'uri' => get_template_directory_uri(),
@@ -53,7 +53,7 @@ return [
     | and loading theme files, assets and templates. They must be
     | given as relative to the `root` theme directory.
     |
-    */
+     */
     'directories' => [
         'languages' => 'resources/languages',
         'templates' => 'resources/templates',
@@ -70,9 +70,9 @@ return [
     | The components listed below will be automatically loaded on the
     | theme bootstrap by `functions.php` file. Feel free to add your
     | own files to this array which you would like to autoload.
-    | 
+    |
     | 注意加载有先后顺序
-    */
+     */
     'autoload' => [
         'Traits/ResourceTrait.php',
         'helpers.php',
@@ -83,6 +83,7 @@ return [
         'Plugins/user-account-center.php',
         'Services/BaseService.php',
         'Services/CaptchaMessage.php',
+        'Services/LogService.php',
         'Services/MailService.php',
         'Services/OrderService.php',
         'Services/PaymentService.php',

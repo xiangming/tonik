@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use function Tonik\Theme\App\wpLog;
+use function Tonik\Theme\App\theme;
 use Yansongda\Pay\Pay;
 
 /**
@@ -181,7 +181,8 @@ class PaymentService extends BaseService
             // return $this->format(['code_url' => $result->code_url, 'order_id' => $orderPay['id'], 'out_trade_no' => $orderPay['out_trade_no']]);
             return $this->format($result);
         } catch (\Exception $e) {
-            wpLog('[' . $paymentName . ']:' . $e->getMessage());
+            theme('log')->log($e->getMessage(), $paymentName);
+
             return $this->formatError('调取支付失败');
         }
     }
@@ -207,14 +208,14 @@ class PaymentService extends BaseService
         // 判断是否支付成功，未成功则提前退出
         if ($paymentName == 'wechat') {
             if ($result->event_type != 'TRANSACTION.SUCCESS' && $result->resource['ciphertext']['trade_state'] != 'SUCCESS') {
-                wpLog($result);
+                // theme('log')->log($result, $paymentName);
                 throw new \Exception('wechat pay error - ' . $result->resource['ciphertext']['out_trade_no']);
             }
             $trade_no = $result->resource['ciphertext']['transaction_id'];
         }
         if ($paymentName == 'alipay') {
             if ($result->trade_status != 'TRADE_SUCCESS') {
-                wpLog($result);
+                // theme('log')->log($result, $paymentName);
                 throw new \Exception('alipay pay error - ' . $result->out_trade_no);
             }
             $trade_no = $result->trade_no;
@@ -283,7 +284,8 @@ class PaymentService extends BaseService
             // PAYERROR--支付失败(其他原因，如银行返回失败)
             // ACCEPT--已接收，等待扣款
         } catch (\Exception $e) {
-            wpLog('[' . $paymentName . ']:' . $e->getMessage());
+            theme('log')->log($e->getMessage(), $paymentName);
+
             return $this->formatError('查询支付结果失败');
         }
     }
@@ -335,7 +337,8 @@ class PaymentService extends BaseService
             //     "trade_state_desc": "订单未支付"
             // }
         } catch (\Exception $e) {
-            wpLog('[' . $paymentName . ']:' . $e->getMessage());
+            theme('log')->log($e->getMessage(), $paymentName.'转账');
+
             return $this->formatError('转账失败');
         }
     }
@@ -392,7 +395,8 @@ class PaymentService extends BaseService
 
             return $paySuccessData;
         } catch (\Exception $e) {
-            wpLog('[' . $paymentName . ']:' . $e->getMessage());
+            theme('log')->log($e->getMessage(), $paymentName);
+            
             return $this->formatError($e->getMessage());
         }
     }

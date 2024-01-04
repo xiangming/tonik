@@ -13,6 +13,7 @@ namespace Tonik\Theme\App\Setup;
 |
  */
 
+use App\Services\LogService;
 use App\Services\MailService;
 use App\Services\OrderService;
 use App\Services\PaymentService;
@@ -24,7 +25,7 @@ use WP_Query;
 
 /**
  * Binds services
- * 
+ *
  * 通过theme方法快速获取：theme('books');
  *
  * @return void
@@ -63,6 +64,10 @@ function bind_services()
 
     theme()->bind('mail', function (Theme $theme, $parameters) {
         return new MailService();
+    });
+
+    theme()->bind('log', function (Theme $theme, $parameters) {
+        return new LogService();
     });
 }
 add_action('init', 'Tonik\Theme\App\Setup\bind_services');

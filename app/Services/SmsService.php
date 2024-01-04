@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use function Tonik\Theme\App\wpLog;
+use function Tonik\Theme\App\theme;
 use Overtrue\EasySms\EasySms;
 
 class SmsService extends BaseService
@@ -80,9 +80,8 @@ class SmsService extends BaseService
             // return $code;
         } catch (\Overtrue\EasySms\Exceptions\NoGatewayAvailableException $e) {
             $error_msg = $e->getException('aliyun')->getMessage();
-            wpLog('[SMS send to' . $phoneNumber . ']:' . $error_msg);
-            // resError($error_msg);
-            // exit();
+
+            theme('log')->log($error_msg, 'SMS to ' . $phoneNumber);
 
             return $this->formatError('短信验证码发送失败');
         }
