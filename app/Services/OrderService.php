@@ -21,7 +21,7 @@ class OrderService extends BaseService
      *
      * @return  [type]           [return description]
      */
-    public function createOrder($type, $amount, $name, $remark, $related)
+    public function createOrder($type, $amount, $name, $remark, $related, $method)
     {
         // TODO: 格式化商品数据等
 
@@ -29,7 +29,7 @@ class OrderService extends BaseService
 
         // TODO: 地址验证
 
-        // 生成订单号
+        // 生成支付通道订单号
         // $out_trade_no = date('YmdHis') . '-' . $productId . '-' . $from_user_id . '-' . $to_user_id . '-' . rand(1000, 9999); // 注意总长度不能超过32位
         $out_trade_no = date('YmdHis') . '00' . mt_rand(10000, 99999);
 
@@ -38,7 +38,7 @@ class OrderService extends BaseService
             // 'post_author'    => $uid,
             'post_title' => $out_trade_no,
             'post_status' => 'draft',
-            'post_type' => 'orders',
+            'post_type' => 'orders', // custom-post-type
         );
         // https://developer.wordpress.org/reference/functions/wp_insert_post/
         // If the $postarr parameter has ‘ID’ set to a value, then post will be updated.
@@ -47,7 +47,6 @@ class OrderService extends BaseService
         // 订单创建错误
         if (is_wp_error($in_id)) {
             $errmsg = $in_id->get_error_message();
-            // return new WP_Error(1, $errmsg);
             return $this->formatError($errmsg);
         }
 
@@ -76,6 +75,11 @@ class OrderService extends BaseService
             update_post_meta($in_id, 'related', $related);
         }
 
+        // 支付通道
+        if (isset($method)) {
+            update_post_meta($in_id, 'method', $method);
+        }
+
         // TODO: 执行成功则删除购物车
 
         $order_pay_info = [
@@ -86,6 +90,7 @@ class OrderService extends BaseService
             'type' => $type,
             'remark' => $remark,
             'related' => $related,
+            'method' => $method,
         ];
 
         return $this->format($order_pay_info);
@@ -336,23 +341,20 @@ class OrderService extends BaseService
 
     }
 
-    // base64 代码验证
-    public function base64Check()
+    // 查询订单是否支付成功，$rs['data']返回布尔值
+    public function check($orderId)
     {
-        $base64 = request()->params ?? '';
-
-        // 如果为空
-        if (empty($base64)) {
-            return $this->formatError(__('tip.order.error'));
+        if (empty($orderId)) {
+            return $this->formatError('order not found.');
         }
 
-        // 判断是否能解析
-        try {
-            $params = json_decode(base64_decode($base64), true);
-        } catch (\Exception $e) {
-            return $this->formatError(__('tip.order.error') . '2');
+        $status = get_post_status($orderId);
+
+        if (!$status) {
+            return $this->formatError('order status check failed');
         }
-        return $this->format($params);
+
+        return $this->format($status === 'publish');
     }
 
     // // 获取订单
@@ -378,21 +380,23 @@ class OrderService extends BaseService
         );
         $orders = get_posts($args);
 
-        // FIXME: check the orders count
-        if ($orders) {
-            $order = $orders[0];
-            $orderId = $order['id'];
-            return array_merge($order, [
-                'from_user_id' => $order['author'],
-                'to_user_id' => get_post_meta($orderId, 'related'),
-                'name' => get_post_meta($orderId, 'name'),
-                'amount' => get_post_meta($orderId, 'amount'),
-                'type' => get_post_meta($orderId, 'type'),
-                'remark' => get_post_meta($orderId, 'remark'),
-            ]);
+        // check the order
+        if (empty($orders) || empty($orders[0])) {
+            return $this->formatError('订单不存在');
         }
 
-        return null;
+        $order = $orders[0];
+        $orderId = $order->ID;
+        return $this->format([
+            'id' => $orderId,
+            'status' => get_post_status($orderId),
+            'from_user_id' => $order->post_author,
+            'to_user_id' => get_post_meta($orderId, 'related', true),
+            'name' => get_post_meta($orderId, 'name', true),
+            'amount' => get_post_meta($orderId, 'amount', true),
+            'type' => get_post_meta($orderId, 'type', true),
+            'remark' => get_post_meta($orderId, 'remark', true),
+        ]);
     }
 
     // 获取关联项目信息

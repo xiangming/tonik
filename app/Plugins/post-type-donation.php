@@ -67,39 +67,39 @@ add_action('init', function () {
     //     //'rewrite'             => array( 'slug' => '/', 'with_front' => false )// hide slug in URL
     // );
 
-    register_post_type('donation', [
-        'description' => __('Collection of donations.', config('textdomain')),
-        'public' => true,
-        'supports' => ['title', 'author', 'custom-fields'],
-        'show_in_rest' => true, // 将自动生成一组类似posts的接口
-        'rest_base' => 'donations',
-        'menu_icon' => 'dashicons-coffee',
-        'labels' => [
-            'name' => _x('Donations', 'post type general name', config('textdomain')),
-            'singular_name' => _x('Donation', 'post type singular name', config('textdomain')),
-            'menu_name' => _x('Donations', 'admin menu', config('textdomain')),
-            'name_admin_bar' => _x('Donation', 'add new on admin bar', config('textdomain')),
-            'add_new' => _x('Add New', 'donation', config('textdomain')),
-            'add_new_item' => __('Add New Donation', config('textdomain')),
-            'new_item' => __('New Donation', config('textdomain')),
-            'edit_item' => __('Edit Donation', config('textdomain')),
-            'view_item' => __('View Donation', config('textdomain')),
-            'all_items' => __('All Donations', config('textdomain')),
-            'search_items' => __('Search Donations', config('textdomain')),
-            'parent_item_colon' => __('Parent Donations:', config('textdomain')),
-            'not_found' => __('No donations found.', config('textdomain')),
-            'not_found_in_trash' => __('No donations found in Trash.', config('textdomain')),
-        ],
-    ]);
+    // register_post_type('donation', [
+    //     'description' => __('Collection of donations.', config('textdomain')),
+    //     'public' => true,
+    //     'supports' => ['title', 'author', 'custom-fields'],
+    //     'show_in_rest' => true, // 将自动生成一组类似posts的接口
+    //     'rest_base' => 'donations',
+    //     'menu_icon' => 'dashicons-coffee',
+    //     'labels' => [
+    //         'name' => _x('Donations', 'post type general name', config('textdomain')),
+    //         'singular_name' => _x('Donation', 'post type singular name', config('textdomain')),
+    //         'menu_name' => _x('Donations', 'admin menu', config('textdomain')),
+    //         'name_admin_bar' => _x('Donation', 'add new on admin bar', config('textdomain')),
+    //         'add_new' => _x('Add New', 'donation', config('textdomain')),
+    //         'add_new_item' => __('Add New Donation', config('textdomain')),
+    //         'new_item' => __('New Donation', config('textdomain')),
+    //         'edit_item' => __('Edit Donation', config('textdomain')),
+    //         'view_item' => __('View Donation', config('textdomain')),
+    //         'all_items' => __('All Donations', config('textdomain')),
+    //         'search_items' => __('Search Donations', config('textdomain')),
+    //         'parent_item_colon' => __('Parent Donations:', config('textdomain')),
+    //         'not_found' => __('No donations found.', config('textdomain')),
+    //         'not_found_in_trash' => __('No donations found in Trash.', config('textdomain')),
+    //     ],
+    // ]);
     // flush_rewrite_rules();
 });
 
 /**
- * 后台文章列表显示打赏信息
- * @author arvinxiang.com
- * @since 1.0
+ * 定制管理后台文章列表列
+ * 
+ * https://developer.wordpress.org/reference/hooks/manage_post_type_posts_columns/
  */
-add_filter('manage_orders_posts_columns', function ($columns) {
+add_filter('manage_donation_posts_columns', function ($columns) {
     // unset( $columns['author'] );
     unset($columns['categories']);
     unset($columns['tags']);
@@ -132,7 +132,12 @@ add_filter('manage_orders_posts_columns', function ($columns) {
     return $sort_columns;
 });
 
-add_action('manage_orders_posts_custom_column', function ($column_name, $id) {
+/**
+ * 定制管理后台文章列表列内容
+ * 
+ * https://developer.wordpress.org/reference/hooks/manage_post-post_type_posts_custom_column/
+ */
+add_action('manage_donation_posts_custom_column', function ($column_name, $id) {
     if ($column_name == 'productName') {
         $productName = get_post_meta($id, "productName", true);
         echo $productName;
@@ -177,61 +182,3 @@ add_action('manage_orders_posts_custom_column', function ($column_name, $id) {
 //     return $query;
 // }
 // add_filter( 'pre_get_posts', 'postsFilter' );
-
-/**
- * 创建打赏记录
- * @param int $from_user_id  打赏人ID
- * @param int $to_user_id  被打赏人ID
- * @param int $amount 打赏金额
- * @param string $remark 打赏留言，可选
- * @param string $orderId 关联订单，可选
- *
- * @return int $Id
- */
-function createDonation($from_user_id, $to_user_id, $amount, $remark, $orderId)
-{
-    $in_data = array(
-        'post_author' => $from_user_id,
-        'post_status' => 'draft',
-        'post_type' => 'donation', // custom-post-type
-    );
-    // https://developer.wordpress.org/reference/functions/wp_insert_post/
-    // If the $postarr parameter has ‘ID’ set to a value, then post will be updated.
-    $in_id = wp_insert_post($in_data, true);
-
-    // 订单提交错误
-    if (is_wp_error($in_id)) {
-        $errmsg = $in_id->get_error_message();
-        return new WP_Error(1, $errmsg);
-    }
-
-    // 被打赏人
-    if (isset($to_user_id)) {
-        update_post_meta($in_id, 'to', $to_user_id);
-    }
-
-    // 打赏金额
-    if (isset($amount)) {
-        update_post_meta($in_id, 'amount', $amount);
-    }
-
-    // 备注
-    if (isset($remark)) {
-        update_post_meta($in_id, 'remark', $remark);
-    }
-
-    // 关联订单
-    if (isset($orderId)) {
-        update_post_meta($in_id, 'orderId', $orderId);
-    }
-
-    $donation_info = [
-        'id' => $in_id,
-        'orderId' => $orderId,
-        'amount' => $amount,
-        'identity' => get_user_meta($to_user_id, 'alipay_id', true), // FIXME: 使用创作者入驻的字段
-        'name' => get_user_meta($to_user_id, 'real_name', true), // FIXME: 使用创作者入驻的字段
-    ];
-
-    return $donation_info;
-}

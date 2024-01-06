@@ -13,6 +13,7 @@ namespace Tonik\Theme\App\Setup;
 |
  */
 
+use App\Services\DonationService;
 use App\Services\LogService;
 use App\Services\MailService;
 use App\Services\OrderService;
@@ -68,6 +69,10 @@ function bind_services()
 
     theme()->bind('log', function (Theme $theme, $parameters) {
         return new LogService();
+    });
+
+    theme()->bind('donation', function (Theme $theme, $parameters) {
+        return new DonationService();
     });
 }
 add_action('init', 'Tonik\Theme\App\Setup\bind_services');

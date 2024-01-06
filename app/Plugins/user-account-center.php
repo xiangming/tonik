@@ -466,7 +466,7 @@ add_action('rest_api_init', function () {
             $to = sanitize_text_field($parameters['to']); // 被打赏人，必填
             $amount = sanitize_text_field($parameters['amount']); // 打赏金额，必填
             $remark = $parameters['remark'] ? sanitize_text_field($parameters['remark']) : null; // 打赏留言，可选
-            $payment_name = $parameters['payment_name'] ? sanitize_text_field($parameters['payment_name']) : 'alipay'; // 支付通道，可选
+            $method = $parameters['method'] ? sanitize_text_field($parameters['method']) : 'alipay'; // 支付通道，可选
             $device = $parameters['device'] ? sanitize_text_field($parameters['device']) : 'scan'; // 支付设备类型，可选
 
             // TODO: 一般性校验，使用WP内置方法即可（参考下面的args），不需要额外处理
@@ -489,7 +489,7 @@ add_action('rest_api_init', function () {
             // 1. 创建order
             $name = '打赏-' . $to; // 支付通道显示的标题
             $orderService = theme('order');
-            $rs = $orderService->createOrder('donation', $amount, $name, $remark, $to_user_id);
+            $rs = $orderService->createOrder('donation', $amount, $name, $remark, $to_user_id, $method);
 
             // 创建订单失败
             if (!$rs['status']) {
@@ -499,7 +499,7 @@ add_action('rest_api_init', function () {
 
             // 2. 调取第三方支付
             $paymentService = theme('payment');
-            $rs = $paymentService->pay($payment_name, $device, $rs['data']);
+            $rs = $paymentService->pay($method, $device, $rs['data']);
 
             // 3. 输出结果
             $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
@@ -532,7 +532,7 @@ add_action('rest_api_init', function () {
                 'type' => "string",
                 'required' => false,
             ],
-            'payment_name' => [
+            'method' => [
                 "description" => "支付通道。",
                 'type' => "string",
                 'required' => true,
@@ -568,18 +568,49 @@ add_action('rest_api_init', function () {
         'methods' => 'POST',
         'callback' => function ($request) {
             $parameters = $request->get_json_params();
-            $payment_name = $parameters['payment_name'] ? sanitize_text_field($parameters['payment_name']) : 'alipay'; // 支付通道
+            $method = $parameters['method'] ? sanitize_text_field($parameters['method']) : 'alipay'; // 支付通道
             $out_trade_no = $parameters['out_trade_no'] ? sanitize_text_field($parameters['out_trade_no']) : null; // 第三方单号
 
             $paymentService = theme('payment');
-            $rs = $paymentService->find($payment_name, $out_trade_no);
+            $rs = $paymentService->find($method, $out_trade_no);
 
             // 输出结果
             $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
             exit();
         },
         'args' => array(
-            'payment_name' => [
+            'method' => [
+                "description" => "支付通道。",
+                'type' => "string",
+                'required' => true,
+            ],
+            'out_trade_no' => [
+                "description" => "第三方订单号。",
+                'type' => "string",
+                'required' => true,
+            ],
+        ),
+        'permission_callback' => '__return_true',
+    ));
+
+    // Register a new endpoint: /wp/v2/payment/check
+    register_rest_route(WP_V2_NAMESPACE, '/payment/check', array(
+        'methods' => 'POST',
+        'callback' => function ($request) {
+            $parameters = $request->get_json_params();
+            
+            $method = $parameters['method'] ? sanitize_text_field($parameters['method']) : 'alipay'; // 支付通道
+            $out_trade_no = $parameters['out_trade_no'] ? sanitize_text_field($parameters['out_trade_no']) : null; // 第三方单号
+
+            $paymentService = theme('payment');
+            $rs = $paymentService->check($method, $out_trade_no);
+
+            // 输出结果
+            $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
+            exit();
+        },
+        'args' => array(
+            'method' => [
                 "description" => "支付通道。",
                 'type' => "string",
                 'required' => true,

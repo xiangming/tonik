@@ -8,7 +8,7 @@ namespace App\Services;
  */
 class LogService extends BaseService
 {
-    public function log($log, $namespace = null)
+    public function _log($log, $namespace = null)
     {
         if (true === WP_DEBUG) {
             if (is_array($log) || is_object($log)) {
@@ -18,10 +18,28 @@ class LogService extends BaseService
             }
 
             if ($namespace) {
-                error_log('[' . $namespace . ']: ' . $message);
+                error_log($namespace . $message);
             } else {
                 error_log($message);
             }
         }
+    }
+
+    public function log($log, $namespace = null)
+    {
+        $namespace = $namespace ? '[' . $namespace . ']' : null;
+        $this->_log($log, '[普通]' . $namespace . ': ');
+    }
+
+    public function debug($log, $namespace = null)
+    {
+        $namespace = $namespace ? '[' . $namespace . ']' : null;
+        $this->_log($log, '[调试]' . $namespace . ': ');
+    }
+
+    public function error($log, $namespace = null)
+    {
+        $namespace = $namespace ? '[' . $namespace . ']' : null;
+        $this->_log($log, '[错误]' . $namespace . ': ');
     }
 }

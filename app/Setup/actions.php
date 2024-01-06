@@ -2,6 +2,8 @@
 
 namespace Tonik\Theme\App\Setup;
 
+use function Tonik\Theme\App\theme;
+
 /*
 |-----------------------------------------------------------
 | Theme Actions
@@ -31,41 +33,51 @@ add_filter('excerpt_length', 'Tonik\Theme\App\Setup\example_action');
  */
 function transfer($donation)
 {
+    theme('log')->log($donation, 'donation find start');
+
     $paymentService = theme('payment');
 
     // 向支付通道查询一次订单状态
     $out_trade_no = get_the_title($donation['orderId']);
-    $paymentName = get_post_meta($donation['orderId'], 'method');
+    $paymentName = get_post_meta($donation['orderId'], 'method', true); // 如果是在wp-admin设置的，可能没有method
     $rs = $paymentService->find($paymentName, $out_trade_no);
 
     // TODO: 支持余额支付
 
     // 查询失败，提前退出
     if (!$rs['status']) {
-        // update_post_status($donation['id'], 'pending');
+        theme('log')->log($rs['msg'], 'donation find error');
         return;
     }
 
-    // 支付未成功则设置为draft并提前退出
+    theme('log')->log($rs['data'], 'donation find success');
+
+    // 支付未成功则提前退出
     if ($rs['data']['trade_state'] !== 'SUCCESS') {
-        // update_post_status($donation['id'], 'draft');
+        theme('log')->log('支付未成功，提前退出', 'donation transfer');
         return;
     }
 
     // 支付成功
 
+    theme('log')->log($donation, 'donation transfer start');
+
     // 执行打款（当前只支持alipay）
-    $rs = $paymentService->transfer('alipay', '2023122712345', '0.1', '282818269@qq.com', '向明'); // FIXME: 改为动态值
-    // $rs = $paymentService->transfer('alipay', '2023122712345', $donation['amount'], $donation['identity'], $donation['name']);
+    // $rs = $paymentService->transfer('alipay', $donation['out_trade_no'], '0.1', '282818269@qq.com', '向明'); // FIXME: 改为动态值
+    $rs = $paymentService->transfer('alipay', $donation['out_trade_no'], '0.1', 'arvinxiang@qq.com', '向明'); // FIXME: 改为动态值
+    // $rs = $paymentService->transfer('alipay', $donation['out_trade_no'], $donation['amount'], $donation['identity'], $donation['name']);
 
     // 打款失败
     if (!$rs['status']) {
+        theme('log')->log($rs['msg'], 'donation transfer error');
         update_post_status($donation['id'], 'pending');
         return;
     }
 
     // 打款成功
     update_post_status($donation['id'], 'publish');
+
+    theme('log')->log($rs['msg'], 'donation transfer success');
 }
 add_action('transfer', 'Tonik\Theme\App\Setup\transfer');
 
@@ -86,28 +98,48 @@ function statusHook($new_status, $old_status, $post)
 {
     // 从非publish变更为publish时执行
     if ('publish' == $new_status && 'publish' != $old_status && isset($post->post_type)) {
-        $id = $post->ID;
+        // $id = $post->ID;
+
+        theme('log')->log($post, 'order');
 
         switch ($post->post_type) {
 
             case 'orders':
                 $out_trade_no = $post->post_title;
-                $order = theme('order')->getOrderByNo($out_trade_no);
-                // $type = get_post_meta($id, 'type', true);
-                // $amount = get_post_meta($id, 'amount', true);
-                // $remark = get_post_meta($id, 'remark', true);
-                // $type = get_post_meta($id, 'type', true);
+                $rs = theme('order')->getOrderByNo($out_trade_no);
 
-                switch ($type) {
-                    // donation: 生成打赏记录
+                if (!$rs['status']) {
+                    return $this->formatError($rs['msg']);
+                }
+
+                $order = $rs['data'];
+
+                theme('log')->log($order, 'order');
+
+                switch ($order['type']) {
+
                     case 'donation':
 
-                        // FIXME: 支付成功要100%完成打款，否则要生成打款记录，用于用户手动打款
-                        $donation = createDonation($order['from_user_id'], $order['to_user_id'], $order['amount'], $order['remark'], $order['id']);
+                        theme('log')->log('donation start');
 
-                        // 加入打款队列
-                        $queue = theme('queue');
-                        $queue->add_async('transfer', [$donation]);
+                        // FIXME: 支付成功要100%完成打款，否则要生成打款记录，用于用户手动打款
+                        $rs = theme('donation')->create($order['from_user_id'], $order['to_user_id'], $order['amount'], $order['remark'], $order['id']);
+
+                        if (!$rs['status']) {
+                            theme('log')->log($rs, 'donation create end');
+                            return;
+                        }
+
+                        theme('log')->log('donation end');
+
+                        try {
+                            // 加入打款队列
+                            $queue = theme('queue');
+                            $queue->add_async('transfer', [$rs['data']]);
+                        } catch (\Throwable $th) {
+                            theme('log')->log($th, 'donation transfer error catch');
+                            return;
+                        }
 
                         // // 获取关联uid
                         // $uid = get_post_field('post_author', $id);
@@ -191,4 +223,4 @@ function statusHook($new_status, $old_status, $post)
         }
     }
 }
-add_action('transition_post_status', 'Tonik\Theme\App\Setup\statusHook');
+add_action('transition_post_status', 'Tonik\Theme\App\Setup\statusHook', 10, 3);

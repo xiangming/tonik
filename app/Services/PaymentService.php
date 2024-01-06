@@ -86,7 +86,7 @@ class PaymentService extends BaseService
         'logger' => [
             'enable' => true,
             'file' => './logs/pay.log',
-            'level' => 'info', // 建议生产环境等级调整为 info，开发环境为 debug
+            'level' => 'debug', // 建议生产环境等级调整为 info，开发环境为 debug
             'type' => 'single', // optional, 可选 daily.
             'max_file' => 30, // optional, 当 type 为 daily 时有效，默认 30 天
         ],
@@ -205,7 +205,10 @@ class PaymentService extends BaseService
             // TODO: 生成余额记录
         }
 
+        theme('log')->debug($result, 'paySuccess->$result');
+
         // 判断是否支付成功，未成功则提前退出
+        // FIXME: 下面的字段是yansongda v3.1的，可能不正确
         if ($paymentName == 'wechat') {
             if ($result->event_type != 'TRANSACTION.SUCCESS' && $result->resource['ciphertext']['trade_state'] != 'SUCCESS') {
                 // theme('log')->log($result, $paymentName);
@@ -222,7 +225,7 @@ class PaymentService extends BaseService
         }
 
         // 订单信息更新
-        // TODO: 把$trade_no保存到订单？
+        // TODO: 保存$trade_no到订单，用于前端调用jsapi唤起支付
         update_post_status($orderPay['id'], 'publish'); // 已支付（付款时间自动更新）
         update_post_meta($orderPay['id'], 'method', $paymentName); // 最终成功的支付方式
 
@@ -246,11 +249,17 @@ class PaymentService extends BaseService
         return $paymentName == 'balance' ? $this->format() : Pay::$paymentName($this->config)->success();
     }
 
-    // 查询订单支付结果
+    /**
+     * 查询订单支付结果
+     *
+     * https://pay.weixin.qq.com/wiki/doc/apiv3/apis/chapter3_4_2.shtml
+     *
+     * @return  [Array] 支付通道结果对象
+     */
     public function find($paymentName = 'alipay', $out_trade_no = null)
     {
         if (empty($out_trade_no)) {
-            return $this->formatError('out_trade_no empty');
+            return $this->formatError('find $out_trade_no empty');
         }
 
         // 订单数据配置
@@ -266,15 +275,68 @@ class PaymentService extends BaseService
             // }
 
             return $this->format($result);
-            // {
-            //     "mch_id": "1512637611",
-            //     "appid": "wx63b95a5ba3d10f69",
-            //     "device_info": [],
-            //     "total_fee": "3000",
-            //     "out_trade_no": "0020220920083631008427000",
-            //     "trade_state": "NOTPAY",
-            //     "trade_state_desc": "订单未支付"
-            // }
+        } catch (\Exception $e) {
+            theme('log')->log($e->getMessage(), $paymentName);
+
+            return $this->formatError('查询支付结果失败');
+        }
+    }
+
+    /**
+     * 查询订单是否支付成功
+     *
+     * https://pay.weixin.qq.com/wiki/doc/apiv3/apis/chapter3_4_2.shtml
+     */
+    public function check($paymentName = 'alipay', $out_trade_no = null)
+    {
+        if (empty($out_trade_no)) {
+            theme('log')->debug('check $out_trade_no empty');
+            return $this->formatError('check $out_trade_no empty');
+        }
+
+        $rs = $this->find($paymentName, $out_trade_no);
+
+        theme('log')->debug($rs, 'check->find');
+
+        if (!$rs['status']) {
+            theme('log')->debug($rs['msg']);
+            return $this->formatError($rs['msg']);
+        }
+
+        // 判断是否支付成功
+        if ($paymentName == 'wechat') {
+            // [appid] => wx63b95a5ba3d10f69
+            // [attach] =>
+            // [mchid] => 1512637611
+            // [out_trade_no] => 202312260853060036408
+            // [payer] => Array
+            // [promotion_detail] => Array
+            // [trade_state] => CLOSED
+            // [trade_state_desc] => 订单已关闭
+
+            // [amount] => Array
+            //     (
+            //         [currency] => CNY
+            //         [payer_currency] => CNY
+            //         [payer_total] => 1
+            //         [total] => 1
+            //     )
+            // [appid] => wx63b95a5ba3d10f69
+            // [attach] => 风启禾泰支付解决方案
+            // [bank_type] => OTHERS
+            // [mchid] => 1512637611
+            // [out_trade_no] => 20230911220408004231003123
+            // [payer] => Array
+            //     (
+            //         [openid] => oN2P21d5-msgLgHchECuwR3I6DRM
+            //     )
+            // [promotion_detail] => Array
+            // [success_time] => 2023-09-11T22:04:54+08:00
+            // [trade_state] => SUCCESS
+            // [trade_state_desc] => 支付成功
+            // [trade_type] => NATIVE
+            // [transaction_id] => 4200001891202309111964511274
+
             // SUCCESS--支付成功
             // REFUND--转入退款
             // NOTPAY--未支付
@@ -283,18 +345,43 @@ class PaymentService extends BaseService
             // USERPAYING--用户支付中
             // PAYERROR--支付失败(其他原因，如银行返回失败)
             // ACCEPT--已接收，等待扣款
-        } catch (\Exception $e) {
-            theme('log')->log($e->getMessage(), $paymentName);
 
-            return $this->formatError('查询支付结果失败');
+            // 支付未成功
+            if ($rs['data']['trade_state'] != 'SUCCESS') {
+                theme('log')->debug('wechat trade_state != SUCCESS');
+                return $this->format(['paid' => false]);
+            }
         }
+
+        if ($paymentName == 'alipay') {
+            // [code] => 10000
+            // [msg] => Success
+            // [buyer_logon_id] => arv***@qq.com
+            // [buyer_pay_amount] => 0.00
+            // [buyer_user_id] => 2088002593954546
+            // [invoice_amount] => 0.00
+            // [out_trade_no] => 202312271145010052547
+            // [point_amount] => 0.00
+            // [receipt_amount] => 0.00
+            // [total_amount] => 100.00
+            // [trade_no] => 2023122722001454541434248869
+            // [trade_status] => TRADE_CLOSED
+
+            // 支付未成功
+            if ($rs['data']['trade_status'] != 'TRADE_SUCCESS') {
+                theme('log')->debug('alipay trade_status != SUCCESS');
+                return $this->format(['paid' => false]);
+            }
+        }
+
+        return $this->format(['paid' => true]);
     }
 
     // 转账到支付宝账户
     public function transfer($paymentName = 'alipay', $out_trade_no = null, $amount = null, $identity = null, $name = null)
     {
         if (empty($out_trade_no)) {
-            return $this->formatError('$out_trade_no empty');
+            return $this->formatError('transfer $out_trade_no empty');
         }
 
         if (empty($amount)) {
@@ -327,17 +414,8 @@ class PaymentService extends BaseService
             $result = Pay::$paymentName($this->config)->transfer($this->orderData);
 
             return $this->format($result);
-            // {
-            //     "mch_id": "1512637611",
-            //     "appid": "wx63b95a5ba3d10f69",
-            //     "device_info": [],
-            //     "total_fee": "3000",
-            //     "out_trade_no": "0020220920083631008427000",
-            //     "trade_state": "NOTPAY",
-            //     "trade_state_desc": "订单未支付"
-            // }
         } catch (\Exception $e) {
-            theme('log')->log($e->getMessage(), $paymentName.'转账');
+            theme('log')->log($e->getMessage(), $paymentName . '转账');
 
             return $this->formatError('转账失败');
         }
@@ -361,6 +439,8 @@ class PaymentService extends BaseService
         // $this->setConfig($paymentName, $device, $config);
         $result = Pay::$paymentName($this->config)->callback(null, ['_config' => $config]);
 
+        theme('log')->debug($result, 'notify->$result');
+
         try {
             if ($paymentName == 'wechat') {
                 $out_trade_no = $result->resource['ciphertext']['out_trade_no'];
@@ -379,7 +459,13 @@ class PaymentService extends BaseService
             // return $pay->success()->send(); // laravel 框架中请直接 `return $pay->success()`
 
             // 1. 通过no拿到orderInfo
-            $orderInfo = theme('order')->getOrderByNo($out_trade_no);
+            $rs = theme('order')->getOrderByNo($out_trade_no);
+
+            if (!$rs['status']) {
+                return $this->formatError($rs['msg']);
+            }
+
+            $orderInfo = $rs['data'];
 
             // 2. 触发支付成功后的操作paySuccess
             $paySuccessData = theme('payment')->paySuccess($paymentName, $orderInfo, $result);
@@ -396,7 +482,7 @@ class PaymentService extends BaseService
             return $paySuccessData;
         } catch (\Exception $e) {
             theme('log')->log($e->getMessage(), $paymentName);
-            
+
             return $this->formatError($e->getMessage());
         }
     }
