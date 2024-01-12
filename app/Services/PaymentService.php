@@ -225,9 +225,19 @@ class PaymentService extends BaseService
         }
 
         // 订单信息更新
+
         // TODO: 保存$trade_no到订单，用于前端调用jsapi唤起支付
-        update_post_status($orderPay['id'], 'publish'); // 已支付（付款时间自动更新）
-        update_post_meta($orderPay['id'], 'method', $paymentName); // 最终成功的支付方式
+
+        // 已支付（付款时间自动更新）
+        $rs = theme('tool')->updatePostStatus($orderPay['id'], 'publish');
+        if (is_wp_error($rs)) {
+            $message = $result->get_error_message();
+            theme('log')->error($message, 'paySuccess->updatePostStatus');
+            throw new \Exception('paySuccess->updatePostStatus error - ' . $message);
+        }
+
+        // 最终成功的支付方式
+        update_post_meta($orderPay['id'], 'method', $paymentName);
 
         // 如果是充值，生成余额变动记录
         if ($orderPay['type'] == 'recharge') {
@@ -296,7 +306,7 @@ class PaymentService extends BaseService
 
         $rs = $this->find($paymentName, $out_trade_no);
 
-        theme('log')->debug($rs, 'check->find');
+        theme('log')->debug($rs, 'payment->check->find');
 
         if (!$rs['status']) {
             theme('log')->debug($rs['msg']);
@@ -346,10 +356,15 @@ class PaymentService extends BaseService
             // PAYERROR--支付失败(其他原因，如银行返回失败)
             // ACCEPT--已接收，等待扣款
 
+            // // 订单已关闭，则删除内部订单
+            // if ($rs['data']['trade_state'] === 'CLOSED') {
+            //     theme('log')->log('三方单已关闭，删除内部订单', 'payment->check');
+            //     // TODO: delete order post
+            // }
+
             // 支付未成功
             if ($rs['data']['trade_state'] != 'SUCCESS') {
-                theme('log')->debug('wechat trade_state != SUCCESS');
-                return $this->format(['paid' => false]);
+                return $this->format(false);
             }
         }
 
@@ -370,11 +385,11 @@ class PaymentService extends BaseService
             // 支付未成功
             if ($rs['data']['trade_status'] != 'TRADE_SUCCESS') {
                 theme('log')->debug('alipay trade_status != SUCCESS');
-                return $this->format(['paid' => false]);
+                return $this->format(false);
             }
         }
 
-        return $this->format(['paid' => true]);
+        return $this->format(true);
     }
 
     // 转账到支付宝账户

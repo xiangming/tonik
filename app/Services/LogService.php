@@ -41,5 +41,6 @@ class LogService extends BaseService
     {
         $namespace = $namespace ? '[' . $namespace . ']' : null;
         $this->_log($log, '[错误]' . $namespace . ': ');
+        // TODO: 邮件告警
     }
 }

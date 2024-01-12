@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use function Tonik\Theme\App\theme;
+
 class OrderService extends BaseService
 {
     // 创建订单前处理订单
@@ -19,7 +21,7 @@ class OrderService extends BaseService
      * @param   [string]  $remark  备注留言
      * @param   [string]  $related 关联项目，
      *
-     * @return  [type]           [return description]
+     * @return  [object]    订单信息
      */
     public function createOrder($type, $amount, $name, $remark, $related, $method)
     {
@@ -47,6 +49,9 @@ class OrderService extends BaseService
         // 订单创建错误
         if (is_wp_error($in_id)) {
             $errmsg = $in_id->get_error_message();
+
+            theme('log')->error($errmsg, 'order create error');
+
             return $this->formatError($errmsg);
         }
 
@@ -82,7 +87,7 @@ class OrderService extends BaseService
 
         // TODO: 执行成功则删除购物车
 
-        $order_pay_info = [
+        $result = [
             'id' => $in_id,
             'out_trade_no' => $out_trade_no,
             'amount' => $amount,
@@ -93,7 +98,9 @@ class OrderService extends BaseService
             'method' => $method,
         ];
 
-        return $this->format($order_pay_info);
+        theme('log')->debug($result, 'order create success');
+
+        return $this->format($result);
     }
 
     // 创建订单后处理

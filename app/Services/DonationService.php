@@ -35,7 +35,7 @@ class DonationService extends BaseService
         if (is_wp_error($in_id)) {
             $errmsg = $in_id->get_error_message();
 
-            theme('log')->log($errmsg, 'donation create error');
+            theme('log')->error($errmsg, 'donation create error');
 
             return $this->formatError($errmsg);
         }
@@ -60,17 +60,17 @@ class DonationService extends BaseService
             update_post_meta($in_id, 'orderId', $orderId);
         }
 
-        $donation_info = [
+        $result = [
             'id' => $in_id,
-            'out_trade_no' => $out_trade_no,
             'orderId' => $orderId,
+            'out_trade_no' => $out_trade_no,
             'amount' => $amount,
-            'identity' => get_user_meta($to_user_id, 'alipay_id', true), // FIXME: 使用创作者入驻的字段
-            'name' => get_user_meta($to_user_id, 'real_name', true), // FIXME: 使用创作者入驻的字段
+            'identity' => get_user_meta($to_user_id, 'alipay', true), // 使用创作者入驻字段-收款账号
+            'name' => get_user_meta($to_user_id, 'name', true), // 使用创作者入驻字段-真实姓名
         ];
 
-        theme('log')->log($donation_info, 'donation create success');
+        theme('log')->debug($result, 'donation create success');
 
-        return $this->format($donation_info);
+        return $this->format($result);
     }
 }

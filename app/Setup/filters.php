@@ -11,7 +11,7 @@ namespace Tonik\Theme\App\Setup;
 | filters hooks, which changes output or behaviour
 | of different parts of WordPress functions.
 |
-*/
+ */
 
 /**
  * Hides sidebar on index template on specific views.
@@ -40,3 +40,66 @@ function modify_excerpt_length()
     return 60;
 }
 add_filter('excerpt_length', 'Tonik\Theme\App\Setup\modify_excerpt_length');
+
+/**
+ * 通过 jwt_auth_expire 这个filter，将token有效期设置为一年
+ */
+add_filter('jwt_auth_expire', function ($issuedAt) {
+    // return $issuedAt + (DAY_IN_SECONDS * 365);
+    return time() + (DAY_IN_SECONDS * 365);
+});
+
+/**
+ * rewrite 'wp-json' REST API prefix with 'api'
+ */
+add_filter('rest_url_prefix', function () {
+    return 'api';
+});
+
+/**
+ * 修改 /token 接口返回值，增加avatar和roles字段
+ */
+add_filter('jwt_auth_token_before_dispatch', function ($data, $user) {
+    $avatar = get_avatar_url($user->ID);
+    $data['user_roles'] = $user->caps;
+    $data['user_avatar'] = $avatar;
+    return $data;
+}, 10, 3);
+
+/**
+ * 定制管理后台文章列表列
+ *
+ * https://developer.wordpress.org/reference/hooks/manage_post_type_posts_columns/
+ */
+add_filter('manage_donation_posts_columns', function ($columns) {
+    // unset( $columns['author'] );
+    unset($columns['categories']);
+    unset($columns['tags']);
+    unset($columns['comments']);
+    unset($columns['date']);
+    unset($columns['views']);
+
+    $columns['title'] = __('订单号');
+    $columns['productName'] = __('商品名称');
+    $columns['author'] = __('打赏人');
+    $columns['status'] = __('状态');
+    $columns['to'] = __('被打赏人');
+    $columns['amount'] = __('打赏金额');
+    $columns['time'] = __('打赏时间');
+    // return $columns;
+
+    // 调整位置
+    foreach ($columns as $key => $value) {
+        if ($key == 'date') {
+            $sort_columns['title'] = __('订单号');
+            $sort_columns['productName'] = __('商品名称');
+            $sort_columns['status'] = __('状态');
+            $sort_columns['to'] = __('被打赏人');
+            $sort_columns['author'] = __('打赏人');
+            $sort_columns['amount'] = __('打赏金额');
+            $sort_columns['time'] = __('打赏时间');
+        }
+        $sort_columns[$key] = $value;
+    }
+    return $sort_columns;
+});

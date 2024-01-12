@@ -1,8 +1,8 @@
 <?php
 /**
  * 添加 CORS 跨域 header
- * @author arvinxiang.com
- * @since 1.0
+ * 
+ * https://stackoverflow.com/questions/63282687/wordpress-rest-pre-serve-request-produces-php-header-warnings
  */
 add_action('rest_api_init', function () {
     /* unhook default function */
@@ -27,5 +27,5 @@ add_action('rest_api_init', function () {
         }
 
         return $value;
-    });
+    }, 11, 1);
 }, 15);

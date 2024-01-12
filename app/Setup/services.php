@@ -13,6 +13,7 @@ namespace Tonik\Theme\App\Setup;
 |
  */
 
+use App\Services\ArgsService;
 use App\Services\DonationService;
 use App\Services\LogService;
 use App\Services\MailService;
@@ -20,6 +21,8 @@ use App\Services\OrderService;
 use App\Services\PaymentService;
 use App\Services\QueueService;
 use App\Services\SmsService;
+use App\Services\ToolService;
+use App\Services\UserService;
 use function Tonik\Theme\App\theme;
 use Tonik\Gin\Foundation\Theme;
 use WP_Query;
@@ -45,6 +48,10 @@ function bind_services()
         return new WP_Query([
             'post_type' => 'book',
         ]);
+    });
+
+    theme()->bind('tool', function (Theme $theme, $parameters) {
+        return new ToolService();
     });
 
     theme()->bind('order', function (Theme $theme, $parameters) {
@@ -73,6 +80,14 @@ function bind_services()
 
     theme()->bind('donation', function (Theme $theme, $parameters) {
         return new DonationService();
+    });
+
+    theme()->bind('user', function (Theme $theme, $parameters) {
+        return new UserService();
+    });
+
+    theme()->bind('args', function (Theme $theme, $parameters) {
+        return new ArgsService();
     });
 }
 add_action('init', 'Tonik\Theme\App\Setup\bind_services');
