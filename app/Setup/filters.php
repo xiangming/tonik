@@ -103,3 +103,29 @@ add_filter('manage_donation_posts_columns', function ($columns) {
     }
     return $sort_columns;
 });
+
+/**
+ * 修改post返回值
+ */
+add_filter('rest_prepare_post', function ($response, $post, $request) {
+    $_data = $response->data;
+    $uid = $post->post_author;
+
+    // // My custom fields that I want to include in the WP API v2 responce
+    // $fields = ['job_title', 'job_city', 'job_highlight'];
+    // foreach ( $fields as $field ) {
+    //   $_data[$field] = get_post_meta( $pid, $field, true );
+    // }
+
+    // 获取用户数据
+    $user = get_userdata($uid);
+    $_data['author_name'] = $user->display_name;
+    $_data['author_slug'] = $user->user_nicename;
+
+    // $user = wp_get_current_user();
+    // $bookmarks = (array) get_user_meta($user->ID, 'bookmarks', true);
+    // $_data['bookmarked'] = in_array($pid, $bookmarks);
+
+    $response->data = $_data;
+    return $response;
+}, 10, 3);
