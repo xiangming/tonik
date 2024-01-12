@@ -32,6 +32,37 @@ function example_action()
 add_filter('excerpt_length', 'Tonik\Theme\App\Setup\example_action');
 
 /**
+ * 添加 CORS 跨域 header
+ *
+ * https://stackoverflow.com/questions/63282687/wordpress-rest-pre-serve-request-produces-php-header-warnings
+ */
+add_action('rest_api_init', function () {
+    /* unhook default function */
+    remove_filter('rest_pre_serve_request', 'rest_send_cors_headers');
+
+    /* then add your own filter */
+    add_filter('rest_pre_serve_request', function ($value) {
+        $origin = get_http_origin();
+
+        if ($origin) {
+            $my_sites = array('http://localhost:3000', 'http://localhost:3300', 'https://chuchuang.work');
+            if (in_array($origin, $my_sites)) {
+                $origin = esc_url_raw($origin);
+                header('Access-Control-Allow-Origin: ' . $origin);
+                header('Access-Control-Allow-Headers: X-Requested-With, content-type, Authorization');
+                header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
+                header('Access-Control-Allow-Credentials: true');
+                header('Vary: Origin', false);
+            }
+        } elseif (!headers_sent() && 'GET' === $_SERVER['REQUEST_METHOD'] && !is_user_logged_in()) {
+            header('Vary: Origin', false);
+        }
+
+        return $value;
+    }, 11, 1);
+}, 15);
+
+/**
  * 定制管理后台文章列表列内容
  *
  * https://developer.wordpress.org/reference/hooks/manage_post-post_type_posts_custom_column/
@@ -481,6 +512,19 @@ add_action('rest_api_init', function () {
             'out_trade_no' => theme('args')->out_trade_no(true),
         ),
         'permission_callback' => '__return_true',
+    ));
+
+    // Register a new endpoint: /wp/v2/test/xxx
+    register_rest_route(WP_V2_NAMESPACE, '/test/(?P<id>\d+)', array(
+        'methods' => 'GET',
+        'callback' => 'my_awesome_func',
+        'args' => array(
+            'id' => array(
+                'validate_callback' => function ($param, $request, $key) {
+                    return is_numeric($param);
+                },
+            ),
+        ),
     ));
 
     // Register a new endpoint: /wp/v2/users/test_queue
