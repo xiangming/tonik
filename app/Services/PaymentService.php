@@ -99,19 +99,19 @@ class PaymentService extends BaseService
 
     public function __construct()
     {
-        $this->config['alipay']['default']['app_id'] = getenv('ALIPAY_APP_ID');
-        $this->config['alipay']['default']['app_secret_cert'] = getenv('ALIPAY_APP_SECRET_CERT');
-        $this->config['alipay']['default']['app_public_cert_path'] = getenv('ALIPAY_APP_PUBLIC_CERT_PATH');
-        $this->config['alipay']['default']['alipay_public_cert_path'] = getenv('ALIPAY_PUBLIC_CERT_PATH');
-        $this->config['alipay']['default']['alipay_root_cert_path'] = getenv('ALIPAY_ROOT_CERT_PATH');
-        $this->config['alipay']['default']['notify_url'] = getenv('ALIPAY_NOTIFY_URL');
+        $this->config['alipay']['default']['app_id'] = $_ENV['ALIPAY_APP_ID'];
+        $this->config['alipay']['default']['app_secret_cert'] = $_ENV['ALIPAY_APP_SECRET_CERT'];
+        $this->config['alipay']['default']['app_public_cert_path'] = $_ENV['ALIPAY_APP_PUBLIC_CERT_PATH'];
+        $this->config['alipay']['default']['alipay_public_cert_path'] = $_ENV['ALIPAY_PUBLIC_CERT_PATH'];
+        $this->config['alipay']['default']['alipay_root_cert_path'] = $_ENV['ALIPAY_ROOT_CERT_PATH'];
+        $this->config['alipay']['default']['notify_url'] = $_ENV['ALIPAY_NOTIFY_URL'];
 
-        $this->config['wechat']['default']['mch_id'] = getenv('WECHAT_MCH_ID');
-        $this->config['wechat']['default']['mch_secret_key_v2'] = getenv('WECHAT_MCH_SECRET_KEY_V2');
-        $this->config['wechat']['default']['mch_secret_key'] = getenv('WECHAT_MCH_SECRET_KEY');
-        $this->config['wechat']['default']['mch_secret_cert'] = getenv('WECHAT_MCH_SECRET_CERT');
-        $this->config['wechat']['default']['mch_public_cert_path'] = getenv('WECHAT_MCH_SECRET_CERT_PATH');
-        $this->config['wechat']['default']['notify_url'] = getenv('WECHAT_NOTIFY_URL');
+        $this->config['wechat']['default']['mch_id'] = $_ENV['WECHAT_MCH_ID'];
+        $this->config['wechat']['default']['mch_secret_key_v2'] = $_ENV['WECHAT_MCH_SECRET_KEY_V2'];
+        $this->config['wechat']['default']['mch_secret_key'] = $_ENV['WECHAT_MCH_SECRET_KEY'];
+        $this->config['wechat']['default']['mch_secret_cert'] = $_ENV['WECHAT_MCH_SECRET_CERT'];
+        $this->config['wechat']['default']['mch_public_cert_path'] = $_ENV['WECHAT_MCH_SECRET_CERT_PATH'];
+        $this->config['wechat']['default']['notify_url'] = $_ENV['WECHAT_NOTIFY_URL'];
     }
 
     /**

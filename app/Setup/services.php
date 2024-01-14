@@ -54,14 +54,6 @@ function bind_services()
         return new ToolService();
     });
 
-    theme()->bind('order', function (Theme $theme, $parameters) {
-        return new OrderService();
-    });
-
-    theme()->bind('payment', function (Theme $theme, $parameters) {
-        return new PaymentService();
-    });
-
     theme()->bind('queue', function (Theme $theme, $parameters) {
         return new QueueService();
     });
@@ -78,16 +70,24 @@ function bind_services()
         return new LogService();
     });
 
+    theme()->bind('args', function (Theme $theme, $parameters) {
+        return new ArgsService();
+    });
+
+    theme()->bind('order', function (Theme $theme, $parameters) {
+        return new OrderService();
+    });
+
+    theme()->bind('payment', function (Theme $theme, $parameters) {
+        return new PaymentService();
+    });
+
     theme()->bind('donation', function (Theme $theme, $parameters) {
         return new DonationService();
     });
 
     theme()->bind('user', function (Theme $theme, $parameters) {
         return new UserService();
-    });
-
-    theme()->bind('args', function (Theme $theme, $parameters) {
-        return new ArgsService();
     });
 }
 add_action('init', 'Tonik\Theme\App\Setup\bind_services');
