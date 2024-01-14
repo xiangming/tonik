@@ -196,7 +196,7 @@ add_action('transition_post_status', function ($new_status, $old_status, $post) 
 
                         theme('log')->log('donation start');
 
-                        // FIXME: 支付成功要100%完成打款，否则要生成打款记录，用于用户手动打款
+                        // 支付成功后要生成打赏记录
                         $rs = theme('donation')->create($order['from_user_id'], $order['to_user_id'], $order['amount'], $order['remark'], $order['id']);
 
                         if (!$rs['status']) {
@@ -206,10 +206,10 @@ add_action('transition_post_status', function ($new_status, $old_status, $post) 
 
                         theme('log')->log('donation end');
 
+                        
+                        // 加入打款队列
                         try {
-                            // 加入打款队列
-                            $queue = theme('queue');
-                            $queue->add_async('transfer', [$rs['data']]);
+                            theme('queue')->add_async('transfer', [$rs['data']]);
                         } catch (\Throwable $th) {
                             theme('log')->log($th, 'donation transfer error catch');
                             return;
@@ -393,7 +393,7 @@ add_action('rest_api_init', function () {
     ));
 
     // Register a new endpoint: /wp/v2/donation
-    register_rest_route(WP_V2_NAMESPACE, '/donation', array(
+    register_rest_route(WP_V2_NAMESPACE, '/payment/donation', array(
         'methods' => 'POST',
         'callback' => function ($request) {
             $parameters = $request->get_json_params();
@@ -474,8 +474,9 @@ add_action('rest_api_init', function () {
         'methods' => 'POST',
         'callback' => function ($request) {
             $parameters = $request->get_json_params();
-            $method = $parameters['method'] ? sanitize_text_field($parameters['method']) : 'alipay'; // 支付通道
-            $out_trade_no = $parameters['out_trade_no'] ? sanitize_text_field($parameters['out_trade_no']) : null; // 第三方单号
+
+            $method = $parameters['method'] ? $parameters['method'] : 'alipay'; // 支付通道
+            $out_trade_no = $parameters['out_trade_no'] ? $parameters['out_trade_no'] : null; // 第三方单号
 
             $paymentService = theme('payment');
             $rs = $paymentService->find($method, $out_trade_no);
@@ -579,8 +580,6 @@ add_action('test_queue', function ($account) {
 add_action('rest_api_init', function () {
     // 新增字段: creating, 正在创造什么？
     register_rest_field('user', 'creating', array(
-        // Show in the WP REST API response. Default: false.
-        'show_in_rest' => true,
         'get_callback' => function ($object, $field, $request) {
             // Get field as single value from post meta.
             return get_user_meta($object['id'], $field, true);
@@ -608,62 +607,60 @@ add_action('rest_api_init', function () {
         ),
     ));
 
-    // 新增字段: avatar, 头像地址
+    // 新增字段: avatar, 头像地址（不使用update_callback，单独上传后更新值）
     register_rest_field('user', 'avatar', array(
-        'show_in_rest' => true,
         'get_callback' => function ($object, $field, $request) {
             // Get field as single value from post meta.
             return get_user_meta($object['id'], $field, true);
         },
-        'update_callback' => function ($value, $object, $field) {
-            // Update the field/meta value.
-            update_user_meta($object->ID, $field, $value);
-        },
-        'schema' => array(
-            'type' => 'string',
-            'arg_options' => array(
-                'sanitize_callback' => function ($value) {
-                    // Make the value safe for storage.
-                    // https://developer.wordpress.org/reference/functions/sanitize_url/
-                    return sanitize_url($value, array('http', 'https'));
-                },
-                'validate_callback' => function ($value) {
-                    // Valid if it is valid url
-                    return (bool) Validator::isURL($value);
-                },
-            ),
-        ),
+        // 'update_callback' => function ($value, $object, $field) {
+        //     // Update the field/meta value.
+        //     update_user_meta($object->ID, $field, $value);
+        // },
+        // 'schema' => array(
+        //     'type' => 'string',
+        //     'arg_options' => array(
+        //         'sanitize_callback' => function ($value) {
+        //             // Make the value safe for storage.
+        //             // https://developer.wordpress.org/reference/functions/sanitize_url/
+        //             return sanitize_url($value, array('http', 'https'));
+        //         },
+        //         'validate_callback' => function ($value) {
+        //             // Valid if it is valid url
+        //             return (bool) Validator::isURL($value);
+        //         },
+        //     ),
+        // ),
     ));
 
-    // 新增字段: background, 封面图地址
+    // 新增字段: background, 封面图地址（不使用update_callback，单独上传后更新值）
     register_rest_field('user', 'background', array(
-        'show_in_rest' => true,
         'get_callback' => function ($object, $field, $request) {
             // Get field as single value from post meta.
             return get_user_meta($object['id'], $field, true);
         },
-        'update_callback' => function ($value, $object, $field) {
-            // Update the field/meta value.
-            update_user_meta($object->ID, $field, $value);
-        },
-        'schema' => array(
-            'type' => 'string',
-            'arg_options' => array(
-                'sanitize_callback' => function ($value) {
-                    // Make the value safe for storage.
-                    return sanitize_url($value, array('http', 'https'));
-                },
-                'validate_callback' => function ($value) {
-                    // Valid if it is valid url
-                    return (bool) Validator::isURL($value);
-                },
-            ),
-        ),
+        // 'update_callback' => function ($value, $object, $field) {
+        //     // Update the field/meta value.
+        //     update_user_meta($object->ID, $field, $value);
+        // },
+        // 'schema' => array(
+        //     'type' => 'string',
+        //     'arg_options' => array(
+        //         'sanitize_callback' => function ($value) {
+        //             // Make the value safe for storage.
+        //             return sanitize_url($value, array('http', 'https'));
+        //         },
+        //         'validate_callback' => function ($value) {
+        //             // Valid if it is valid url
+        //             return (bool) Validator::isURL($value);
+        //         },
+        //     ),
+        // ),
     ));
     
-    // 新增字段: real, 真实姓名
-    register_rest_field('user', 'real', array(
-        'show_in_rest' => true,
+    // 新增字段: realname, 真实姓名
+    // FIXME: 字段仅添加到users/me接口（仅自己可见）
+    register_rest_field('user', 'realname', array(
         'get_callback' => function ($object, $field, $request) {
             // Get field as single value from post meta.
             return get_user_meta($object['id'], $field, true);
@@ -687,36 +684,9 @@ add_action('rest_api_init', function () {
         ),
     ));
 
-    // 新增字段: phone, 手机号码（国内11位校验）
-    register_rest_field('user', 'phone', array(
-        'show_in_rest' => true,
-        'get_callback' => function ($object, $field, $request) {
-            // Get field as single value from post meta.
-            return get_user_meta($object['id'], $field, true);
-        },
-        // // 手机号需要走验证码流程，不能简单设置
-        // 'update_callback' => function ($value, $object, $field) {
-        //     // Update the field/meta value.
-        //     update_user_meta($object->ID, $field, $value);
-        // },
-        'schema' => array(
-            'type' => 'string',
-            'arg_options' => array(
-                'sanitize_callback' => function ($value) {
-                    // Make the value safe for storage.
-                    return sanitize_text_field($value);
-                },
-                'validate_callback' => function ($value) {
-                    // Valid if it is a valid phone number
-                    return (bool) Validator::isPhone($value);
-                },
-            ),
-        ),
-    ));
-
     // 新增字段: alipay, 支付宝账号
+    // FIXME: 字段仅添加到users/me接口（仅自己可见）
     register_rest_field('user', 'alipay', array(
-        'show_in_rest' => true,
         'get_callback' => function ($object, $field, $request) {
             // Get field as single value from post meta.
             return get_user_meta($object['id'], $field, true);
@@ -741,8 +711,8 @@ add_action('rest_api_init', function () {
     ));
 
     // 新增字段: wechat, 微信账号
+    // FIXME: 字段仅添加到users/me接口（仅自己可见）
     register_rest_field('user', 'wechat', array(
-        'show_in_rest' => true,
         'get_callback' => function ($object, $field, $request) {
             // Get field as single value from post meta.
             return get_user_meta($object['id'], $field, true);

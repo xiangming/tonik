@@ -194,7 +194,7 @@ class PaymentService extends BaseService
             return $this->formatError('pay success params $orderPay empty .');
         }
 
-        // 订单已经支付
+        // 订单状态已经是publish则不需要处理，退出
         if ($orderPay['status'] == 'publish') {
             return $this->formatError(__('tip.order.payed'));
         }
@@ -228,7 +228,7 @@ class PaymentService extends BaseService
 
         // TODO: 保存$trade_no到订单，用于前端调用jsapi唤起支付
 
-        // 已支付（付款时间自动更新）
+        // 更新订单状态为已支付（付款时间会自动更新）
         $rs = theme('tool')->updatePostStatus($orderPay['id'], 'publish');
         if (is_wp_error($rs)) {
             $message = $result->get_error_message();
@@ -236,16 +236,11 @@ class PaymentService extends BaseService
             throw new \Exception('paySuccess->updatePostStatus error - ' . $message);
         }
 
-        // 最终成功的支付方式
+        // 更新最终成功的支付方式
         update_post_meta($orderPay['id'], 'method', $paymentName);
 
         // 如果是充值，生成余额变动记录
         if ($orderPay['type'] == 'recharge') {
-            // $this->getService('MoneyLog')->edit([
-            //     'name'  =>  __('tip.payment.onlineRecharge'),
-            //     'user_id'  =>  $orderPay['from_user_id'],
-            //     'money'  =>  $orderPay['amount'],
-            // ]);
             return $this->format();
         }
 
@@ -255,7 +250,7 @@ class PaymentService extends BaseService
 
         // 分销处理
 
-        // 余额支付需要返回信息 第三方支付需要返回指定信息给回调服务器
+        // 余额支付需要返回信息，第三方支付需要返回指定信息给回调服务器
         return $paymentName == 'balance' ? $this->format() : Pay::$paymentName($this->config)->success();
     }
 
