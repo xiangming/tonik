@@ -160,92 +160,92 @@ function transfer($donation)
 }
 add_action('transfer', 'Tonik\Theme\App\Setup\transfer');
 
-/**
- * Fire a callback only when post or custom-post-type transitioned to 'publish'.
- *
- * 'transition_post_status' is a generic action that is called every time a post changes status.
- *
- * 'transition_post_status' is executed before 'save_post', so you can not get_post_meta when create new post.
- *
- * https://developer.wordpress.org/reference/hooks/transition_post_status/
- *
- * @param string  $new_status New post status.
- * @param string  $old_status Old post status.
- * @param WP_Post $post       Post object.
- */
-add_action('transition_post_status', function ($new_status, $old_status, $post) {
-    // 从非publish变更为publish时执行
-    if ('publish' == $new_status && 'publish' != $old_status && isset($post->post_type)) {
-        // $id = $post->ID;
+// /**
+//  * Fire a callback only when post or custom-post-type transitioned to 'publish'.
+//  *
+//  * 'transition_post_status' is a generic action that is called every time a post changes status.
+//  *
+//  * 'transition_post_status' is executed before 'save_post', so you can not get_post_meta when create new post.
+//  *
+//  * https://developer.wordpress.org/reference/hooks/transition_post_status/
+//  *
+//  * @param string  $new_status New post status.
+//  * @param string  $old_status Old post status.
+//  * @param WP_Post $post       Post object.
+//  */
+// add_action('transition_post_status', function ($new_status, $old_status, $post) {
+//     // 从非publish变更为publish时执行
+//     if ('publish' == $new_status && 'publish' != $old_status && isset($post->post_type)) {
+//         // $id = $post->ID;
 
-        theme('log')->log($post, 'order');
+//         theme('log')->log($post, 'order');
 
-        switch ($post->post_type) {
+//         switch ($post->post_type) {
 
-            case 'orders':
-                $out_trade_no = $post->post_title;
-                $rs = theme('order')->getOrderByNo($out_trade_no);
+//             case 'orders':
+//                 $out_trade_no = $post->post_title;
+//                 $rs = theme('order')->getOrderByNo($out_trade_no);
 
-                if (!$rs['status']) {
-                    return $this->formatError($rs['msg']);
-                }
+//                 if (!$rs['status']) {
+//                     return $this->formatError($rs['msg']);
+//                 }
 
-                $order = $rs['data'];
+//                 $order = $rs['data'];
 
-                theme('log')->log($order, 'order');
+//                 theme('log')->log($order, 'order');
 
-                switch ($order['type']) {
+//                 switch ($order['type']) {
 
-                    case 'donation':
+//                     case 'donation':
 
-                        theme('log')->log('donation start');
+//                         theme('log')->log('donation start');
 
-                        // 支付成功后要生成打赏记录
-                        $rs = theme('donation')->create($order['from_user_id'], $order['to_user_id'], $order['amount'], $order['remark'], $order['id']);
+//                         // 支付成功后要生成打赏记录
+//                         $rs = theme('donation')->create($order['from_user_id'], $order['to_user_id'], $order['amount'], $order['remark'], $order['id']);
 
-                        if (!$rs['status']) {
-                            theme('log')->log($rs, 'donation create end');
-                            return;
-                        }
+//                         if (!$rs['status']) {
+//                             theme('log')->log($rs, 'donation create end');
+//                             return;
+//                         }
 
-                        theme('log')->log('donation end');
+//                         theme('log')->log('donation end');
 
-                        // 打赏记录创建后，加入打款队列
-                        try {
-                            theme('queue')->add_async('transfer', [$rs['data']]);
-                        } catch (\Throwable $th) {
-                            theme('log')->error($th, 'donation transfer error catch');
-                            return;
-                        }
+//                         // 打赏记录创建后，加入打款队列
+//                         try {
+//                             theme('queue')->add_async('transfer', [$rs['data']]);
+//                         } catch (\Throwable $th) {
+//                             theme('log')->error($th, 'donation transfer error catch');
+//                             return;
+//                         }
 
-                        break;
+//                         break;
 
-                    default:
-                        // TODO: Implement
+//                     default:
+//                         // TODO: Implement
 
-                        break;
-                }
+//                         break;
+//                 }
 
-                break;
+//                 break;
 
-            // 职位publish后触发：邮件通知author
-            case 'post':
-                $pid = $id;
+//             // 职位publish后触发：邮件通知author
+//             case 'post':
+//                 $pid = $id;
 
-                // 获取author id
-                $uid = get_post_field('post_author', $pid);
+//                 // 获取author id
+//                 $uid = get_post_field('post_author', $pid);
 
-                // 通知author
-                sendPublishNotifyEmail($uid, $pid);
+//                 // 通知author
+//                 sendPublishNotifyEmail($uid, $pid);
 
-                break;
+//                 break;
 
-            default:
+//             default:
 
-                break;
-        }
-    }
-}, 10, 3);
+//                 break;
+//         }
+//     }
+// }, 10, 3);
 
 /**
  * 向/wp/v2/users/增加一些子接口
@@ -455,23 +455,6 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
-    // Register a new endpoint: /wp/v2/payment/alipay/notify
-    register_rest_route(WP_V2_NAMESPACE, '/payment/alipay/notify', array(
-        'methods' => 'GET',
-        'callback' => function ($request) {
-            // $parameters = $request->get_json_params();
-            // $account = $parameters['account'];
-
-            $paymentService = theme('payment');
-            $rs = $paymentService->notify('alipay');
-
-            // 输出结果
-            $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
-            exit();
-        },
-        'permission_callback' => '__return_true',
-    ));
-
     // Register a new endpoint: /wp/v2/payment/find
     register_rest_route(WP_V2_NAMESPACE, '/payment/find', array(
         'methods' => 'POST',
@@ -501,11 +484,15 @@ add_action('rest_api_init', function () {
         'callback' => function ($request) {
             $parameters = $request->get_json_params();
 
-            $method = $parameters['method'] ? sanitize_text_field($parameters['method']) : 'alipay'; // 支付通道
-            $out_trade_no = $parameters['out_trade_no'] ? sanitize_text_field($parameters['out_trade_no']) : null; // 第三方单号
+            $method = $parameters['method'] ? $parameters['method'] : 'alipay'; // 支付通道
+            $out_trade_no = $parameters['out_trade_no'] ? $parameters['out_trade_no'] : null; // 第三方单号
 
-            $paymentService = theme('payment');
-            $rs = $paymentService->check($method, $out_trade_no);
+            $rs = theme('payment')->check($method, $out_trade_no);
+
+            // 支付成功，执行paySuccess操作
+            if ($rs['data']) {
+                theme('payment')->handlePaySuccess($paymentName, $out_trade_no);
+            }
 
             // 输出结果
             $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
@@ -515,6 +502,23 @@ add_action('rest_api_init', function () {
             'method' => theme('args')->method(true),
             'out_trade_no' => theme('args')->out_trade_no(true),
         ),
+        'permission_callback' => '__return_true',
+    ));
+
+    // Register a new endpoint: /wp/v2/payment/alipay/notify
+    register_rest_route(WP_V2_NAMESPACE, '/payment/alipay/notify', array(
+        'methods' => 'GET',
+        'callback' => function ($request) {
+            // $parameters = $request->get_json_params();
+            // $account = $parameters['account'];
+
+            $paymentService = theme('payment');
+            $rs = $paymentService->notify('alipay');
+
+            // 输出结果
+            $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
+            exit();
+        },
         'permission_callback' => '__return_true',
     ));
 
