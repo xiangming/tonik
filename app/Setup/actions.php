@@ -491,7 +491,7 @@ add_action('rest_api_init', function () {
 
             // 支付成功，执行paySuccess操作
             if ($rs['data']) {
-                theme('payment')->handlePaySuccess($paymentName, $out_trade_no);
+                theme('payment')->handlePaySuccess($method, $out_trade_no);
             }
 
             // 输出结果

@@ -127,6 +127,8 @@ class PaymentService extends BaseService
      */
     public function pay($paymentName = 'alipay', $device = 'scan', $orderPay = [], $recharge = false, $config = 'default')
     {
+        theme('log')->log('pay start');
+
         if (empty($orderPay)) {
             return $this->formatError('订单信息错误');
         }
@@ -367,6 +369,8 @@ class PaymentService extends BaseService
 
             // 支付未成功
             if ($rs['data']['trade_state'] != 'SUCCESS') {
+                theme('log')->debug($rs['data']['trade_state'], 'wechat trade_state != SUCCESS');
+
                 return $this->format(false);
             }
         }
@@ -387,7 +391,8 @@ class PaymentService extends BaseService
 
             // 支付未成功
             if ($rs['data']['trade_status'] != 'TRADE_SUCCESS') {
-                theme('log')->debug('alipay trade_status != SUCCESS');
+                theme('log')->debug($rs['data']['trade_status'], 'alipay trade_status != SUCCESS');
+
                 return $this->format(false);
             }
         }
@@ -497,26 +502,7 @@ class PaymentService extends BaseService
 
             // TODO: 使用队列处理支付通道回调？
 
-            // 1. 通过out_trade_no拿到orderInfo
-            $rs = theme('order')->getOrderByNo($out_trade_no);
-
-            if (!$rs['status']) {
-                return $this->formatError($rs['msg']);
-            }
-
-            $orderInfo = $rs['data'];
-
-            // 2. 触发支付成功后的操作paySuccess
-            $paySuccessData = theme('payment')->paySuccess($paymentName, $orderInfo);
-
-            // 3. 返回paySuccess结果
-            if (!is_array($paySuccessData)) {
-                return $paySuccessData;
-            }
-
-            if (!$paySuccessData['status']) {
-                throw new \Exception($paySuccessData['msg']);
-            }
+            $paySuccessData = theme('payment')->handlePaySuccess($paymentName, $out_trade_no);
 
             return $paySuccessData;
         } catch (\Exception $e) {
