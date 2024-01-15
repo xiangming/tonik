@@ -8,6 +8,7 @@ use function Tonik\Theme\App\resOK;
 use function Tonik\Theme\App\theme;
 
 define('WP_V2_NAMESPACE', 'wp/v2'); // WP REST API 命名空间
+define('FEE_RATE', 0.06); // 平台费率
 
 /*
 |-----------------------------------------------------------
@@ -138,6 +139,9 @@ function transfer($donation)
 
     theme('log')->log($donation, 'donation transfer start');
 
+    // 计算扣除平台手续费后的实际金额
+    $donation['amount'] = theme('tool')->calculateAmount($donation['amount'], FEE_RATE);
+
     // 执行打款（当前只支持alipay）
     $rs = $paymentService->transfer('alipay', $donation['out_trade_no'], $donation['amount'], $donation['identity'], $donation['name']);
     // $rs = $paymentService->transfer('alipay', $donation['out_trade_no'], '0.1', 'arvinxiang@qq.com', '向明'); // 测试使用
@@ -206,12 +210,11 @@ add_action('transition_post_status', function ($new_status, $old_status, $post) 
 
                         theme('log')->log('donation end');
 
-                        
-                        // 加入打款队列
+                        // 打赏记录创建后，加入打款队列
                         try {
                             theme('queue')->add_async('transfer', [$rs['data']]);
                         } catch (\Throwable $th) {
-                            theme('log')->log($th, 'donation transfer error catch');
+                            theme('log')->error($th, 'donation transfer error catch');
                             return;
                         }
 

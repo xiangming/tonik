@@ -117,4 +117,19 @@ class ToolService extends BaseService
 
         return $result;
     }
+
+    /**
+     * 计算扣除平台费用后的金额
+     */
+    public function calculateAmount($originalAmount, $feeRate)
+    {
+        // 计算手续费
+        $fee = $originalAmount * $feeRate;
+
+        // 扣除手续费
+        $actualAmount = $originalAmount - $fee;
+
+        return $actualAmount;
+    }
+
 }
