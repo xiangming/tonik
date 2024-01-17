@@ -18,6 +18,8 @@ class DonationService extends BaseService
      */
     public function create($from_user_id, $to_user_id, $amount, $remark, $orderId)
     {
+        theme('log')->log('DonationService create start');
+
         // 生成支付通道订单号
         $out_trade_no = date('YmdHis') . '00' . mt_rand(10000, 99999);
 
@@ -35,7 +37,7 @@ class DonationService extends BaseService
         if (is_wp_error($in_id)) {
             $errmsg = $in_id->get_error_message();
 
-            theme('log')->error($errmsg, 'donation create error');
+            theme('log')->error($errmsg, 'donation create');
 
             return $this->formatError($errmsg);
         }
@@ -69,7 +71,7 @@ class DonationService extends BaseService
             'name' => get_user_meta($to_user_id, 'name', true), // 使用创作者入驻字段-真实姓名
         ];
 
-        theme('log')->debug($result, 'donation create success');
+        theme('log')->log($result, 'DonationService create success');
 
         return $this->format($result);
     }

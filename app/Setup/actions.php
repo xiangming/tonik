@@ -110,14 +110,12 @@ add_action('manage_donation_posts_custom_column', function ($column_name, $id) {
  */
 function transfer($donation)
 {
-    theme('log')->log($donation, 'donation find start');
-
     $paymentService = theme('payment');
 
     // 向支付通道查询一次订单状态
     $out_trade_no = get_the_title($donation['orderId']);
     $paymentName = get_post_meta($donation['orderId'], 'method', true); // 如果是在wp-admin设置的，可能没有method
-    $rs = $paymentService->check($paymentName, $out_trade_no);
+    $rs = $paymentService->query($paymentName, $out_trade_no);
 
     // TODO: 支持余额支付
 
@@ -478,7 +476,33 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
-    // Register a new endpoint: /wp/v2/payment/check
+    // Register a new endpoint: /wp/v2/payment/query
+    register_rest_route(WP_V2_NAMESPACE, '/payment/query', array(
+        'methods' => 'POST',
+        'callback' => function ($request) {
+            $parameters = $request->get_json_params();
+
+            $method = $parameters['method'] ? $parameters['method'] : 'alipay'; // 支付通道
+            $out_trade_no = $parameters['out_trade_no'] ? $parameters['out_trade_no'] : null; // 第三方单号
+
+            $rs = theme('payment')->query($method, $out_trade_no);
+
+            // 输出结果
+            $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
+            exit();
+        },
+        'args' => array(
+            'method' => theme('args')->method(true),
+            'out_trade_no' => theme('args')->out_trade_no(true),
+        ),
+        'permission_callback' => '__return_true',
+    ));
+
+    /**
+     * 请求后端确认支付结果
+     *
+     * endpoint: /wp/v2/payment/check
+     */
     register_rest_route(WP_V2_NAMESPACE, '/payment/check', array(
         'methods' => 'POST',
         'callback' => function ($request) {
@@ -487,15 +511,29 @@ add_action('rest_api_init', function () {
             $method = $parameters['method'] ? $parameters['method'] : 'alipay'; // 支付通道
             $out_trade_no = $parameters['out_trade_no'] ? $parameters['out_trade_no'] : null; // 第三方单号
 
-            $rs = theme('payment')->check($method, $out_trade_no);
+            $rs = theme('payment')->query($method, $out_trade_no);
 
-            // 支付成功，执行paySuccess操作
-            if ($rs['data']) {
-                theme('payment')->handlePaySuccess($method, $out_trade_no);
+            if (!$rs['data']) {
+                resOK(false, '订单未支付');
+                exit();
             }
 
-            // 输出结果
-            $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
+            // 支付成功，执行paySuccess操作（无论成功与否都往下继续执行）
+            try {
+                // 1. 通过out_trade_no拿到orderInfo
+                $rs = theme('order')->getOrderByNo($out_trade_no);
+    
+                // 2. 触发支付成功后的操作paySuccess
+                $paySuccessData = theme('payment')->paySuccess($method, $rs['data']);
+    
+                if (!$paySuccessData['status']) {
+                    throw new \Exception($paySuccessData['msg']);
+                }
+            } catch (\Exception $e) {
+                theme('log')->error($e->getMessage(), '/payment/check');
+            }
+
+            resOK(true, '订单支付成功');
             exit();
         },
         'args' => array(
@@ -509,11 +547,7 @@ add_action('rest_api_init', function () {
     register_rest_route(WP_V2_NAMESPACE, '/payment/alipay/notify', array(
         'methods' => 'GET',
         'callback' => function ($request) {
-            // $parameters = $request->get_json_params();
-            // $account = $parameters['account'];
-
-            $paymentService = theme('payment');
-            $rs = $paymentService->notify('alipay');
+            $rs = theme('payment')->notify('alipay');
 
             // 输出结果
             $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
@@ -664,7 +698,7 @@ add_action('rest_api_init', function () {
         //     ),
         // ),
     ));
-    
+
     // 新增字段: realname, 真实姓名
     // FIXME: 字段仅添加到users/me接口（仅自己可见）
     register_rest_field('user', 'realname', array(

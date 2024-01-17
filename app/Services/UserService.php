@@ -56,6 +56,8 @@ class UserService extends BaseService
      */
     public function create($account = null, $password = null, $role = 'subscriber')
     {
+        theme('log')->log('UserService create start');
+
         // 用户已存在，则直接返回
         $user_id = $this->exists($account);
         if ($user_id) {
@@ -98,7 +100,7 @@ class UserService extends BaseService
         if (is_wp_error($in_id)) {
             $errmsg = $in_id->get_error_message();
 
-            theme('log')->error($errmsg, 'user create error');
+            theme('log')->error($errmsg, 'UserService create');
 
             return $this->formatError($errmsg);
         }
@@ -108,7 +110,7 @@ class UserService extends BaseService
             update_user_meta($in_id, 'phone_temp', $account);
         }
 
-        theme('log')->debug($in_id, 'user create success');
+        theme('log')->log($in_id, 'UserService create success');
 
         return $this->format($in_id);
     }

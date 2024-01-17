@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Validators\Validator;
+use function Tonik\Theme\App\theme;
 
 class ArgsService extends BaseService
 {
@@ -49,7 +50,7 @@ class ArgsService extends BaseService
             'type' => "string",
             "description" => "用户名、邮箱或者手机号。",
             'validate_callback' => function ($param, $request, $key) {
-                return is_email($param) || Validator::isPhone($param) || is_string($param);
+                return is_email($param) || Validator::isPhone($param) || theme('user')->exists($param);
             },
             'sanitize_callback' => 'sanitize_text_field',
         ];

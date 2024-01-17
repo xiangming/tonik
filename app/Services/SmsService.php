@@ -41,10 +41,10 @@ class SmsService extends BaseService
 
     public function __construct()
     {
-        $this->config['gateways']['yunpian']['api_key'] = getenv('YUNPIAN_API_KEY');
-        $this->config['gateways']['aliyun']['access_key_id'] = getenv('ALIYUN_SMS_API_KEY');
-        $this->config['gateways']['aliyun']['access_key_secret'] = getenv('ALIYUN_SMS_API_SECRET');
-        $this->config['gateways']['aliyun']['sign_name'] = getenv('ALIYUN_SMS_SIGN_NAME');
+        $this->config['gateways']['yunpian']['api_key'] = $_ENV['YUNPIAN_API_KEY'];
+        $this->config['gateways']['aliyun']['access_key_id'] = $_ENV['ALIYUN_SMS_API_KEY'];
+        $this->config['gateways']['aliyun']['access_key_secret'] = $_ENV['ALIYUN_SMS_API_SECRET'];
+        $this->config['gateways']['aliyun']['sign_name'] = $_ENV['ALIYUN_SMS_SIGN_NAME'];
     }
 
     /**
@@ -61,6 +61,8 @@ class SmsService extends BaseService
      */
     public function send($phoneNumber)
     {
+        theme('log')->log('SmsService send start');
+
         try {
             $code = mt_rand(1000, 9999);
 
@@ -81,18 +83,19 @@ class SmsService extends BaseService
         } catch (\Overtrue\EasySms\Exceptions\NoGatewayAvailableException $e) {
             $error_msg = $e->getException('aliyun')->getMessage();
 
-            theme('log')->log($error_msg, 'SMS to ' . $phoneNumber);
+            theme('log')->error($error_msg, 'SmsService send to ' . $phoneNumber);
 
-            return $this->formatError('短信验证码发送失败');
+            return $this->formatError('调取短信服务失败');
         }
 
         if (isset($rs) && $rs['aliyun']['status'] == 'success' && $rs['aliyun']['result']['Code'] == 'OK') {
+            theme('log')->log('SmsService send success');
+
             return $this->format($code);
         } else {
-            // $smsLog->error_msg = json_encode($rs);
-            // $smsLog->status = 0;
-            // $smsLog->save();
-            return $this->formatError('短信验证码发送失败');
+            theme('log')->error('短信发送失败', 'SmsService send to ' . $phoneNumber);
+
+            return $this->formatError('短信发送失败');
         }
     }
 }
