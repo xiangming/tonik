@@ -6,6 +6,8 @@ class ToolService extends BaseService
 {
     /**
      * 生成随机字符串（小写字母和数字）
+     * 5位重复的概率是六千万分之一，已经够用了
+     * 4位重复的概率是一百六十万分之一，其实也够用了
      */
     public function generateRandomString($length = 5)
     {
@@ -119,9 +121,9 @@ class ToolService extends BaseService
     }
 
     /**
-     * 计算扣除平台费用后的金额
+     * 计算扣除平台费用后的待结算金额
      */
-    public function calculateAmount($originalAmount, $feeRate)
+    public function settledAmount($originalAmount, $feeRate)
     {
         // 计算手续费
         $fee = $originalAmount * $feeRate;
@@ -132,4 +134,23 @@ class ToolService extends BaseService
         return $actualAmount;
     }
 
+
+    /**
+     * 检查验证码获取频率
+     */
+    public static function checkCodeLimit($uid, $limited = 60)
+    {
+        $code_saved = get_user_meta($uid, 'code', true);
+
+        if (!empty($code_saved)) {
+            $code_saved = explode('-', $code_saved);
+            $expired = $code_saved[1] + $limited; // 限制60s获取一次
+            if ($expired > time()) {
+                resError('验证码获取太频繁，请一分钟后再尝试');
+                exit();
+            }
+        }
+
+        return true;
+    }
 }

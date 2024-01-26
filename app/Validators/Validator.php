@@ -205,23 +205,4 @@ class Validator
 
         return true;
     }
-
-    /**
-     * 检查验证码获取频率
-     */
-    public static function checkCodeLimit($uid)
-    {
-        $code_saved = get_user_meta($uid, 'code', true);
-
-        if (!empty($code_saved)) {
-            $code_saved = explode('-', $code_saved);
-            $expired = $code_saved[1] + 60; // 限制60s获取一次
-            if ($expired > time()) {
-                resError('验证码获取太频繁，请一分钟后再尝试');
-                exit();
-            }
-        }
-
-        return true;
-    }
 }
