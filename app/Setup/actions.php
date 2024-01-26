@@ -699,16 +699,21 @@ add_action('rest_api_init', function () {
         // ),
     ));
 
-    // 新增字段: realname, 真实姓名
-    // FIXME: 字段仅添加到users/me接口（仅自己可见）
+    // 新增字段: realname, 真实姓名，仅自己可见
     register_rest_field('user', 'realname', array(
         'get_callback' => function ($object, $field, $request) {
-            // Get field as single value from post meta.
-            return get_user_meta($object['id'], $field, true);
+            $current_user = wp_get_current_user();
+
+            // Get field as single value from post meta, return false if current user not found
+            return get_user_meta($current_user->ID, $field, true);
+            // return get_user_meta($object['id'], $field, true);
         },
         'update_callback' => function ($value, $object, $field) {
+            $current_user = wp_get_current_user();
+
             // Update the field/meta value.
-            update_user_meta($object->ID, $field, $value);
+            update_user_meta($current_user->ID, $field, $value);
+            // update_user_meta($object->ID, $field, $value);
         },
         'schema' => array(
             'type' => 'string',
@@ -725,16 +730,21 @@ add_action('rest_api_init', function () {
         ),
     ));
 
-    // 新增字段: alipay, 支付宝账号
-    // FIXME: 字段仅添加到users/me接口（仅自己可见）
+    // 新增字段: alipay, 支付宝账号，仅自己可见
     register_rest_field('user', 'alipay', array(
         'get_callback' => function ($object, $field, $request) {
-            // Get field as single value from post meta.
-            return get_user_meta($object['id'], $field, true);
+            $current_user = wp_get_current_user();
+
+            // Get field as single value from post meta, return false if current user not found
+            return get_user_meta($current_user->ID, $field, true);
+            // return get_user_meta($object['id'], $field, true);
         },
         'update_callback' => function ($value, $object, $field) {
+            $current_user = wp_get_current_user();
+
             // Update the field/meta value.
-            update_user_meta($object->ID, $field, $value);
+            update_user_meta($current_user->ID, $field, $value);
+            // update_user_meta($object->ID, $field, $value);
         },
         'schema' => array(
             'type' => 'string',
@@ -751,16 +761,21 @@ add_action('rest_api_init', function () {
         ),
     ));
 
-    // 新增字段: wechat, 微信账号
-    // FIXME: 字段仅添加到users/me接口（仅自己可见）
+    // 新增字段: wechat, 微信账号，仅自己可见
     register_rest_field('user', 'wechat', array(
         'get_callback' => function ($object, $field, $request) {
-            // Get field as single value from post meta.
-            return get_user_meta($object['id'], $field, true);
+            $current_user = wp_get_current_user();
+
+            // Get field as single value from post meta, return false if current user not found
+            return get_user_meta($current_user->ID, $field, true);
+            // return get_user_meta($object['id'], $field, true);
         },
         'update_callback' => function ($value, $object, $field) {
+            $current_user = wp_get_current_user();
+
             // Update the field/meta value.
-            update_user_meta($object->ID, $field, $value);
+            update_user_meta($current_user->ID, $field, $value);
+            // update_user_meta($object->ID, $field, $value);
         },
         'schema' => array(
             'type' => 'string',
