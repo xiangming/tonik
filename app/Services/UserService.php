@@ -73,7 +73,7 @@ class UserService extends BaseService
         Validator::validateLength($password, '密码', 6, 20);
 
         // 随机生成5位用户名
-        $user_login = theme('tool')->generateRandomString(5);
+        $user_login = theme('tool')->generateRandomString(4);
 
         // 准备数据
         $args = array();

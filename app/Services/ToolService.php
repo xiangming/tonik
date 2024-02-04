@@ -6,8 +6,10 @@ class ToolService extends BaseService
 {
     /**
      * 生成随机字符串（小写字母和数字）
-     * 5位重复的概率是六千万分之一，已经够用了
-     * 4位重复的概率是一百六十万分之一，其实也够用了
+     * 
+     * 5位重复的概率是六千万分之一，用于post slug，后期不够用可以增加一位
+     * 4位重复的概率是一百六十万分之一，用于user slug，后期不够用可以增加一位
+     * 3位的总数是46,656，用于保留单位
      */
     public function generateRandomString($length = 5)
     {

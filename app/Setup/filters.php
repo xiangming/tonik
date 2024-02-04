@@ -107,7 +107,7 @@ add_filter('manage_donation_posts_columns', function ($columns) {
 /**
  * 修改post返回值
  */
-add_filter('rest_prepare_post', function ($response, $post, $request) {
+function _modify_rest_prepare($response, $post, $request) {
     $_data = $response->data;
     $uid = $post->post_author;
 
@@ -128,4 +128,6 @@ add_filter('rest_prepare_post', function ($response, $post, $request) {
 
     $response->data = $_data;
     return $response;
-}, 10, 3);
+}
+add_filter('rest_prepare_post', 'Tonik\Theme\App\Setup\_modify_rest_prepare', 10, 3);
+add_filter('rest_prepare_donation', 'Tonik\Theme\App\Setup\_modify_rest_prepare', 10, 3);
