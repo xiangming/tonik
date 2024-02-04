@@ -522,10 +522,10 @@ add_action('rest_api_init', function () {
             try {
                 // 1. 通过out_trade_no拿到orderInfo
                 $rs = theme('order')->getOrderByNo($out_trade_no);
-    
+
                 // 2. 触发支付成功后的操作paySuccess
                 $paySuccessData = theme('payment')->paySuccess($method, $rs['data']);
-    
+
                 if (!$paySuccessData['status']) {
                     throw new \Exception($paySuccessData['msg']);
                 }
@@ -654,24 +654,6 @@ add_action('rest_api_init', function () {
             // Get field as single value from post meta.
             return get_user_meta($object['id'], $field, true);
         },
-        // 'update_callback' => function ($value, $object, $field) {
-        //     // Update the field/meta value.
-        //     update_user_meta($object->ID, $field, $value);
-        // },
-        // 'schema' => array(
-        //     'type' => 'string',
-        //     'arg_options' => array(
-        //         'sanitize_callback' => function ($value) {
-        //             // Make the value safe for storage.
-        //             // https://developer.wordpress.org/reference/functions/sanitize_url/
-        //             return sanitize_url($value, array('http', 'https'));
-        //         },
-        //         'validate_callback' => function ($value) {
-        //             // Valid if it is valid url
-        //             return (bool) Validator::isURL($value);
-        //         },
-        //     ),
-        // ),
     ));
 
     // 新增字段: background, 封面图地址（不使用update_callback，单独上传后更新值）
@@ -680,23 +662,6 @@ add_action('rest_api_init', function () {
             // Get field as single value from post meta.
             return get_user_meta($object['id'], $field, true);
         },
-        // 'update_callback' => function ($value, $object, $field) {
-        //     // Update the field/meta value.
-        //     update_user_meta($object->ID, $field, $value);
-        // },
-        // 'schema' => array(
-        //     'type' => 'string',
-        //     'arg_options' => array(
-        //         'sanitize_callback' => function ($value) {
-        //             // Make the value safe for storage.
-        //             return sanitize_url($value, array('http', 'https'));
-        //         },
-        //         'validate_callback' => function ($value) {
-        //             // Valid if it is valid url
-        //             return (bool) Validator::isURL($value);
-        //         },
-        //     ),
-        // ),
     ));
 
     // 新增字段: realname, 真实姓名，仅自己可见
@@ -706,7 +671,6 @@ add_action('rest_api_init', function () {
 
             // Get field as single value from post meta, return false if current user not found
             return get_user_meta($current_user->ID, $field, true);
-            // return get_user_meta($object['id'], $field, true);
         },
         'update_callback' => function ($value, $object, $field) {
             $current_user = wp_get_current_user();
@@ -737,7 +701,6 @@ add_action('rest_api_init', function () {
 
             // Get field as single value from post meta, return false if current user not found
             return get_user_meta($current_user->ID, $field, true);
-            // return get_user_meta($object['id'], $field, true);
         },
         'update_callback' => function ($value, $object, $field) {
             $current_user = wp_get_current_user();
@@ -768,7 +731,6 @@ add_action('rest_api_init', function () {
 
             // Get field as single value from post meta, return false if current user not found
             return get_user_meta($current_user->ID, $field, true);
-            // return get_user_meta($object['id'], $field, true);
         },
         'update_callback' => function ($value, $object, $field) {
             $current_user = wp_get_current_user();
@@ -790,5 +752,27 @@ add_action('rest_api_init', function () {
                 },
             ),
         ),
+    ));
+
+    // 新增字段: to, 被打赏人id（不使用update_callback，有单独接口处理更新逻辑）
+    register_rest_field('donation', 'to', array(
+        'get_callback' => function ($object, $field, $request) {
+            // Get field as single value from post meta.
+            return (int) get_post_meta($object['id'], $field, true);
+        },
+    ));
+    // 新增字段: amount, 金额（不使用update_callback，有单独接口处理更新逻辑）
+    register_rest_field('donation', 'amount', array(
+        'get_callback' => function ($object, $field, $request) {
+            // Get field as single value from post meta.
+            return (int) get_post_meta($object['id'], $field, true);
+        },
+    ));
+    // 新增字段: remark, 被打赏人id（不使用update_callback，有单独接口处理更新逻辑）
+    register_rest_field('donation', 'remark', array(
+        'get_callback' => function ($object, $field, $request) {
+            // Get field as single value from post meta.
+            return get_post_meta($object['id'], $field, true);
+        },
     ));
 });

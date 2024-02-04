@@ -131,3 +131,16 @@ function _modify_rest_prepare($response, $post, $request) {
 }
 add_filter('rest_prepare_post', 'Tonik\Theme\App\Setup\_modify_rest_prepare', 10, 3);
 add_filter('rest_prepare_donation', 'Tonik\Theme\App\Setup\_modify_rest_prepare', 10, 3);
+
+/**
+ * /wp/v2/donation?to=1
+ * 
+ * from: https://wordpress.stackexchange.com/questions/332310/how-to-search-by-metadata-using-rest-api
+ */
+add_filter( 'rest_donation_query', function( $args, $request ){
+    if ( $to = $request->get_param( 'to' ) ) {
+        $args['meta_key'] = 'to';
+        $args['meta_value'] = $to;
+    }
+    return $args;
+}, 99, 2 );
