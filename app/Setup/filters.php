@@ -105,7 +105,7 @@ add_filter('manage_donation_posts_columns', function ($columns) {
 });
 
 /**
- * 修改post返回值
+ * 修改API中的post对象
  */
 function _modify_rest_prepare($response, $post, $request) {
     $_data = $response->data;
@@ -131,6 +131,45 @@ function _modify_rest_prepare($response, $post, $request) {
 }
 add_filter('rest_prepare_post', 'Tonik\Theme\App\Setup\_modify_rest_prepare', 10, 3);
 add_filter('rest_prepare_donation', 'Tonik\Theme\App\Setup\_modify_rest_prepare', 10, 3);
+
+// 修改API中的comment对象
+add_filter('rest_prepare_comment', function($response, $post, $request) {
+    $_data = $response->data;
+    $uid = $post->post_author;
+
+    // // My custom fields that I want to include in the WP API v2 responce
+    // $fields = ['job_title', 'job_city', 'job_highlight'];
+    // foreach ( $fields as $field ) {
+    //   $_data[$field] = get_post_meta( $pid, $field, true );
+    // }
+
+    // 获取用户数据
+    $user = get_userdata($uid);
+    // $_data['author_name'] = $user->display_name;
+    $_data['author_slug'] = $user->user_nicename;
+
+    // 获取parent用户数据
+    $parent = get_comment($_data['parent']);
+    $_data['parent_name'] = $parent->comment_author;
+    // "comment_ID": "5",
+    // "comment_post_ID": "11",
+    // "comment_author": "Arvin",
+    // "comment_author_email": "282818269@qq.com",
+    // "comment_author_url": "https://afdian.net/a/evanyou?tab=home",
+    // "comment_author_IP": "::1",
+    // "comment_date": "2024-02-05 22:22:52",
+    // "comment_date_gmt": "2024-02-05 14:22:52",
+    // "comment_content": "写的真好",
+    // "comment_karma": "0",
+    // "comment_approved": "1",
+    // "comment_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+    // "comment_type": "comment",
+    // "comment_parent": "0",
+    // "user_id": "1"
+
+    $response->data = $_data;
+    return $response;
+}, 10, 3);
 
 /**
  * /wp/v2/donation?to=1
