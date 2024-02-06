@@ -135,16 +135,9 @@ add_filter('rest_prepare_donation', 'Tonik\Theme\App\Setup\_modify_rest_prepare'
 // 修改API中的comment对象
 add_filter('rest_prepare_comment', function($response, $post, $request) {
     $_data = $response->data;
-    $uid = $post->post_author;
-
-    // // My custom fields that I want to include in the WP API v2 responce
-    // $fields = ['job_title', 'job_city', 'job_highlight'];
-    // foreach ( $fields as $field ) {
-    //   $_data[$field] = get_post_meta( $pid, $field, true );
-    // }
 
     // 获取用户数据
-    $user = get_userdata($uid);
+    $user = get_userdata($_data['author']);
     // $_data['author_name'] = $user->display_name;
     $_data['author_slug'] = $user->user_nicename;
 
