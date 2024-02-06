@@ -107,7 +107,8 @@ add_filter('manage_donation_posts_columns', function ($columns) {
 /**
  * 修改API中的post对象
  */
-function _modify_rest_prepare($response, $post, $request) {
+function _modify_rest_prepare($response, $post, $request)
+{
     $_data = $response->data;
     $uid = $post->post_author;
 
@@ -133,7 +134,7 @@ add_filter('rest_prepare_post', 'Tonik\Theme\App\Setup\_modify_rest_prepare', 10
 add_filter('rest_prepare_donation', 'Tonik\Theme\App\Setup\_modify_rest_prepare', 10, 3);
 
 // 修改API中的comment对象
-add_filter('rest_prepare_comment', function($response, $post, $request) {
+add_filter('rest_prepare_comment', function ($response, $post, $request) {
     $_data = $response->data;
 
     // 获取用户数据
@@ -166,13 +167,29 @@ add_filter('rest_prepare_comment', function($response, $post, $request) {
 
 /**
  * /wp/v2/donation?to=1
- * 
+ *
  * from: https://wordpress.stackexchange.com/questions/332310/how-to-search-by-metadata-using-rest-api
  */
-add_filter( 'rest_donation_query', function( $args, $request ){
-    if ( $to = $request->get_param( 'to' ) ) {
+add_filter('rest_donation_query', function ($args, $request) {
+    if ($to = $request->get_param('to')) {
         $args['meta_key'] = 'to';
         $args['meta_value'] = $to;
     }
     return $args;
-}, 99, 2 );
+}, 99, 2);
+
+add_filter('rest_request_before_callbacks', function ($response, $handler, $request) {
+    if (\WP_REST_Server::READABLE !== $request->get_method()) {
+        return $response;
+    }
+
+    if (!preg_match('~/wp/v2/users/\d+~', $request->get_route())) {
+        return $response;
+    }
+
+    add_filter('get_usernumposts', function ($count) {
+        return $count > 0 ? $count : 1;
+    });
+
+    return $response;
+}, 10, 3);

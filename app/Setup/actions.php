@@ -556,6 +556,22 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
+    // Register a new endpoint: /wp/v2/users/<slug>
+    register_rest_route(WP_V2_NAMESPACE, '/users/slug/(?P<slug>[\\w-]+)', array(
+        'methods' => 'GET',
+        'callback' => function ($request) {
+            // $parameters = $request->get_json_params();
+
+            $slug = $request['slug'];
+            $user = get_user_by('slug', $slug);
+
+            // 输出结果
+            $user ? resOK($user->data) : resError('user not exist');
+            exit();
+        },
+        'permission_callback' => '__return_true',
+    ));
+
     // Register a new endpoint: /wp/v2/test/xxx
     register_rest_route(WP_V2_NAMESPACE, '/test/(?P<id>\d+)', array(
         'methods' => 'GET',
