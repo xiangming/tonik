@@ -178,18 +178,27 @@ add_filter('rest_donation_query', function ($args, $request) {
     return $args;
 }, 99, 2);
 
-// add_filter('rest_request_before_callbacks', function ($response, $handler, $request) {
-//     if (\WP_REST_Server::READABLE !== $request->get_method()) {
-//         return $response;
-//     }
+/**
+ * WP默认不返回没有发表过内容的用户数据，比如：http://localhost/wp/api/wp/v2/users/3217
+ * 
+ * 具体细节：https://wordpress.stackexchange.com/questions/331042/unable-to-get-the-info-of-the-user-which-doesnt-have-created-any-post-via-rest
+ * 
+ * 我们这里通过filter来放开这个限制，但是需要注意数据安全
+ */
+add_filter('rest_request_before_callbacks', function ($response, $handler, $request) {
+    // // 其他路由，放行
+    // if (\WP_REST_Server::READABLE !== $request->get_method()) {
+    //     return $response;
+    // }
 
-//     if (!preg_match('~/wp/v2/users/\d+~', $request->get_route())) {
-//         return $response;
-//     }
+    // // 其他路由，放行
+    // if (!preg_match('~/wp/v2/users/\d+~', $request->get_route())) {
+    //     return $response;
+    // }
 
-//     add_filter('get_usernumposts', function ($count) {
-//         return $count > 0 ? $count : 1;
-//     });
+    add_filter('get_usernumposts', function ($count) {
+        return $count > 0 ? $count : 1;
+    });
 
-//     return $response;
-// }, 10, 3);
+    return $response;
+}, 10, 3);
