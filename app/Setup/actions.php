@@ -556,18 +556,17 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
-    // Register a new endpoint: /wp/v2/users/<slug>
-    register_rest_route(WP_V2_NAMESPACE, '/users/slug/(?P<slug>[\\w-]+)', array(
+    // Register a new endpoint: /wp/v2/user/<slug>
+    // https://stackoverflow.com/questions/56952400/wordpress-rest-api-receive-data-for-single-post-by-slug
+    register_rest_route(WP_V2_NAMESPACE, '/user/(?P<slug>[a-zA-Z0-9-]+)', array(
         'methods' => 'GET',
         'callback' => function ($request) {
-            // $parameters = $request->get_json_params();
-
             $slug = $request['slug'];
-            $user = get_user_by('slug', $slug);
+            $users = get_users([
+                'slug' => $slug,
+            ]);
 
-            // 输出结果
-            $user ? resOK($user->data) : resError('user not exist');
-            exit();
+            return $users[0];
         },
         'permission_callback' => '__return_true',
     ));

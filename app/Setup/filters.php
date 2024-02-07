@@ -178,18 +178,18 @@ add_filter('rest_donation_query', function ($args, $request) {
     return $args;
 }, 99, 2);
 
-add_filter('rest_request_before_callbacks', function ($response, $handler, $request) {
-    if (\WP_REST_Server::READABLE !== $request->get_method()) {
-        return $response;
-    }
+// add_filter('rest_request_before_callbacks', function ($response, $handler, $request) {
+//     if (\WP_REST_Server::READABLE !== $request->get_method()) {
+//         return $response;
+//     }
 
-    if (!preg_match('~/wp/v2/users/\d+~', $request->get_route())) {
-        return $response;
-    }
+//     if (!preg_match('~/wp/v2/users/\d+~', $request->get_route())) {
+//         return $response;
+//     }
 
-    add_filter('get_usernumposts', function ($count) {
-        return $count > 0 ? $count : 1;
-    });
+//     add_filter('get_usernumposts', function ($count) {
+//         return $count > 0 ? $count : 1;
+//     });
 
-    return $response;
-}, 10, 3);
+//     return $response;
+// }, 10, 3);
