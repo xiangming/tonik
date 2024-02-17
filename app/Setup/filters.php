@@ -60,9 +60,9 @@ add_filter('rest_url_prefix', function () {
  * 修改 /token 接口返回值，增加avatar和roles字段
  */
 add_filter('jwt_auth_token_before_dispatch', function ($data, $user) {
-    $avatar = get_avatar_url($user->ID);
+    // $avatar = get_avatar_url($user->ID);
     $data['user_roles'] = $user->caps;
-    $data['user_avatar'] = $avatar;
+    // $data['user_avatar'] = $avatar;
     return $data;
 }, 10, 3);
 

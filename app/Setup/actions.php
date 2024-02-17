@@ -652,7 +652,6 @@ add_action('rest_api_init', function () {
                     return sanitize_text_field($value);
                 },
                 'validate_callback' => function ($value) {
-                    // Valid if it is string
                     return is_string($value);
                 },
                 // 'validate_callback' => function ($value) {
@@ -702,7 +701,6 @@ add_action('rest_api_init', function () {
                     return sanitize_text_field($value);
                 },
                 'validate_callback' => function ($value) {
-                    // Valid if it is string
                     return is_string($value);
                 },
             ),
@@ -732,7 +730,6 @@ add_action('rest_api_init', function () {
                     return sanitize_text_field($value);
                 },
                 'validate_callback' => function ($value) {
-                    // Valid if it is string
                     return is_string($value);
                 },
             ),
@@ -762,11 +759,22 @@ add_action('rest_api_init', function () {
                     return sanitize_text_field($value);
                 },
                 'validate_callback' => function ($value) {
-                    // Valid if it is string
                     return is_string($value);
                 },
             ),
         ),
+    ));
+
+    // 新增字段: registered, 封面图地址（不使用update_callback，单独上传后更新值）
+    register_rest_field('user', 'registered', array(
+        'get_callback' => function ($object, $field, $request) {
+            $user = get_user_by('id', $object['id']);
+            if ($user) {
+                $registered_date = date('Y-m-d', strtotime($user->user_registered));
+                return $registered_date;
+            }
+            return $user;
+        },
     ));
 
     // 新增字段: to, 被打赏人id（不使用update_callback，有单独接口处理更新逻辑）
