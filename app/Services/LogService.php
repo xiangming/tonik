@@ -8,39 +8,42 @@ namespace App\Services;
  */
 class LogService extends BaseService
 {
-    public function _log($log, $namespace = null)
+    public function _print($log = null)
+    {
+        if (is_array($log) || is_object($log)) {
+            $message = print_r($log, true);
+        } else {
+            $message = $log;
+        }
+
+        return $message;
+    }
+
+    public function _log($namespace = null, $logs = null)
     {
         if (true === WP_DEBUG) {
-            if (is_array($log) || is_object($log)) {
-                $message = print_r($log, true);
-            } else {
-                $message = $log;
+            $message = '';
+            foreach ($logs as $piece) {
+                $message .= ' ' . $this->_print($piece);
             }
 
-            if ($namespace) {
-                error_log($namespace . $message);
-            } else {
-                error_log($message);
-            }
+            error_log($namespace . $message);
         }
     }
 
-    public function log($log, $namespace = null)
+    public function log(...$log)
     {
-        $namespace = $namespace ? '[' . $namespace . ']' : null;
-        $this->_log($log, '[普通]' . $namespace . ': ');
+        $this->_log('[普通]', $log);
     }
 
-    public function debug($log, $namespace = null)
+    public function debug(...$log)
     {
-        $namespace = $namespace ? '[' . $namespace . ']' : null;
-        $this->_log($log, '[调试]' . $namespace . ': ');
+        $this->_log('[调试]', $log);
     }
 
-    public function error($log, $namespace = null)
+    public function error(...$log)
     {
-        $namespace = $namespace ? '[' . $namespace . ']' : null;
-        $this->_log($log, '[错误]' . $namespace . ': ');
+        $this->_log('[错误]', $log);
         // TODO: 邮件告警
     }
 }
