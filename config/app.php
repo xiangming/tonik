@@ -1,5 +1,5 @@
 <?php
-$dotenv = Dotenv\Dotenv::createUnsafeImmutable(__DIR__ . '/../');
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
 return [
@@ -12,7 +12,7 @@ return [
     | namespace for gettext strings across theme. Remember, this value must
     | be in sync with `Text Domain:` entry inside style.css theme file.
     |
-    */
+     */
     'textdomain' => 'tonik',
 
     /*
@@ -24,9 +24,9 @@ return [
     | By default, they use `.tpl.php` suffix to distinguish template files
     | from controllers, but you are free to change it however you like.
     |
-    */
+     */
     'templates' => [
-        'extension' => '.tpl.php'
+        'extension' => '.tpl.php',
     ],
 
     /*
@@ -38,7 +38,7 @@ return [
     | they use WordPress `get_template_directory` functions and
     | probably you don't need make any changes in here.
     |
-    */
+     */
     'paths' => [
         'directory' => get_template_directory(),
         'uri' => get_template_directory_uri(),
@@ -53,7 +53,7 @@ return [
     | and loading theme files, assets and templates. They must be
     | given as relative to the `root` theme directory.
     |
-    */
+     */
     'directories' => [
         'languages' => 'resources/languages',
         'templates' => 'resources/templates',
@@ -71,14 +71,26 @@ return [
     | theme bootstrap by `functions.php` file. Feel free to add your
     | own files to this array which you would like to autoload.
     |
-    */
+    | 注意加载有先后顺序
+     */
     'autoload' => [
+        'Traits/ResourceTrait.php',
         'helpers.php',
-        'jwt.php',
         'Http/assets.php',
         'Http/ajaxes.php',
-        'Plugins/MailService.php',
-        'Plugins/user-account-center.php',
+        'Services/BaseService.php',
+        'Services/ArgsService.php',
+        'Services/LogService.php',
+        'Services/CaptchaMessage.php',
+        'Services/DonationService.php',
+        'Services/MailService.php',
+        'Services/OrderService.php',
+        'Services/PaymentService.php',
+        'Services/WechatPayService.php',
+        'Services/QueueService.php',
+        'Services/SmsService.php',
+        'Services/ToolService.php',
+        'Services/UserService.php',
         'Setup/actions.php',
         'Setup/filters.php',
         'Setup/supports.php',
@@ -92,19 +104,5 @@ return [
         'Structure/shortcodes.php',
         'Structure/thumbnails.php',
         'Validators/Validator.php',
-        'Sms/CaptchaMessage.php',
-        'Sms/SmsService.php',
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Config files
-    |--------------------------------------------------------------------------
-    |
-    | Determines the theme's templates settings like an extension of the files.
-    | By default, they use `.tpl.php` suffix to distinguish template files
-    | from controllers, but you are free to change it however you like.
-    |
-    */
-    'sms' => require_once __DIR__ . '/../config/sms.php',
 ];

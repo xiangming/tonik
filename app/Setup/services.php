@@ -13,18 +13,28 @@ namespace Tonik\Theme\App\Setup;
 |
  */
 
+use App\Services\ArgsService;
+use App\Services\DonationService;
+use App\Services\LogService;
+use App\Services\MailService;
+use App\Services\OrderService;
+use App\Services\PaymentService;
+use App\Services\QueueService;
+use App\Services\SmsService;
+use App\Services\ToolService;
+use App\Services\UserService;
 use function Tonik\Theme\App\theme;
-// use Overtrue\EasySms\EasySms;
 use Tonik\Gin\Foundation\Theme;
-// use App\Sms\CaptchaMessage;
 use WP_Query;
 
 /**
- * Service handler for retrieving posts of specific post type.
+ * Binds services
+ *
+ * 通过theme方法快速获取：theme('books');
  *
  * @return void
  */
-function bind_books_service()
+function bind_services()
 {
     /**
      * Binds service for retrieving posts of specific post type.
@@ -39,8 +49,48 @@ function bind_books_service()
             'post_type' => 'book',
         ]);
     });
+
+    theme()->bind('tool', function (Theme $theme, $parameters) {
+        return new ToolService();
+    });
+
+    theme()->bind('queue', function (Theme $theme, $parameters) {
+        return new QueueService();
+    });
+
+    theme()->bind('sms', function (Theme $theme, $parameters) {
+        return new SmsService();
+    });
+
+    theme()->bind('mail', function (Theme $theme, $parameters) {
+        return new MailService();
+    });
+
+    theme()->bind('log', function (Theme $theme, $parameters) {
+        return new LogService();
+    });
+
+    theme()->bind('args', function (Theme $theme, $parameters) {
+        return new ArgsService();
+    });
+
+    theme()->bind('order', function (Theme $theme, $parameters) {
+        return new OrderService();
+    });
+
+    theme()->bind('payment', function (Theme $theme, $parameters) {
+        return new PaymentService();
+    });
+
+    theme()->bind('donation', function (Theme $theme, $parameters) {
+        return new DonationService();
+    });
+
+    theme()->bind('user', function (Theme $theme, $parameters) {
+        return new UserService();
+    });
 }
-add_action('init', 'Tonik\Theme\App\Setup\bind_books_service');
+add_action('init', 'Tonik\Theme\App\Setup\bind_services');
 
 /**
  * 发送短信接口

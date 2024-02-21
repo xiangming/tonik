@@ -84,13 +84,16 @@ function asset_path($file)
 
 /**
  * 接口正确返回函数
+ * 
+ * 错误码请阅读：https://flowus.cn/arvin/51fac2b2-d532-48b9-b287-2c5c2b123ba2
  *
- * @param   $message  接口message
- * @param   $data     接口data，可选
+ * @param   $code     接口错误码
+ * @param   $data     接口需要返回的数据
+ * @param   $message  接口提示信息
  *
  * @return  标准接口json
  */
-function resOK($message = 'success', $data = null, $code = 0)
+function resOK($data = null, $message = 'success', $code = 0)
 {
     print_r(json_encode(['code' => $code, 'message' => $message, 'data' => $data]));
     return;
@@ -99,15 +102,4 @@ function resError($message = 'error', $data = null, $code = 1)
 {
     print_r(json_encode(['code' => $code, 'message' => $message, 'data' => $data]));
     return;
-}
-
-/**
- * 是否admin用户
- * @since 1.0
- */
-if (!function_exists('isAdmin')) {
-    function isAdmin()
-    {
-        return current_user_can('manage_options') ? true : false;
-    }
 }

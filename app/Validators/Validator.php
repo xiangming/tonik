@@ -3,6 +3,7 @@
 namespace App\Validators;
 
 use function Tonik\Theme\App\resError;
+use function Tonik\Theme\App\theme;
 
 /**
  * Class Validator.
@@ -30,7 +31,7 @@ class Validator
     }
 
     /**
-     * 验证URL
+     * 验证整数
      *
      * @return true on success, false on failure
      */
@@ -129,22 +130,6 @@ class Validator
     }
 
     /**
-     * 验证email格式
-     *
-     * @return true on success, exit() on failure
-     */
-    public static function validateEmail($value, $message = '邮箱')
-    {
-        $value = strtolower($value);
-        if (!is_email($value)) {
-            resError($message . '格式不正确');
-            exit();
-        }
-
-        return true;
-    }
-
-    /**
      * 验证phone
      *
      * @return true on success, exit() on failure
@@ -186,6 +171,41 @@ class Validator
             resError('请选择正确的' . $message);
             exit();
         }
+
+        return true;
+    }
+
+    /**
+     * 验证验证码
+     *
+     * @return true on success, exit() on failure
+     */
+    public static function validateCode($uid, $code)
+    {
+        // theme('log')->debug('validateCode uid', $uid);
+        // theme('log')->debug('validateCode code', $code);
+
+        // 验证码格式验证
+        Validator::validateInt($code, '验证码', 1000, 9999);
+
+        // 获取数据库中保存的验证码
+        $code_saved = get_user_meta($uid, 'code', true);
+        $code_saved = explode('-', $code_saved);
+        $expired = $code_saved[1] + 1800; // 30分钟有效
+        $code_saved = $code_saved[0];
+
+        if ($expired < time()) {
+            resError('验证码已失效，请重新获取');
+            exit();
+        }
+        
+        if ($code !== $code_saved) {
+            resError('验证码不正确，请重新输入');
+            exit();
+        }
+
+        // 验证成功，删除code字段
+        delete_user_meta($uid, 'code');
 
         return true;
     }

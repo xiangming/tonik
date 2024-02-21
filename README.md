@@ -3,14 +3,15 @@
 基础设施后端主题，目前实现的基础设施能力：
 
 - [x] 短信发送
-- [ ] 邮件发送
-- [ ] 图片验证码
-- [ ] 支付接口
+- [x] 邮件发送
+- [x] 图形码
+- [x] 二维码
+- [x] 微信和支付宝支付
 - [ ] 对象存储 token 下发
 
 依赖此主题的产品主题，使用分支开发，方便基础代码共享：
 
-- [x] 打赏项目：fans/develop
+- [x] 打赏项目：fans/master
 
 ## 分支管理
 
@@ -22,7 +23,7 @@
 - develop: 主分支，跟踪 [origin](git@github.com:xiangming/tonik.git)的 develop 分支。
 - feature/xxx: 独立功能需求开发分支，跟踪 [origin](git@github.com:xiangming/tonik.git)的 feature/xxx 分支。
 
-fans 项目服务器：
+fans 项目 WEB 服务器：
 
 - 测试环境：[dev](ssh://git@165.154.22.106:7000/home/data/git/dev.git)
 - 生产环境：[release](ssh://git@165.154.22.106:7000/home/data/git/release.git)
@@ -38,6 +39,7 @@ fans 项目服务器：
 - [https://github.com/overtrue/api.yike.io/](https://github.com/overtrue/api.yike.io/)
 - [https://github.com/calibur-tv/Hentai](https://github.com/calibur-tv/Hentai)
 - [https://github.com/qingwuit/qwshop](https://github.com/qingwuit/qwshop)
+- [Refactor service provider](https://github.com/tonik/theme/issues/27)
 
 > 注意！开发功能时，尽量与业务解耦并形成独立的文件，已方便其他项目移植使用。
 
