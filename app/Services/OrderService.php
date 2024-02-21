@@ -21,11 +21,11 @@ class OrderService extends BaseService
      * @param   [string]  $amount  金额
      * @param   [string]  $name    购买的服务名称
      * @param   [string]  $remark  备注留言
-     * @param   [string]  $related 关联项目，
+     * @param   [string]  $related 关联项目
      *
      * @return  [object]    订单信息
      */
-    public function createOrder($type, $amount, $name, $remark, $related, $method)
+    public function createOrder($type, $amount, $name, $remark, $related, $method, $author_id)
     {
         theme('log')->log('OrderService createOrder start');
 
@@ -41,11 +41,14 @@ class OrderService extends BaseService
 
         // 创建订单
         $in_data = array(
-            // 'post_author'    => $uid,
             'post_title' => $out_trade_no,
             'post_status' => 'draft',
             'post_type' => 'orders', // custom-post-type
         );
+
+        // 如果指定了author_id，则设置
+        if($author_id) $in_data['post_author'] = $author_id;
+
         // https://developer.wordpress.org/reference/functions/wp_insert_post/
         // If the $postarr parameter has ‘ID’ set to a value, then post will be updated.
         $in_id = wp_insert_post($in_data, true);

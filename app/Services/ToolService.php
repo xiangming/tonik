@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use function Tonik\Theme\App\theme;
+
 class ToolService extends BaseService
 {
     /**
      * 生成随机字符串（小写字母和数字）
-     * 
+     *
      * 5位重复的概率是六千万分之一，用于post slug，后期不够用可以增加一位
      * 4位重复的概率是一百六十万分之一，用于user slug，后期不够用可以增加一位
      * 3位的总数是46,656，用于保留单位
@@ -60,6 +62,9 @@ class ToolService extends BaseService
         // 将时间戳和验证码一起保存，用于计算有效期和获取频率（以往经验，邮件发送的结果不可信，这里我们提前保存验证码用于频率限制）
         $new_code = $code . '-' . time();
         update_user_meta($uid, 'code', $new_code);
+        // theme('log')->debug('saveCode uid', $uid);
+        // theme('log')->debug('saveCode code', $code);
+        // theme('log')->debug('saveCode new_code', $new_code);
     }
 
     /**
@@ -75,6 +80,42 @@ class ToolService extends BaseService
             update_user_meta($uid, 'phone', $phone_temp);
             delete_user_meta($uid, 'phone_temp');
             return $uid;
+        }
+
+        return false;
+    }
+
+    /**
+     * 转正邮箱临时账号
+     *
+     * @return  uid on success, false on failure
+     */
+    public function updateEmailFromEmailTemp($uid)
+    {
+        $email_temp = get_user_meta($uid, 'email_temp', true);
+
+        if (isset($email_temp)) {
+            if (email_exists($email_temp)) {
+                // Email exists, do not update value.
+                // Maybe output a warning.
+                resError('该邮箱已经被其他账号绑定', $email_temp);
+                exit();
+            } else {
+                $result = wp_update_user(array(
+                    'ID' => $uid,
+                    'user_email' => $email_temp,
+                ));
+
+                if (is_wp_error($result)) {
+                    $message = $result->get_error_message();
+                    resError($message);
+                    exit();
+                }
+                
+                delete_user_meta($uid, 'email_temp');
+
+                return $result;
+            }
         }
 
         return false;
@@ -135,7 +176,6 @@ class ToolService extends BaseService
 
         return $actualAmount;
     }
-
 
     /**
      * 检查验证码获取频率

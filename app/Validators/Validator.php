@@ -3,6 +3,7 @@
 namespace App\Validators;
 
 use function Tonik\Theme\App\resError;
+use function Tonik\Theme\App\theme;
 
 /**
  * Class Validator.
@@ -181,6 +182,9 @@ class Validator
      */
     public static function validateCode($uid, $code)
     {
+        // theme('log')->debug('validateCode uid', $uid);
+        // theme('log')->debug('validateCode code', $code);
+
         // 验证码格式验证
         Validator::validateInt($code, '验证码', 1000, 9999);
 
@@ -194,7 +198,7 @@ class Validator
             resError('验证码已失效，请重新获取');
             exit();
         }
-
+        
         if ($code !== $code_saved) {
             resError('验证码不正确，请重新输入');
             exit();

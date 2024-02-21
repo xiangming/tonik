@@ -50,6 +50,7 @@ class ArgsService extends BaseService
             'type' => "string",
             "description" => "用户名、邮箱或者手机号。",
             'validate_callback' => function ($param, $request, $key) {
+                // 巧妙设计：只允许邮箱和手机新用户或者已注册用户开放（防止使用用户名胡乱请求）
                 return is_email($param) || Validator::isPhone($param) || theme('user')->exists($param);
             },
             'sanitize_callback' => 'sanitize_text_field',

@@ -16,8 +16,16 @@ class UserService extends BaseService
      */
     public function exists($account)
     {
+        theme('log')->debug('UserService exists start');
+
         if (is_email($account)) {
             $user = get_user_by('email', $account);
+            if ($user) {
+                return $user->ID;
+            }
+
+            // 临时账号也应该检查，否则同一个邮箱会产生很多临时账号
+            $user = $this->getUserByMeta('email_temp', $account);
             if ($user) {
                 return $user->ID;
             }
@@ -52,11 +60,11 @@ class UserService extends BaseService
      * @param string $password  密码
      * @param string $role 账号角色
      *
-     * @return int uid
+     * @return 标准响应对象
      */
-    public function create($account = null, $password = null, $role = 'subscriber')
+    public function createUser($account = null, $password = null, $role = 'subscriber')
     {
-        theme('log')->log('UserService create start');
+        theme('log')->debug('createUser start');
 
         // 用户已存在，则直接返回
         $user_id = $this->exists($account);
@@ -72,19 +80,24 @@ class UserService extends BaseService
         // 密码格式验证
         Validator::validateLength($password, '密码', 6, 20);
 
-        // 随机生成5位用户名
-        $user_login = theme('tool')->generateRandomString(4);
+        // 随机生成uuid作为username
+        $user_login = theme('tool')->generateRandomString();
+
+        // 随机生成uuid作为user_slug（因为user_slug会对外暴露，不要和user_login相同）
+        $user_slug = theme('tool')->generateRandomString();
 
         // 准备数据
         $args = array();
-        $args['user_login'] = $user_login;
+        $args['user_login'] = $user_login; // 需要隐藏
         $args['user_pass'] = $password;
-        $args['display_name'] = $user_login;
+        $args['user_nicename'] = $user_slug; // 别名
+        $args['nickname'] = $user_slug; // 后台昵称
+        $args['display_name'] = $user_slug; // 前台昵称
         $args['role'] = $role;
 
         // // 如果是邮箱
         // if (is_email($account)) {
-        //     $args['display_name'] = explode("@", $account)[0]; // 截取邮箱@前作为昵称
+        //     // $args['display_name'] = explode("@", $account)[0]; // 截取邮箱@前作为昵称
         //     // $args['user_email'] = $account; // 邮箱尚未验证，不能转正
         // }
 
@@ -100,17 +113,22 @@ class UserService extends BaseService
         if (is_wp_error($in_id)) {
             $errmsg = $in_id->get_error_message();
 
-            theme('log')->error($errmsg, 'UserService create');
+            theme('log')->error($errmsg, 'createUser');
 
             return $this->formatError($errmsg);
         }
 
-        // save as phone_temp, will transfer to phone after phone validated
+        // save as phone_temp, will transfer to phone after phone verified
         if (Validator::isPhone($account)) {
             update_user_meta($in_id, 'phone_temp', $account);
         }
 
-        theme('log')->log($in_id, 'UserService create success');
+        // save as email_temp, will transfer to email after email verified
+        if (is_email($account)) {
+            update_user_meta($in_id, 'email_temp', $account);
+        }
+
+        theme('log')->log($in_id, 'createUser success');
 
         return $this->format($in_id);
     }

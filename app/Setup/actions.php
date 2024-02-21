@@ -199,7 +199,7 @@ add_action('transfer', 'Tonik\Theme\App\Setup\transfer');
 //                         theme('log')->log('donation start');
 
 //                         // 支付成功后要生成打赏记录
-//                         $rs = theme('donation')->create($order['from_user_id'], $order['to_user_id'], $order['amount'], $order['remark'], $order['id']);
+//                         $rs = theme('donation')->createDonation($order['from_user_id'], $order['to_user_id'], $order['amount'], $order['remark'], $order['id']);
 
 //                         if (!$rs['status']) {
 //                             theme('log')->log($rs, 'donation create end');
@@ -271,8 +271,17 @@ add_action('rest_api_init', function () {
             if ($token) {
                 $uid = theme('tool')->getUserIdFromJwtToken($token);
             } else {
+                // 创建或者返回账号
+                $rs = theme('user')->createUser($account);
                 // TODO: 不需要创建账号，使用PHP缓存即可：cache()->get($this->getLoginKey($mobile));
-                $uid = theme('user')->create($account);
+                
+                // 创建失败
+                if (!$rs['status']) {
+                    resError($rs['msg']);
+                    exit();
+                }
+                
+                $uid = $rs['data'];
             }
 
             if (!$uid) {
@@ -318,6 +327,10 @@ add_action('rest_api_init', function () {
      * 3. 验证码验证通过，则转正临时账号：将phone_temp保存到phone，并删除phone_temp
      * 4. 提示: “注册成功”
      * 5. 前端跳转到登录表单
+     *
+     * 1. 通过邮箱或者手机获取验证码（/users/code）
+     * 2. 使用验证码请求注册（当前接口）
+     * 3. 通过exists方法获取uid
      */
     register_rest_route(WP_V2_NAMESPACE, '/users/register', array(
         'methods' => 'POST',
@@ -328,25 +341,19 @@ add_action('rest_api_init', function () {
             $code = $parameters['code'];
             $password = $parameters['password'];
 
-            // 后端数据格式校验
+            // 通过exists方法获取uid
+            $uid = theme('user')->exists($account);
+            if ($uid) {
+                theme('log')->error('已找到用户，开始校验验证码', $uid);
 
-            // 正式账号是否存在？
-            $user = theme('user')->getUserByMeta('phone', $account);
-            if ($user) {
-                resError('用户已经存在');
-                exit();
-            }
-
-            $user = theme('user')->getUserByMeta('phone_temp', $account);
-            if ($user) {
-                $uid = $user->ID;
-
+                // 校验验证码
                 Validator::validateCode($uid, $code);
 
-                // 验证码验证通过，则转正临时账号
+                // 验证码通过，则转正临时账号
                 theme('tool')->updatePhoneFromPhoneTemp($uid);
+                theme('tool')->updateEmailFromEmailTemp($uid);
 
-                // 设置用户密码，失败也没关系，用户可以找回密码
+                // 设置用户密码，失败也没关系，用户可以找回密码（会触发wordpress内部的邮件通知）
                 if ($password) {
                     theme('tool')->updatePassword($uid, $password);
                 }
@@ -355,7 +362,7 @@ add_action('rest_api_init', function () {
                 exit();
             }
 
-            resError('注册失败，验证码错误');
+            resError('注册失败', $uid, 100101); // account对应的用户不存在，用户没有按照正常的流程操作
             exit();
         },
         'args' => array(
@@ -394,6 +401,7 @@ add_action('rest_api_init', function () {
     ));
 
     // Register a new endpoint: /wp/v2/donation
+    // 当携带了from，则订单和打赏记录的author设置为from对应用户；否则系统会默认token对应用户
     register_rest_route(WP_V2_NAMESPACE, '/payment/donation', array(
         'methods' => 'POST',
         'callback' => function ($request) {
@@ -408,25 +416,28 @@ add_action('rest_api_init', function () {
 
             // TODO: 一般性校验，使用WP内置方法即可（参考下面的args），不需要额外处理
 
-            // 处理打赏人，打赏记录关联此账号，而不是当前token账号（可能会帮别人打赏）
-            $from_user_id = theme('user')->exists($from);
-            // 填写的账号不存在，则自动创建账号并关联打赏记录
-            if (!$from_user_id) {
-                $from_user_id = theme('user')->create($from);
+            // 处理打赏人
+            if ($from) {
+                $from_user_id = theme('user')->exists($from);
+                // 填写的账号不存在，则提示用户注册
+                if (!$from_user_id) {
+                    resError('打赏用户不存在，请先注册');
+                    exit();
+                }
             }
 
             // 处理被打赏人
             $to_user_id = theme('user')->exists($to);
             // 不存在，退出
             if (!$to_user_id) {
-                resError('被打赏人不存在', $to);
+                resError('被打赏人不存在');
                 exit();
             }
 
             // 1. 创建order
             $name = '打赏-' . $to; // 支付通道显示的标题
             $orderService = theme('order');
-            $rs = $orderService->createOrder('donation', $amount, $name, $remark, $to_user_id, $method);
+            $rs = $orderService->createOrder('donation', $amount, $name, $remark, $to_user_id, $method, $from_user_id);
 
             // 创建订单失败
             if (!$rs['status']) {
@@ -443,10 +454,10 @@ add_action('rest_api_init', function () {
             exit();
         },
         'args' => array(
-            'from' => theme('args')->account(true),
+            'from' => theme('args')->account(false), // 可选
             'to' => theme('args')->account(true),
             'amount' => theme('args')->amount(true),
-            'remark' => theme('args')->remark(false),
+            'remark' => theme('args')->remark(false), // 可选
             'method' => theme('args')->method(true),
             'device' => theme('args')->device(true),
         ),
