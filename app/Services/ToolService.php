@@ -21,36 +21,36 @@ class ToolService extends BaseService
         return $randomString;
     }
 
-    /**
-     * 从 api 请求里面获取 jwt-token
-     *
-     * @param   [type]  $request  api请求参数集合
-     *
-     * @return  token on success, false on failure.
-     */
-    public function getJwtTokenFromRequest($request)
-    {
-        $headers = $request->get_headers();
-        $token = $headers['authorization'] ? substr($headers['authorization'][0], 7) : false;
-        return $token;
-    }
+    // /**
+    //  * 从 api 请求里面获取 jwt-token
+    //  *
+    //  * @param   [type]  $request  api请求参数集合
+    //  *
+    //  * @return  token on success, false on failure.
+    //  */
+    // public function getJwtTokenFromRequest($request)
+    // {
+    //     $headers = $request->get_headers();
+    //     $token = $headers['authorization'] ? substr($headers['authorization'][0], 7) : false;
+    //     return $token;
+    // }
 
-    /**
-     * 从JWT Token里面解析出user id
-     * https://developer.wordpress.org/reference/functions/get_user_id_from_string/
-     *
-     * @return  ID on success, false on failure.
-     */
-    public function getUserIdFromJwtToken($token)
-    {
-        $array = explode(".", $token);
-        $user = json_decode(base64_decode($array[1]))->data->user;
-        if ($user) {
-            return $user->id;
-        }
+    // /**
+    //  * 从JWT Token里面解析出user id
+    //  * https://developer.wordpress.org/reference/functions/get_user_id_from_string/
+    //  *
+    //  * @return  ID on success, false on failure.
+    //  */
+    // public function getUserIdFromJwtToken($token)
+    // {
+    //     $array = explode(".", $token);
+    //     $user = json_decode(base64_decode($array[1]))->data->user;
+    //     if ($user) {
+    //         return $user->id;
+    //     }
 
-        return false;
-    }
+    //     return false;
+    // }
 
     /**
      * 保存或者更新user_meta上的验证码
@@ -68,83 +68,71 @@ class ToolService extends BaseService
     }
 
     /**
-     * 转正手机临时账号
+     * 保存或者更新cache里面的验证码，有效期1小时
      *
-     * @return  uid on success, false on failure
+     * @return  无
      */
-    public function updatePhoneFromPhoneTemp($uid)
+    public function saveCacheCode($account, $code)
     {
-        $phone_temp = get_user_meta($uid, 'phone_temp', true);
-
-        if (isset($phone_temp)) {
-            update_user_meta($uid, 'phone', $phone_temp);
-            delete_user_meta($uid, 'phone_temp');
-            return $uid;
-        }
-
-        return false;
+        // 将时间戳和验证码一起保存，用于计算有效期和获取频率（以往经验，邮件发送的结果不可信，这里我们提前保存验证码用于频率限制）
+        $new_code = $code . '-' . time();
+        set_transient( $account.'_code', $new_code, HOUR_IN_SECONDS );
+        theme('log')->debug('saveCacheCode account', $account);
+        theme('log')->debug('saveCacheCode code', $code);
+        theme('log')->debug('saveCacheCode new_code', $new_code);
     }
 
     /**
-     * 转正邮箱临时账号
-     *
-     * @return  uid on success, false on failure
-     */
-    public function updateEmailFromEmailTemp($uid)
-    {
-        $email_temp = get_user_meta($uid, 'email_temp', true);
-
-        if (isset($email_temp)) {
-            if (email_exists($email_temp)) {
-                // Email exists, do not update value.
-                // Maybe output a warning.
-                resError('该邮箱已经被其他账号绑定', $email_temp);
-                exit();
-            } else {
-                $result = wp_update_user(array(
-                    'ID' => $uid,
-                    'user_email' => $email_temp,
-                ));
-
-                if (is_wp_error($result)) {
-                    $message = $result->get_error_message();
-                    resError($message);
-                    exit();
-                }
-                
-                delete_user_meta($uid, 'email_temp');
-
-                return $result;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * 更新密码
+     * 更新邮箱
      *
      * @return uid or a WP_Error object if the user could not be updated.
      */
-    public function updatePassword($uid, $password)
+    public function updateEmail($uid, $email)
     {
         // 更新用户密码
         $result = wp_update_user(
             array(
                 'ID' => $uid,
-                'user_pass' => $password,
+                'user_email' => $email,
             )
         );
 
-        // // 更新密码出错
-        // if (is_wp_error($result)) {
-        //     $message = $result->get_error_message();
-        //     resError($message);
-        //     exit();
-        // }
+        if (is_wp_error($result)) {
+            $message = $result->get_error_message();
+
+            theme('log')->error('updateEmail failed', $message);
+
+            resError($message);
+            exit();
+        }
 
         return $result;
     }
+
+    // /**
+    //  * 更新密码
+    //  *
+    //  * @return uid or a WP_Error object if the user could not be updated.
+    //  */
+    // public function updatePassword($uid, $password)
+    // {
+    //     // 更新用户密码
+    //     $result = wp_update_user(
+    //         array(
+    //             'ID' => $uid,
+    //             'user_pass' => $password,
+    //         )
+    //     );
+
+    //     // // 更新密码出错
+    //     // if (is_wp_error($result)) {
+    //     //     $message = $result->get_error_message();
+    //     //     resError($message);
+    //     //     exit();
+    //     // }
+
+    //     return $result;
+    // }
 
     /**
      * 更新 post_status
@@ -175,25 +163,5 @@ class ToolService extends BaseService
         $actualAmount = $originalAmount - $fee;
 
         return $actualAmount;
-    }
-
-    /**
-     * 检查验证码获取频率
-     * TODO: 间隔时间随着获取次数递增、设置每个手机号码每天的最大发送量
-     */
-    public static function checkCodeLimit($uid, $limited = 60)
-    {
-        $code_saved = get_user_meta($uid, 'code', true);
-
-        if (!empty($code_saved)) {
-            $code_saved = explode('-', $code_saved);
-            $expired = $code_saved[1] + $limited; // 限制60s获取一次
-            if ($expired > time()) {
-                resError('验证码获取太频繁，请一分钟后再尝试');
-                exit();
-            }
-        }
-
-        return true;
     }
 }

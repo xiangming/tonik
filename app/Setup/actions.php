@@ -7,7 +7,8 @@ use function Tonik\Theme\App\resError;
 use function Tonik\Theme\App\resOK;
 use function Tonik\Theme\App\theme;
 
-define('WP_V2_NAMESPACE', 'wp/v2'); // WP REST API 命名空间
+define('WP_V2_NAMESPACE', 'wp/v2'); // WP REST API 内置命名空间
+define('CUSTOM_V1_NAMESPACE', 'custom/v1'); // WP REST API 自定义命名空间
 define('FEE_RATE', 0.06); // 平台费率
 
 /*
@@ -252,8 +253,9 @@ add_action('rest_api_init', function () {
     /**
      * 发送短信或者邮件验证码，应用场景：手机号注册、绑定邮箱、绑定手机等
      *
-     * 当请求未携带jwt时，判定为注册请求，自动生成phone_temp新用户
-     * 当请求携带jwt时，判定为绑定手机号，向jwt用户添加phone_temp字段
+     * 使用wordpress存储方案：https://developer.wordpress.org/apis/transients/
+     *
+     * 注意：该接口需要限制请求频率
      *
      * @param   [string or number]  $account  账号（邮箱、手机或者用户名），必填
      *
@@ -266,28 +268,8 @@ add_action('rest_api_init', function () {
 
             $account = $parameters['account'];
 
-            // 通过请求头获取用户，否则创建新用户
-            $token = theme('tool')->getJwtTokenFromRequest($request);
-            if ($token) {
-                $uid = theme('tool')->getUserIdFromJwtToken($token);
-            } else {
-                // 创建或者返回账号
-                $rs = theme('user')->createUser($account);
-                // TODO: 不需要创建账号，使用PHP缓存即可：cache()->get($this->getLoginKey($mobile));
-                
-                // 创建失败
-                if (!$rs['status']) {
-                    resError($rs['msg']);
-                    exit();
-                }
-                
-                $uid = $rs['data'];
-            }
-
-            if (!$uid) {
-                resError('获取用户信息失败');
-                exit();
-            }
+            // 频率检测，默认60秒
+            Validator::validateCodeLimit($account, 60);
 
             // 发送验证码
             if (is_email($account)) {
@@ -306,8 +288,8 @@ add_action('rest_api_init', function () {
                 exit();
             }
 
-            // 保存到用户表，用于下次验证
-            theme('tool')->saveCode($uid, $rs['data']);
+            // 保存验证码，用于下次验证
+            theme('tool')->saveCacheCode($account, $rs['data']);
 
             resOK('发送成功');
             exit();
@@ -318,20 +300,7 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
-    /**
-     * Register a new endpoint: /wp/v2/users/register
-     *
-     * 注册流程：
-     * 1. 输入手机并获取验证码（/users/code）
-     * 2. 输入拿到的验证码和密码请求注册 => phone正式账号已存在，则提示：“用户已经存在”（不放在1里面，可以避免别人通过获取验证码来判断是否已注册）
-     * 3. 验证码验证通过，则转正临时账号：将phone_temp保存到phone，并删除phone_temp
-     * 4. 提示: “注册成功”
-     * 5. 前端跳转到登录表单
-     *
-     * 1. 通过邮箱或者手机获取验证码（/users/code）
-     * 2. 使用验证码请求注册（当前接口）
-     * 3. 通过exists方法获取uid
-     */
+    // 注册前，判断用户是否已存在
     register_rest_route(WP_V2_NAMESPACE, '/users/register', array(
         'methods' => 'POST',
         'callback' => function ($request) {
@@ -344,40 +313,34 @@ add_action('rest_api_init', function () {
             // 通过exists方法获取uid
             $uid = theme('user')->exists($account);
             if ($uid) {
-                theme('log')->error('已找到用户，开始校验验证码', $uid);
-
-                // 校验验证码
-                Validator::validateCode($uid, $code);
-
-                // 验证码通过，则转正临时账号
-                theme('tool')->updatePhoneFromPhoneTemp($uid);
-                theme('tool')->updateEmailFromEmailTemp($uid);
-
-                // 设置用户密码，失败也没关系，用户可以找回密码（会触发wordpress内部的邮件通知）
-                if ($password) {
-                    theme('tool')->updatePassword($uid, $password);
-                }
-
-                resOK('注册成功');
+                resError('用户已经存在，请勿重复注册');
                 exit();
             }
 
-            resError('注册失败', $uid, 100101); // account对应的用户不存在，用户没有按照正常的流程操作
+            // 校验验证码
+            Validator::validateCacheCode($account, $code);
+
+            // 验证码通过，则创建账号
+            $rs = theme('user')->createUser($account, $password);
+
+            // 创建失败
+            if (!$rs['status']) {
+                resError($rs['msg']);
+                exit();
+            }
+
+            resOK('注册成功');
             exit();
         },
         'args' => array(
             'account' => theme('args')->account(true),
             'code' => theme('args')->code(true),
-            'password' => theme('args')->password(false),
+            'password' => theme('args')->password(true),
         ),
         'permission_callback' => '__return_true',
     ));
 
-    /**
-     * 用户是否存在
-     *
-     * Register a new endpoint: /wp/v2/users/exists
-     */
+    // Register a new endpoint: /wp/v2/users/exists
     register_rest_route(WP_V2_NAMESPACE, '/users/exists', array(
         'methods' => 'POST',
         'callback' => function ($request) {

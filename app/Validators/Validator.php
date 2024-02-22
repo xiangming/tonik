@@ -7,6 +7,8 @@ use function Tonik\Theme\App\theme;
 
 /**
  * Class Validator.
+ * 
+ * 约定：validate开头的函数，return true on success, exit() on failure
  */
 class Validator
 {
@@ -175,37 +177,97 @@ class Validator
         return true;
     }
 
+    // /**
+    //  * 验证验证码
+    //  *
+    //  * @return true on success, exit() on failure
+    //  */
+    // public static function validateCode($uid, $code)
+    // {
+    //     // theme('log')->debug('validateCode uid', $uid);
+    //     // theme('log')->debug('validateCode code', $code);
+
+    //     // 验证码格式验证
+    //     Validator::validateInt($code, '验证码', 1000, 9999);
+
+    //     // 获取数据库中保存的验证码
+    //     $code_saved = get_user_meta($uid, 'code', true);
+    //     $code_saved = explode('-', $code_saved);
+    //     $expired = $code_saved[1] + 1800; // 30分钟有效
+    //     $code_saved = $code_saved[0];
+
+    //     if ($expired < time()) {
+    //         resError('验证码已失效，请重新获取');
+    //         exit();
+    //     }
+
+    //     if ($code !== $code_saved) {
+    //         resError('验证码不正确，请重新输入');
+    //         exit();
+    //     }
+
+    //     // 验证成功，删除code字段
+    //     delete_user_meta($uid, 'code');
+
+    //     return true;
+    // }
+
     /**
-     * 验证验证码
+     * 校验cache里面的验证码
      *
      * @return true on success, exit() on failure
      */
-    public static function validateCode($uid, $code)
+    public static function validateCacheCode($account, $code)
     {
-        // theme('log')->debug('validateCode uid', $uid);
-        // theme('log')->debug('validateCode code', $code);
+        theme('log')->debug('validateCacheCode account', $account);
+        theme('log')->debug('validateCacheCode code', $code);
 
         // 验证码格式验证
         Validator::validateInt($code, '验证码', 1000, 9999);
 
         // 获取数据库中保存的验证码
-        $code_saved = get_user_meta($uid, 'code', true);
+        $code_saved = get_transient($account . '_code');
+        theme('log')->debug('validateCacheCode code_saved', $code_saved);
         $code_saved = explode('-', $code_saved);
-        $expired = $code_saved[1] + 1800; // 30分钟有效
+        $expired = $code_saved[1] + HOUR_IN_SECONDS;
         $code_saved = $code_saved[0];
 
         if ($expired < time()) {
+            delete_transient($account . '_code');
+
             resError('验证码已失效，请重新获取');
             exit();
         }
-        
+
         if ($code !== $code_saved) {
+            // 这里不能删除瞬态，用户还有机会重新输入
             resError('验证码不正确，请重新输入');
             exit();
         }
 
-        // 验证成功，删除code字段
-        delete_user_meta($uid, 'code');
+        // 验证成功，删除cache上的code
+        delete_transient($account . '_code');
+
+        return true;
+    }
+
+    /**
+     * 检查验证码获取频率
+     *
+     * @return true on success, exit() on failure
+     */
+    public static function validateCodeLimit($account, $limited = 60)
+    {
+        $code_saved = get_transient($account . '_code');
+
+        if ($code_saved) {
+            $code_saved = explode('-', $code_saved);
+            $expired = $code_saved[1] + $limited; // 限制60s获取一次
+            if ($expired > time()) {
+                resError('验证码获取太频繁，请稍后重试');
+                exit();
+            }
+        }
 
         return true;
     }

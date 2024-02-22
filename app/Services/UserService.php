@@ -24,23 +24,11 @@ class UserService extends BaseService
                 return $user->ID;
             }
 
-            // 临时账号也应该检查，否则同一个邮箱会产生很多临时账号
-            $user = $this->getUserByMeta('email_temp', $account);
-            if ($user) {
-                return $user->ID;
-            }
-
             return false;
         }
 
         if (Validator::isPhone($account)) {
             $user = $this->getUserByMeta('phone', $account);
-            if ($user) {
-                return $user->ID;
-            }
-
-            // 临时账号也应该检查，否则同一个手机号会产生很多临时账号
-            $user = $this->getUserByMeta('phone_temp', $account);
             if ($user) {
                 return $user->ID;
             }
@@ -113,22 +101,22 @@ class UserService extends BaseService
         if (is_wp_error($in_id)) {
             $errmsg = $in_id->get_error_message();
 
-            theme('log')->error($errmsg, 'createUser');
+            theme('log')->error('createUser failed', $errmsg);
 
             return $this->formatError($errmsg);
         }
 
-        // save as phone_temp, will transfer to phone after phone verified
+        // save phone, it's already verified
         if (Validator::isPhone($account)) {
-            update_user_meta($in_id, 'phone_temp', $account);
+            update_user_meta($in_id, 'phone', $account);
         }
 
-        // save as email_temp, will transfer to email after email verified
+        // update email, it's already verified
         if (is_email($account)) {
-            update_user_meta($in_id, 'email_temp', $account);
+            theme('tool')->updateEmail($in_id, $account);
         }
 
-        theme('log')->log($in_id, 'createUser success');
+        theme('log')->log('createUser success', $in_id, $account, $password);
 
         return $this->format($in_id);
     }
