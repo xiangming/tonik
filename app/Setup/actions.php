@@ -377,14 +377,14 @@ add_action('rest_api_init', function () {
             $method = $parameters['method'] ? $parameters['method'] : 'alipay'; // 支付通道，可选
             $device = $parameters['device'] ? $parameters['device'] : 'scan'; // 支付设备类型，可选
 
-            // TODO: 一般性校验，使用WP内置方法即可（参考下面的args），不需要额外处理
+            // 后端校验：使用WP内置方法即可（下面的args），不需要额外处理
 
             // 处理打赏人
             if ($from) {
                 $from_user_id = theme('user')->exists($from);
-                // 填写的账号不存在，则提示用户注册
+                // 填写的打赏记录绑定账号不存在，则提示用户注册
                 if (!$from_user_id) {
-                    resError('打赏用户不存在，请先注册');
+                    resError('打赏记录绑定账号不存在，请先注册');
                     exit();
                 }
             }
@@ -473,7 +473,7 @@ add_action('rest_api_init', function () {
     ));
 
     /**
-     * 请求后端确认支付结果
+     * 请求后端检查支付结果
      *
      * endpoint: /wp/v2/payment/check
      */

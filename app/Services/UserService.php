@@ -18,6 +18,7 @@ class UserService extends BaseService
     {
         theme('log')->debug('UserService exists start');
 
+        // 使用邮箱检索
         if (is_email($account)) {
             $user = get_user_by('email', $account);
             if ($user) {
@@ -27,8 +28,19 @@ class UserService extends BaseService
             return false;
         }
 
+        // 使用手机号检索
         if (Validator::isPhone($account)) {
             $user = $this->getUserByMeta('phone', $account);
+            if ($user) {
+                return $user->ID;
+            }
+
+            return false;
+        }
+
+        // 使用用户ID检索
+        if (is_numeric($account)) {
+            $user = get_user_by('id', $account);
             if ($user) {
                 return $user->ID;
             }
