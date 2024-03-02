@@ -30,8 +30,8 @@ class CaptchaMessage extends Message
         if (isset($this->captchaConfig['template_id'])) {
             return $this->captchaConfig['template_id'];
         } else {
-            // 您的验证码${code}，该验证码15分钟内有效，请勿泄漏于他人！
-            return 'SMS_152511386';
+            // 您的验证码${code}，该验证码1小时内有效，请勿泄漏于他人！
+            return 'SMS_465400825';
         }
     }
 
