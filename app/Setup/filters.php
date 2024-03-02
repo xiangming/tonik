@@ -42,6 +42,13 @@ function modify_excerpt_length()
 add_filter('excerpt_length', 'Tonik\Theme\App\Setup\modify_excerpt_length');
 
 /**
+ * rewrite 'wp-json' REST API prefix with 'api'
+ */
+add_filter('rest_url_prefix', function () {
+    return 'api';
+});
+
+/**
  * 通过 jwt_auth_expire 这个filter，将token有效期设置为一年
  */
 add_filter('jwt_auth_expire', function ($issuedAt) {
@@ -50,14 +57,7 @@ add_filter('jwt_auth_expire', function ($issuedAt) {
 });
 
 /**
- * rewrite 'wp-json' REST API prefix with 'api'
- */
-add_filter('rest_url_prefix', function () {
-    return 'api';
-});
-
-/**
- * 修改 /token 接口返回值，增加avatar和roles字段
+ * 修改 /token 接口的返回值
  */
 add_filter('jwt_auth_token_before_dispatch', function ($data, $user) {
     // $avatar = get_avatar_url($user->ID);
@@ -180,9 +180,9 @@ add_filter('rest_donation_query', function ($args, $request) {
 
 /**
  * WP默认不返回没有发表过内容的用户数据，比如：http://localhost/wp/api/wp/v2/users/3217
- * 
+ *
  * 具体细节：https://wordpress.stackexchange.com/questions/331042/unable-to-get-the-info-of-the-user-which-doesnt-have-created-any-post-via-rest
- * 
+ *
  * 我们这里通过filter来放开这个限制，但是需要注意数据安全
  */
 add_filter('rest_request_before_callbacks', function ($response, $handler, $request) {

@@ -2,6 +2,8 @@
 
 namespace Tonik\Theme\App\Setup;
 
+require_once ABSPATH . 'wp-admin/includes/user.php';
+
 use App\Validators\Validator;
 use function Tonik\Theme\App\resError;
 use function Tonik\Theme\App\resOK;
@@ -355,6 +357,30 @@ add_action('rest_api_init', function () {
             }
 
             resOK(false, '可以注册');
+            exit();
+        },
+        'args' => array(
+            'account' => theme('args')->account(true),
+        ),
+        'permission_callback' => '__return_true',
+    ));
+
+    // 通过账户删除用户
+    register_rest_route(WP_V2_NAMESPACE, '/users/delete', array(
+        'methods' => 'POST',
+        'callback' => function ($request) {
+            $parameters = $request->get_json_params();
+
+            $account = $parameters['account'];
+
+            $user_id = theme('user')->exists($account);
+            if ($user_id) {
+                wp_delete_user($user_id);
+                resOK(true, '用户删除成功');
+                exit();
+            }
+
+            resOK(false, '用户不存在');
             exit();
         },
         'args' => array(
