@@ -53,6 +53,8 @@ class UserService extends BaseService
 
     /**
      * 通过邮件、手机号或者随机值创建新用户
+     * 
+     * 注意！在执行此方法前，请确保account验证码已经校验通过
      *
      * 如果用户（正式或者临时）存在，则返回uid。
      *
@@ -101,10 +103,10 @@ class UserService extends BaseService
         //     // $args['user_email'] = $account; // 邮箱尚未验证，不能转正
         // }
 
-        // // 如果是手机号
-        // if (Validator::isPhone($account)) {
-        //     $args['display_name'] = substr_replace($account, '****', 3, 4); // 隐藏手机号中间四位
-        // }
+        // 如果是手机号，则作为用户名使用（但是不要公开显示在nickname等位置）
+        if (Validator::isPhone($account)) {
+            $args['user_login'] = $account;
+        }
 
         // https://developer.wordpress.org/reference/functions/wp_insert_user/
         $in_id = wp_insert_user($args);
@@ -118,10 +120,10 @@ class UserService extends BaseService
             return $this->formatError($errmsg);
         }
 
-        // save phone, it's already verified
-        if (Validator::isPhone($account)) {
-            update_user_meta($in_id, 'phone', $account);
-        }
+        // // save phone, it's already verified
+        // if (Validator::isPhone($account)) {
+        //     update_user_meta($in_id, 'phone', $account);
+        // }
 
         // update email, it's already verified
         if (is_email($account)) {
