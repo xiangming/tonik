@@ -28,18 +28,18 @@ class UserService extends BaseService
             return false;
         }
 
-        // 使用手机号检索
-        if (Validator::isPhone($account)) {
-            $user = $this->getUserByMeta('phone', $account);
-            if ($user) {
-                return $user->ID;
-            }
+        // // 使用手机号检索
+        // if (Validator::isPhone($account)) {
+        //     $user = $this->getUserByMeta('phone', $account);
+        //     if ($user) {
+        //         return $user->ID;
+        //     }
 
-            return false;
-        }
+        //     return false;
+        // }
 
-        // 使用用户ID检索
-        if (is_numeric($account)) {
+        // 使用用户ID检索并排除手机号
+        if (is_numeric($account) && !Validator::isPhone($account)) {
             $user = get_user_by('id', $account);
             if ($user) {
                 return $user->ID;
@@ -53,7 +53,7 @@ class UserService extends BaseService
 
     /**
      * 通过邮件、手机号或者随机值创建新用户
-     * 
+     *
      * 注意！在执行此方法前，请确保account验证码已经校验通过
      *
      * 如果用户（正式或者临时）存在，则返回uid。

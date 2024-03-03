@@ -293,7 +293,7 @@ add_action('rest_api_init', function () {
             // 保存验证码，用于下次验证
             theme('tool')->saveCacheCode($account, $rs['data']);
 
-            resOK('发送成功');
+            resOK(true, '发送成功');
             exit();
         },
         'args' => array(
@@ -322,8 +322,8 @@ add_action('rest_api_init', function () {
             // 校验验证码
             Validator::validateCacheCode($account, $code);
 
-            // 验证码通过，则创建账号
-            $rs = theme('user')->createUser($account, $password);
+            // 验证码通过，则创建账号(author可以自己发布文章，contributor只能发草稿)
+            $rs = theme('user')->createUser($account, $password, 'author');
 
             // 创建失败
             if (!$rs['status']) {
@@ -331,7 +331,7 @@ add_action('rest_api_init', function () {
                 exit();
             }
 
-            resOK('注册成功');
+            resOK(true, '注册成功');
             exit();
         },
         'args' => array(
@@ -376,6 +376,7 @@ add_action('rest_api_init', function () {
             $user_id = theme('user')->exists($account);
             if ($user_id) {
                 wp_delete_user($user_id);
+
                 resOK(true, '用户删除成功');
                 exit();
             }
@@ -707,7 +708,7 @@ add_action('rest_api_init', function () {
         ),
     ));
 
-    // 新增字段: alipay, 支付宝账号，仅自己可见
+    // 新增字段: alipay, 支付宝账号，仅自己可见，仅自己可更新
     register_rest_field('user', 'alipay', array(
         'get_callback' => function ($object, $field, $request) {
             $current_user = wp_get_current_user();
@@ -724,15 +725,7 @@ add_action('rest_api_init', function () {
         },
         'schema' => array(
             'type' => 'string',
-            'arg_options' => array(
-                'sanitize_callback' => function ($value) {
-                    // Make the value safe for storage.
-                    return sanitize_text_field($value);
-                },
-                'validate_callback' => function ($value) {
-                    return is_string($value);
-                },
-            ),
+            'arg_options' => theme('args')->phoneOrEmail(true),
         ),
     ));
 

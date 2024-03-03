@@ -193,7 +193,7 @@ class Validator
     //     // 获取数据库中保存的验证码
     //     $code_saved = get_user_meta($uid, 'code', true);
     //     $code_saved = explode('-', $code_saved);
-    //     $expired = $code_saved[1] + 1800; // 30分钟有效
+    //     $expired = $code_saved[1] + HOUR_IN_SECONDS;
     //     $code_saved = $code_saved[0];
 
     //     if ($expired < time()) {

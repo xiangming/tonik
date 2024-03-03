@@ -60,6 +60,7 @@ add_filter('jwt_auth_expire', function ($issuedAt) {
  * 修改 /token 接口的返回值
  */
 add_filter('jwt_auth_token_before_dispatch', function ($data, $user) {
+    $data['user_id'] = $user->ID; // 用于前端from字段
     $data['username'] = $user->user_login;
     // $avatar = get_avatar_url($user->ID);
     // $data['user_avatar'] = $avatar;

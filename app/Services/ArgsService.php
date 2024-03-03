@@ -57,6 +57,20 @@ class ArgsService extends BaseService
         ];
     }
 
+    public function phoneOrEmail($required)
+    {
+        return [
+            'required' => $required,
+            'type' => "string",
+            "description" => "邮箱或者手机号。",
+            'validate_callback' => function ($param, $request, $key) {
+                // 巧妙设计：只允许邮箱和手机新用户或者已注册用户开放（防止使用用户名胡乱请求）
+                return is_email($param) || Validator::isPhone($param);
+            },
+            'sanitize_callback' => 'sanitize_text_field',
+        ];
+    }
+
     public function password($required)
     {
         return [
