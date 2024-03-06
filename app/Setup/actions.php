@@ -259,9 +259,7 @@ add_action('rest_api_init', function () {
      *
      * 注意：该接口需要限制请求频率
      *
-     * @param   [string or number]  $account  账号（邮箱、手机或者用户名），必填
-     *
-     * @return  发送的结果
+     * @return  发送是否成功
      */
     register_rest_route(WP_V2_NAMESPACE, '/users/code', array(
         'methods' => 'POST',
@@ -312,18 +310,18 @@ add_action('rest_api_init', function () {
             $code = $parameters['code'];
             $password = $parameters['password'];
 
-            // 通过exists方法获取uid
+            // 校验验证码
+            Validator::validateCacheCode($account, $code);
+
+            // 验证码通过，则检查用户是否存在
             $uid = theme('user')->exists($account);
             if ($uid) {
                 resError('用户已经存在，请勿重复注册');
                 exit();
             }
 
-            // 校验验证码
-            Validator::validateCacheCode($account, $code);
-
-            // 验证码通过，则创建账号(author可以自己发布文章，contributor只能发草稿)
-            $rs = theme('user')->createUser($account, $password, 'author');
+            // 创建账号
+            $rs = theme('user')->createUser($account, $password, 'author'); // author可以自己发布文章，contributor只能发草稿
 
             // 创建失败
             if (!$rs['status']) {
@@ -342,7 +340,41 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
-    // Register a new endpoint: /wp/v2/users/exists
+    // 忘记密码/重置密码
+    register_rest_route(WP_V2_NAMESPACE, '/users/forgot', array(
+        'methods' => 'POST',
+        'callback' => function ($request) {
+            $parameters = $request->get_json_params();
+
+            $account = $parameters['account'];
+            $code = $parameters['code'];
+            $password = $parameters['password'];
+
+            // 校验验证码
+            Validator::validateCacheCode($account, $code);
+
+            // 验证码通过，则检查用户是否存在
+            $uid = theme('user')->exists($account);
+            if (!$uid) {
+                resError('用户不存在');
+                exit();
+            }
+
+            // 修改密码
+            theme('user')->updatePassword($uid, $password);
+
+            resOK(true, '重置成功');
+            exit();
+        },
+        'args' => array(
+            'account' => theme('args')->account(true),
+            'code' => theme('args')->code(true),
+            'password' => theme('args')->password(true),
+        ),
+        'permission_callback' => '__return_true',
+    ));
+
+    // 用户是否存在
     register_rest_route(WP_V2_NAMESPACE, '/users/exists', array(
         'methods' => 'POST',
         'callback' => function ($request) {
@@ -390,8 +422,8 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
-    // Register a new endpoint: /wp/v2/donation
-    // 当携带了from，则订单和打赏记录的author设置为from对应用户；否则系统会默认token对应用户
+    // 创建打赏订单并发起支付
+    // 当携带了from，则订单和打赏记录的author设置为from对应用户；未携带，则会默认token对应用户
     register_rest_route(WP_V2_NAMESPACE, '/payment/donation', array(
         'methods' => 'POST',
         'callback' => function ($request) {
@@ -401,8 +433,8 @@ add_action('rest_api_init', function () {
             $to = $parameters['to']; // 被打赏人，必填
             $amount = $parameters['amount']; // 打赏金额，必填
             $remark = $parameters['remark'] ? $parameters['remark'] : null; // 打赏留言，可选
-            $method = $parameters['method'] ? $parameters['method'] : 'alipay'; // 支付通道，可选
-            $device = $parameters['device'] ? $parameters['device'] : 'scan'; // 支付设备类型，可选
+            $method = $parameters['method']; // 支付通道，可选
+            $device = $parameters['device']; // 支付设备类型，可选
 
             // 后端校验：使用WP内置方法即可（下面的args），不需要额外处理
 
@@ -454,14 +486,14 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
-    // Register a new endpoint: /wp/v2/payment/find
+    // 查询订单的支付结果（对象）
     register_rest_route(WP_V2_NAMESPACE, '/payment/find', array(
         'methods' => 'POST',
         'callback' => function ($request) {
             $parameters = $request->get_json_params();
 
-            $method = $parameters['method'] ? $parameters['method'] : 'alipay'; // 支付通道
-            $out_trade_no = $parameters['out_trade_no'] ? $parameters['out_trade_no'] : null; // 第三方单号
+            $method = $parameters['method']; // 支付通道
+            $out_trade_no = $parameters['out_trade_no']; // 第三方单号
 
             $paymentService = theme('payment');
             $rs = $paymentService->find($method, $out_trade_no);
@@ -477,14 +509,14 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
-    // Register a new endpoint: /wp/v2/payment/query
+    // 查询订单的支付结果（布尔值）
     register_rest_route(WP_V2_NAMESPACE, '/payment/query', array(
         'methods' => 'POST',
         'callback' => function ($request) {
             $parameters = $request->get_json_params();
 
-            $method = $parameters['method'] ? $parameters['method'] : 'alipay'; // 支付通道
-            $out_trade_no = $parameters['out_trade_no'] ? $parameters['out_trade_no'] : null; // 第三方单号
+            $method = $parameters['method']; // 支付通道
+            $out_trade_no = $parameters['out_trade_no']; // 第三方单号
 
             $rs = theme('payment')->query($method, $out_trade_no);
 
@@ -499,18 +531,14 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
-    /**
-     * 请求后端检查支付结果
-     *
-     * endpoint: /wp/v2/payment/check
-     */
+    // 请求后端检查支付结果
     register_rest_route(WP_V2_NAMESPACE, '/payment/check', array(
         'methods' => 'POST',
         'callback' => function ($request) {
             $parameters = $request->get_json_params();
 
-            $method = $parameters['method'] ? $parameters['method'] : 'alipay'; // 支付通道
-            $out_trade_no = $parameters['out_trade_no'] ? $parameters['out_trade_no'] : null; // 第三方单号
+            $method = $parameters['method']; // 支付通道
+            $out_trade_no = $parameters['out_trade_no']; // 第三方单号
 
             $rs = theme('payment')->query($method, $out_trade_no);
 
@@ -544,7 +572,7 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
-    // Register a new endpoint: /wp/v2/payment/alipay/notify
+    // 支付宝通知回调
     register_rest_route(WP_V2_NAMESPACE, '/payment/alipay/notify', array(
         'methods' => 'GET',
         'callback' => function ($request) {
@@ -557,35 +585,35 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
-    // Register a new endpoint: /wp/v2/user/<slug>
-    // https://stackoverflow.com/questions/56952400/wordpress-rest-api-receive-data-for-single-post-by-slug
-    register_rest_route(WP_V2_NAMESPACE, '/user/(?P<slug>[a-zA-Z0-9-]+)', array(
-        'methods' => 'GET',
-        'callback' => function ($request) {
-            $slug = $request['slug'];
-            $users = get_users([
-                'slug' => $slug,
-            ]);
+    // // Register a new endpoint: /wp/v2/user/<slug>
+    // // https://stackoverflow.com/questions/56952400/wordpress-rest-api-receive-data-for-single-post-by-slug
+    // register_rest_route(WP_V2_NAMESPACE, '/user/(?P<slug>[a-zA-Z0-9-]+)', array(
+    //     'methods' => 'GET',
+    //     'callback' => function ($request) {
+    //         $slug = $request['slug'];
+    //         $users = get_users([
+    //             'slug' => $slug,
+    //         ]);
 
-            return $users[0];
-        },
-        'permission_callback' => '__return_true',
-    ));
+    //         return $users[0];
+    //     },
+    //     'permission_callback' => '__return_true',
+    // ));
 
-    // Register a new endpoint: /wp/v2/test/xxx
-    register_rest_route(WP_V2_NAMESPACE, '/test/(?P<id>\d+)', array(
-        'methods' => 'GET',
-        'callback' => 'my_awesome_func',
-        'args' => array(
-            'id' => array(
-                'validate_callback' => function ($param, $request, $key) {
-                    return is_numeric($param);
-                },
-            ),
-        ),
-    ));
+    // // Register a new endpoint: /wp/v2/test/xxx
+    // register_rest_route(WP_V2_NAMESPACE, '/test/(?P<id>\d+)', array(
+    //     'methods' => 'GET',
+    //     'callback' => 'my_awesome_func',
+    //     'args' => array(
+    //         'id' => array(
+    //             'validate_callback' => function ($param, $request, $key) {
+    //                 return is_numeric($param);
+    //             },
+    //         ),
+    //     ),
+    // ));
 
-    // Register a new endpoint: /wp/v2/users/test_queue
+    // 测试接口
     register_rest_route(WP_V2_NAMESPACE, '/users/test_queue', array(
         'methods' => 'POST',
         'callback' => function ($request) {

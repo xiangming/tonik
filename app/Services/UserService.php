@@ -127,7 +127,7 @@ class UserService extends BaseService
 
         // update email, it's already verified
         if (is_email($account)) {
-            theme('tool')->updateEmail($in_id, $account);
+            $this->updateEmail($in_id, $account);
         }
 
         theme('log')->log('createUser success', $in_id, $account, $password);
@@ -157,5 +157,58 @@ class UserService extends BaseService
         }
 
         return $users[0];
+    }
+
+    /**
+     * 更新用户邮箱
+     *
+     * @return uid or a WP_Error object if the user could not be updated.
+     */
+    public function updateEmail($uid, $email)
+    {
+        $result = wp_update_user(
+            array(
+                'ID' => $uid,
+                'user_email' => $email,
+            )
+        );
+
+        if (is_wp_error($result)) {
+            $message = $result->get_error_message();
+
+            theme('log')->error('updateEmail failed', $uid, $message);
+
+            resError($message);
+            exit();
+        }
+
+        return $result;
+    }
+
+    /**
+     * 更新用户密码
+     *
+     * @return uid or a WP_Error object if the user could not be updated.
+     */
+    public function updatePassword($uid, $password)
+    {
+        $result = wp_update_user(
+            array(
+                'ID' => $uid,
+                'user_pass' => $password,
+            )
+        );
+
+        // 更新密码出错
+        if (is_wp_error($result)) {
+            $message = $result->get_error_message();
+
+            theme('log')->error('updatePassword failed', $uid, $message);
+
+            resError($message);
+            exit();
+        }
+
+        return $result;
     }
 }

@@ -83,58 +83,6 @@ class ToolService extends BaseService
     }
 
     /**
-     * 更新邮箱
-     *
-     * @return uid or a WP_Error object if the user could not be updated.
-     */
-    public function updateEmail($uid, $email)
-    {
-        // 更新用户密码
-        $result = wp_update_user(
-            array(
-                'ID' => $uid,
-                'user_email' => $email,
-            )
-        );
-
-        if (is_wp_error($result)) {
-            $message = $result->get_error_message();
-
-            theme('log')->error('updateEmail failed', $message);
-
-            resError($message);
-            exit();
-        }
-
-        return $result;
-    }
-
-    // /**
-    //  * 更新密码
-    //  *
-    //  * @return uid or a WP_Error object if the user could not be updated.
-    //  */
-    // public function updatePassword($uid, $password)
-    // {
-    //     // 更新用户密码
-    //     $result = wp_update_user(
-    //         array(
-    //             'ID' => $uid,
-    //             'user_pass' => $password,
-    //         )
-    //     );
-
-    //     // // 更新密码出错
-    //     // if (is_wp_error($result)) {
-    //     //     $message = $result->get_error_message();
-    //     //     resError($message);
-    //     //     exit();
-    //     // }
-
-    //     return $result;
-    // }
-
-    /**
      * 更新 post_status
      * 用法 updatePostStatus($pid, 'publish');
      */

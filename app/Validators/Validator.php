@@ -7,7 +7,7 @@ use function Tonik\Theme\App\theme;
 
 /**
  * Class Validator.
- * 
+ *
  * 约定：validate开头的函数，return true on success, exit() on failure
  */
 class Validator
@@ -177,43 +177,10 @@ class Validator
         return true;
     }
 
-    // /**
-    //  * 验证验证码
-    //  *
-    //  * @return true on success, exit() on failure
-    //  */
-    // public static function validateCode($uid, $code)
-    // {
-    //     // theme('log')->debug('validateCode uid', $uid);
-    //     // theme('log')->debug('validateCode code', $code);
-
-    //     // 验证码格式验证
-    //     Validator::validateInt($code, '验证码', 1000, 9999);
-
-    //     // 获取数据库中保存的验证码
-    //     $code_saved = get_user_meta($uid, 'code', true);
-    //     $code_saved = explode('-', $code_saved);
-    //     $expired = $code_saved[1] + HOUR_IN_SECONDS;
-    //     $code_saved = $code_saved[0];
-
-    //     if ($expired < time()) {
-    //         resError('验证码已失效，请重新获取');
-    //         exit();
-    //     }
-
-    //     if ($code !== $code_saved) {
-    //         resError('验证码不正确，请重新输入');
-    //         exit();
-    //     }
-
-    //     // 验证成功，删除code字段
-    //     delete_user_meta($uid, 'code');
-
-    //     return true;
-    // }
-
     /**
      * 校验cache里面的验证码
+     *
+     * TIPS: 在验证通过和失效时，会自动删除保存的验证码
      *
      * @return true on success, exit() on failure
      */
@@ -225,9 +192,16 @@ class Validator
         // 验证码格式验证
         Validator::validateInt($code, '验证码', 1000, 9999);
 
-        // 获取数据库中保存的验证码
+        // 获取保存的验证码
         $code_saved = get_transient($account . '_code');
         theme('log')->debug('validateCacheCode code_saved', $code_saved);
+        if (!$code_saved) {
+            delete_transient($account . '_code');
+
+            resError('验证码已失效，请重新获取');
+            exit();
+        }
+
         $code_saved = explode('-', $code_saved);
         $expired = $code_saved[1] + HOUR_IN_SECONDS;
         $code_saved = $code_saved[0];
