@@ -374,6 +374,29 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
+    // 修改密码（需要登录）
+    register_rest_route(WP_V2_NAMESPACE, '/users/password', array(
+        'methods' => 'POST',
+        'callback' => function ($request) {
+            $parameters = $request->get_json_params();
+
+            $password = $parameters['password'];
+
+            // 修改密码
+            $current_user_id = get_current_user_id();
+            theme('user')->updatePassword($current_user_id, $password);
+
+            resOK(true, '修改成功');
+            exit();
+        },
+        'args' => array(
+            'password' => theme('args')->password(true),
+        ),
+        'permission_callback' => function ($request) {
+            return is_user_logged_in();
+        },
+    ));
+
     // 绑定/换绑手机号（需要登录）
     // 流程：输入新号码、短信验证码验证、后台安全验证、重新登录、完成
     register_rest_route(WP_V2_NAMESPACE, '/users/bind/phone', array(
