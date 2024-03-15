@@ -374,6 +374,78 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
+    // 绑定/换绑手机号（需要登录）
+    // 流程：输入新号码、短信验证码验证、后台安全验证、重新登录、完成
+    register_rest_route(WP_V2_NAMESPACE, '/users/bind/phone', array(
+        'methods' => 'POST',
+        'callback' => function ($request) {
+            $parameters = $request->get_json_params();
+
+            $phone = $parameters['phone'];
+            $code = $parameters['code'];
+
+            // 校验验证码
+            Validator::validateCacheCode($phone, $code);
+
+            // 验证码通过，则检查新的手机号有没有绑定过其他账号
+            $user_exist = theme('user')->exists($phone);
+            if ($user_exist) {
+                resError('手机号已绑定其他账号');
+                exit();
+            }
+
+            // 修改
+            $current_user_id = get_current_user_id();
+            theme('user')->updatePhone($current_user_id, $phone);
+
+            resOK(true, '绑定成功');
+            exit();
+        },
+        'args' => array(
+            'phone' => theme('args')->phone(true),
+            'code' => theme('args')->code(true),
+        ),
+        'permission_callback' => function ($request) {
+            return is_user_logged_in();
+        },
+    ));
+
+    // 绑定/换绑邮箱（需要登录）
+    // 流程：输入新邮箱、邮箱验证码验证、后台安全验证、重新登录、完成
+    register_rest_route(WP_V2_NAMESPACE, '/users/bind/email', array(
+        'methods' => 'POST',
+        'callback' => function ($request) {
+            $parameters = $request->get_json_params();
+
+            $email = $parameters['email'];
+            $code = $parameters['code'];
+
+            // 校验验证码
+            Validator::validateCacheCode($email, $code);
+
+            // 验证码通过，则检查新的邮箱有没有绑定过其他账号
+            $user_exist = theme('user')->exists($email);
+            if ($user_exist) {
+                resError('邮箱已绑定其他账号');
+                exit();
+            }
+
+            // 修改
+            $current_user_id = get_current_user_id();
+            theme('user')->updateEmail($current_user_id, $email);
+
+            resOK(true, '绑定成功');
+            exit();
+        },
+        'args' => array(
+            'email' => theme('args')->email(true),
+            'code' => theme('args')->code(true),
+        ),
+        'permission_callback' => function ($request) {
+            return is_user_logged_in();
+        },
+    ));
+
     // 用户是否存在
     register_rest_route(WP_V2_NAMESPACE, '/users/exists', array(
         'methods' => 'POST',
@@ -397,7 +469,7 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
-    // 通过账户删除用户
+    // 通过账户删除用户（需要登录且有权限）
     register_rest_route(WP_V2_NAMESPACE, '/users/delete', array(
         'methods' => 'POST',
         'callback' => function ($request) {
@@ -407,9 +479,16 @@ add_action('rest_api_init', function () {
 
             $user_id = theme('user')->exists($account);
             if ($user_id) {
-                wp_delete_user($user_id);
+                // 需要检查当前用户的操作权限
+                if (current_user_can('delete_user', $user_id)) {
+                    wp_delete_user($user_id);
 
-                resOK(true, '用户删除成功');
+                    theme('log')->debug('用户删除成功', $user_id, $account);
+                    resOK(true, '用户删除成功');
+                    exit();
+                }
+
+                resOK(false, '抱歉，您不能删除该用户');
                 exit();
             }
 
@@ -419,7 +498,9 @@ add_action('rest_api_init', function () {
         'args' => array(
             'account' => theme('args')->account(true),
         ),
-        'permission_callback' => '__return_true',
+        'permission_callback' => function ($request) {
+            return is_user_logged_in();
+        },
     ));
 
     // 创建打赏订单并发起支付

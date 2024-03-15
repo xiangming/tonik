@@ -10,7 +10,9 @@ class UserService extends BaseService
     /**
      * 检查账号是否存在
      *
-     * @param string $account 邮箱、手机、用户名
+     * 提示！因为使用手机号作为user_login，所以username_exists能够查询手机号
+     *
+     * @param string $account 邮箱、手机、用户名、ID
      *
      * @return The user ID on success, false on failure.
      */
@@ -18,7 +20,7 @@ class UserService extends BaseService
     {
         theme('log')->debug('UserService exists start');
 
-        // 使用邮箱检索
+        // 先使用邮箱检索
         if (is_email($account)) {
             $user = get_user_by('email', $account);
             if ($user) {
@@ -28,9 +30,19 @@ class UserService extends BaseService
             return false;
         }
 
-        // // 使用手机号检索
-        // if (Validator::isPhone($account)) {
-        //     $user = $this->getUserByMeta('phone', $account);
+        // 先使用手机号检索
+        if (Validator::isPhone($account)) {
+            $user = $this->getUserByMeta('phone', $account);
+            if ($user) {
+                return $user->ID;
+            }
+
+            return false;
+        }
+
+        // // 先使用用户ID检索并排除手机号
+        // if (is_numeric($account) && !Validator::isPhone($account)) {
+        //     $user = get_user_by('id', $account);
         //     if ($user) {
         //         return $user->ID;
         //     }
@@ -38,15 +50,7 @@ class UserService extends BaseService
         //     return false;
         // }
 
-        // 使用用户ID检索并排除手机号
-        if (is_numeric($account) && !Validator::isPhone($account)) {
-            $user = get_user_by('id', $account);
-            if ($user) {
-                return $user->ID;
-            }
-
-            return false;
-        }
+        theme('log')->debug('UserService exists end');
 
         return username_exists($account);
     }
@@ -103,10 +107,10 @@ class UserService extends BaseService
         //     // $args['user_email'] = $account; // 邮箱尚未验证，不能转正
         // }
 
-        // 如果是手机号，则作为用户名使用（但是不要公开显示在nickname等位置）
-        if (Validator::isPhone($account)) {
-            $args['user_login'] = $account;
-        }
+        // // 如果是手机号，则作为用户名使用（但是不要公开显示在nickname等位置）
+        // if (Validator::isPhone($account)) {
+        //     $args['user_login'] = $account;
+        // }
 
         // https://developer.wordpress.org/reference/functions/wp_insert_user/
         $in_id = wp_insert_user($args);
@@ -120,10 +124,10 @@ class UserService extends BaseService
             return $this->formatError($errmsg);
         }
 
-        // // save phone, it's already verified
-        // if (Validator::isPhone($account)) {
-        //     update_user_meta($in_id, 'phone', $account);
-        // }
+        // save phone, it's already verified
+        if (Validator::isPhone($account)) {
+            $this->updatePhone($in_id, $account);
+        }
 
         // update email, it's already verified
         if (is_email($account)) {
@@ -166,6 +170,7 @@ class UserService extends BaseService
      */
     public function updateEmail($uid, $email)
     {
+        // 会自动向旧邮箱发送一封提醒邮件
         $result = wp_update_user(
             array(
                 'ID' => $uid,
@@ -210,5 +215,33 @@ class UserService extends BaseService
         }
 
         return $result;
+    }
+
+    /**
+     * 更新用户手机
+     *
+     * @return uid or a WP_Error object if the user could not be updated.
+     */
+    public function updatePhone($uid, $phone)
+    {
+        // $result = wp_update_user(
+        //     array(
+        //         'ID' => $uid,
+        //         'user_login' => $phone,
+        //     )
+        // );
+
+        // if (is_wp_error($result)) {
+        //     $message = $result->get_error_message();
+
+        //     theme('log')->error('更新手机号失败', $uid, $phone, $message);
+
+        //     resError($message);
+        //     exit();
+        // }
+
+        // return $result;
+
+        return update_user_meta($uid, 'phone', $phone);
     }
 }
