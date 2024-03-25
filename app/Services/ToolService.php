@@ -76,7 +76,7 @@ class ToolService extends BaseService
     {
         // 将时间戳和验证码一起保存，用于计算有效期和获取频率（以往经验，邮件发送的结果不可信，这里我们提前保存验证码用于频率限制）
         $new_code = $code . '-' . time();
-        set_transient( $account.'_code', $new_code, HOUR_IN_SECONDS );
+        set_transient($account . '_code', $new_code, HOUR_IN_SECONDS);
         theme('log')->debug('saveCacheCode account', $account);
         theme('log')->debug('saveCacheCode code', $code);
         theme('log')->debug('saveCacheCode new_code', $new_code);

@@ -724,8 +724,10 @@ add_action('rest_api_init', function () {
             $parameters = $request->get_json_params();
             $account = $parameters['account'];
 
-            $queue = theme('queue');
-            $queue->add_async('test_queue', [$account]);
+            // $rs = theme('donation')->createDonation(3217, '1', '90', '感谢分享', 3219);
+
+            // $queue = theme('queue');
+            // $queue->add_async('test_queue', [$account]);
             // $queue->schedule_single(strtotime("+2 minutes"), 'test_queue', [$account]);
 
             // 输出结果
@@ -899,6 +901,28 @@ add_action('rest_api_init', function () {
                 return $registered_date;
             }
             return $user;
+        },
+    ));
+
+    // 新增字段: total_income, 总收入（不使用update_callback，手动刷新时更新值）
+    register_rest_field('user', 'total_income', array(
+        'get_callback' => function ($object, $field, $request) {
+            $current_user = wp_get_current_user();
+
+            $result = theme('user')->getUserTotalIncome($current_user->ID);
+
+            return $result;
+        },
+    ));
+
+    // 新增字段: total_supporters, 总打赏人数（不使用update_callback，手动刷新时更新值）
+    register_rest_field('user', 'total_supporters', array(
+        'get_callback' => function ($object, $field, $request) {
+            $current_user = wp_get_current_user();
+
+            $result = theme('user')->getUserTotalSupporters($current_user->ID);
+
+            return $result;
         },
     ));
 

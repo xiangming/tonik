@@ -244,4 +244,84 @@ class UserService extends BaseService
 
         return update_user_meta($uid, 'phone', $phone);
     }
+
+    /**
+     * 获取用户总收入
+     *
+     * @return number or 0 if no items found.
+     */
+    public function getUserTotalIncome($uid)
+    {
+        $name = $uid . '_total_income';
+
+        $value = get_transient($name);
+
+        // 当缓存不存在时，我们计算值
+        if (!$value) {
+            $total = 0;
+            $args = array(
+                'meta_key' => 'amount',
+                'post_type' => array('donation'),
+                'post_status' => 'publish',
+                'posts_per_page' => -1,
+                'fields' => 'ids',
+                'meta_query' => array(
+                    array(
+                        'key' => 'to',
+                        'value' => $uid,
+                        'compare' => '=',
+                    ),
+                ),
+            );
+            $ids = get_posts($args);
+
+            foreach ($ids as $id) {
+                $total += (int) get_post_meta($id, 'amount', true);
+            }
+
+            $value = $total;
+
+            set_transient($name, $value);
+        }
+
+        return (int) $value;
+    }
+
+    /**
+     * 获取赞助总人数（先使用post_count代替）
+     *
+     * @return number or 0 if no items found.
+     */
+    public function getUserTotalSupporters($uid)
+    {
+        $name = $uid . '_total_supporters';
+
+        $value = get_transient($name);
+
+        // 当缓存不存在时，我们计算值
+        if (!$value) {
+            $total = 0;
+            $args = array(
+                'meta_key' => 'amount',
+                'post_type' => array('donation'),
+                'post_status' => 'publish',
+                'posts_per_page' => -1,
+                'fields' => 'ids',
+                'meta_query' => array(
+                    array(
+                        'key' => 'to',
+                        'value' => $uid,
+                        'compare' => '=',
+                    ),
+                ),
+            );
+            $ids = get_posts($args);
+
+            $value = count($ids);
+
+            set_transient($name, $value);
+        }
+
+        return (int) $value;
+    }
 }
