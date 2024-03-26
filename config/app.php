@@ -91,6 +91,7 @@ return [
         'Services/SmsService.php',
         'Services/ToolService.php',
         'Services/UserService.php',
+        'Services/StatService.php',
         'Setup/actions.php',
         'Setup/filters.php',
         'Setup/supports.php',

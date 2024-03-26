@@ -36,6 +36,16 @@ class ArgsService extends BaseService
         ];
     }
 
+    public function user_slug($required)
+    {
+        return [
+            'required' => $required,
+            'type' => "string",
+            "description" => "用户slug。",
+            'sanitize_callback' => 'sanitize_text_field',
+        ];
+    }
+
     /**
      * 请求参数配置
      *

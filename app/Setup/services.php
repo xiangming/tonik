@@ -21,6 +21,7 @@ use App\Services\OrderService;
 use App\Services\PaymentService;
 use App\Services\QueueService;
 use App\Services\SmsService;
+use App\Services\StatService;
 use App\Services\ToolService;
 use App\Services\UserService;
 use function Tonik\Theme\App\theme;
@@ -88,6 +89,10 @@ function bind_services()
 
     theme()->bind('user', function (Theme $theme, $parameters) {
         return new UserService();
+    });
+
+    theme()->bind('stat', function (Theme $theme, $parameters) {
+        return new StatService();
     });
 }
 add_action('init', 'Tonik\Theme\App\Setup\bind_services');

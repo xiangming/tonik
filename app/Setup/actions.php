@@ -9,8 +9,7 @@ use function Tonik\Theme\App\resError;
 use function Tonik\Theme\App\resOK;
 use function Tonik\Theme\App\theme;
 
-define('WP_V2_NAMESPACE', 'wp/v2'); // WP REST API 内置命名空间
-define('CUSTOM_V1_NAMESPACE', 'custom/v1'); // WP REST API 自定义命名空间
+define('WP_V2_NAMESPACE', '/wp/v2'); // WP REST API 内置命名空间
 define('FEE_RATE', 0.06); // 平台费率
 
 /*
@@ -689,6 +688,33 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
+    // 统计接口（使用filter实现，该接口未启用）
+    register_rest_route(WP_V2_NAMESPACE, '/stat/views', array(
+        'methods' => 'POST',
+        'callback' => function ($request) {
+            $parameters = $request->get_json_params();
+            $slug = $parameters['slug'];
+
+            $uid = get_user_by('slug', $slug);
+
+            if ($uid) {
+                theme('stat')->setUserViews($uid);
+
+                // 输出结果
+                resOK(true);
+                exit();
+            }
+
+            // 输出结果
+            resOK(false);
+            exit();
+        },
+        'args' => array(
+            'slug' => theme('args')->user_slug(true),
+        ),
+        'permission_callback' => '__return_true',
+    ));
+
     // // Register a new endpoint: /wp/v2/user/<slug>
     // // https://stackoverflow.com/questions/56952400/wordpress-rest-api-receive-data-for-single-post-by-slug
     // register_rest_route(WP_V2_NAMESPACE, '/user/(?P<slug>[a-zA-Z0-9-]+)', array(
@@ -909,7 +935,7 @@ add_action('rest_api_init', function () {
         'get_callback' => function ($object, $field, $request) {
             $current_user = wp_get_current_user();
 
-            $result = theme('user')->getUserTotalIncome($current_user->ID);
+            $result = theme('stat')->getTotalIncome($current_user->ID);
 
             return $result;
         },
@@ -920,7 +946,18 @@ add_action('rest_api_init', function () {
         'get_callback' => function ($object, $field, $request) {
             $current_user = wp_get_current_user();
 
-            $result = theme('user')->getUserTotalSupporters($current_user->ID);
+            $result = theme('stat')->getTotalSupporters($current_user->ID);
+
+            return $result;
+        },
+    ));
+
+    // 新增字段: total_views, 主页访问次数（不使用update_callback，手动刷新时更新值）
+    register_rest_field('user', 'total_views', array(
+        'get_callback' => function ($object, $field, $request) {
+            $current_user = wp_get_current_user();
+
+            $result = theme('stat')->getUserViews($current_user->ID);
 
             return $result;
         },

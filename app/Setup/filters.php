@@ -2,6 +2,8 @@
 
 namespace Tonik\Theme\App\Setup;
 
+use function Tonik\Theme\App\theme;
+
 /*
 |-----------------------------------------------------------
 | Theme Filters
@@ -187,20 +189,42 @@ add_filter('rest_donation_query', function ($args, $request) {
  *
  * 我们这里通过filter来放开这个限制，但是需要注意数据安全
  */
-add_filter('rest_request_before_callbacks', function ($response, $handler, $request) {
-    // // 其他路由，放行
-    // if (\WP_REST_Server::READABLE !== $request->get_method()) {
-    //     return $response;
-    // }
+// add_filter('rest_request_before_callbacks', function ($response, $handler, $request) {
+//     // // 其他路由，放行
+//     // if (\WP_REST_Server::READABLE !== $request->get_method()) {
+//     //     return $response;
+//     // }
 
-    // // 其他路由，放行
-    // if (!preg_match('~/wp/v2/users/\d+~', $request->get_route())) {
-    //     return $response;
-    // }
+//     // // 其他路由，放行
+//     // if (!preg_match('~/wp/v2/users/\d+~', $request->get_route())) {
+//     //     return $response;
+//     // }
 
-    add_filter('get_usernumposts', function ($count) {
-        return $count > 0 ? $count : 1;
-    });
+//     add_filter('get_usernumposts', function ($count) {
+//         return $count > 0 ? $count : 1;
+//     });
 
+//     return $response;
+// }, 10, 3);
+
+add_filter('get_usernumposts', function ($count) {
+    return $count > 0 ? $count : 1;
+});
+
+// 全部REST-API触发
+add_filter('rest_pre_echo_response', function ($response, $handler, $request) {
+    // 仅/wp/v2/users?slug=xxx下操作
+    if ($request->get_route() === '/wp/v2/users' && $request->has_param('slug')) {
+        $slugs = $request->get_param('slug');
+
+        //* Get the ID
+        $user = get_user_by('slug', $slugs[0]);
+
+        if ($user) {
+            theme('stat')->setUserViews($user->ID);
+        }
+    }
+
+    // Return the response
     return $response;
 }, 10, 3);
