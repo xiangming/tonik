@@ -40,15 +40,15 @@ class UserService extends BaseService
             return false;
         }
 
-        // // 先使用用户ID检索并排除手机号
-        // if (is_numeric($account) && !Validator::isPhone($account)) {
-        //     $user = get_user_by('id', $account);
-        //     if ($user) {
-        //         return $user->ID;
-        //     }
+        // 手机检索后，尝试使用用户ID检索
+        if (is_numeric($account) && !Validator::isPhone($account)) {
+            $user = get_user_by('id', $account);
+            if ($user) {
+                return $user->ID;
+            }
 
-        //     return false;
-        // }
+            return false;
+        }
 
         theme('log')->debug('UserService exists end');
 
