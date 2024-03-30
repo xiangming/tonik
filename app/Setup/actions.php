@@ -688,31 +688,21 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
-    // 统计接口（使用filter实现，该接口未启用）
-    register_rest_route(WP_V2_NAMESPACE, '/stat/views', array(
-        'methods' => 'POST',
+    // 重新计算自己的数据统计结果（需要登录）
+    register_rest_route(WP_V2_NAMESPACE, '/stat/refresh', array(
+        'methods' => 'GET',
         'callback' => function ($request) {
-            $parameters = $request->get_json_params();
-            $slug = $parameters['slug'];
-
-            $uid = get_user_by('slug', $slug);
-
-            if ($uid) {
-                theme('stat')->setUserViews($uid);
-
-                // 输出结果
-                resOK(true);
-                exit();
-            }
+            // 修改
+            $current_user_id = get_current_user_id();
+            theme('stat')->refresh($current_user_id);
 
             // 输出结果
-            resOK(false);
+            resOK(true, '刷新成功');
             exit();
         },
-        'args' => array(
-            'slug' => theme('args')->user_slug(true),
-        ),
-        'permission_callback' => '__return_true',
+        'permission_callback' => function ($request) {
+            return is_user_logged_in();
+        },
     ));
 
     // // Register a new endpoint: /wp/v2/user/<slug>

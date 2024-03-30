@@ -4,7 +4,40 @@ namespace App\Services;
 
 class StatService extends BaseService
 {
-    protected $viewsKey = 'views';
+    protected $viewsMetaKey = 'views';
+    protected $incomeMetaKey = 'income';
+    protected $supportersMetaKey = 'supporters';
+
+    /**
+     * 计算用户总收入
+     *
+     * @return number or 0 if no items found.
+     */
+    public function calcTotalIncome($uid)
+    {
+        $total = 0;
+        $args = array(
+            'meta_key' => 'amount',
+            'post_type' => array('donation'),
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'meta_query' => array(
+                array(
+                    'key' => 'to',
+                    'value' => $uid,
+                    'compare' => '=',
+                ),
+            ),
+        );
+        $ids = get_posts($args);
+
+        foreach ($ids as $id) {
+            $total += (int) get_post_meta($id, 'amount', true);
+        }
+
+        return (int) $total;
+    }
 
     /**
      * 获取用户总收入
@@ -13,39 +46,50 @@ class StatService extends BaseService
      */
     public function getTotalIncome($uid)
     {
-        $name = $uid . '_total_income';
+        $metaKey = $this->incomeMetaKey;
 
-        $value = get_transient($name);
+        $value = (int) get_user_meta($uid, $metaKey, true);
 
-        // 当缓存不存在时，我们计算值
-        if (!$value) {
-            $total = 0;
-            $args = array(
-                'meta_key' => 'amount',
-                'post_type' => array('donation'),
-                'post_status' => 'publish',
-                'posts_per_page' => -1,
-                'fields' => 'ids',
-                'meta_query' => array(
-                    array(
-                        'key' => 'to',
-                        'value' => $uid,
-                        'compare' => '=',
-                    ),
+        return $value;
+    }
+
+    /**
+     * 保存总收入
+     */
+    public function setTotalIncome($uid, $value)
+    {
+        $metaKey = $this->incomeMetaKey;
+
+        update_user_meta($uid, $metaKey, $value);
+    }
+
+    /**
+     * 计算赞助总人数（先使用post_count代替）
+     *
+     * @return number or 0 if no items found.
+     */
+    public function calcTotalSupporters($uid)
+    {
+        $total = 0;
+        $args = array(
+            'meta_key' => 'amount',
+            'post_type' => array('donation'),
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'meta_query' => array(
+                array(
+                    'key' => 'to',
+                    'value' => $uid,
+                    'compare' => '=',
                 ),
-            );
-            $ids = get_posts($args);
+            ),
+        );
+        $ids = get_posts($args);
 
-            foreach ($ids as $id) {
-                $total += (int) get_post_meta($id, 'amount', true);
-            }
+        $total = count($ids);
 
-            $value = $total;
-
-            set_transient($name, $value);
-        }
-
-        return (int) $value;
+        return (int) $total;
     }
 
     /**
@@ -55,83 +99,53 @@ class StatService extends BaseService
      */
     public function getTotalSupporters($uid)
     {
-        $name = $uid . '_total_supporters';
+        $metaKey = $this->supportersMetaKey;
 
-        $value = get_transient($name);
+        $value = (int) get_user_meta($uid, $metaKey, true);
 
-        // 当缓存不存在时，我们计算值
-        if (!$value) {
-            $total = 0;
-            $args = array(
-                'meta_key' => 'amount',
-                'post_type' => array('donation'),
-                'post_status' => 'publish',
-                'posts_per_page' => -1,
-                'fields' => 'ids',
-                'meta_query' => array(
-                    array(
-                        'key' => 'to',
-                        'value' => $uid,
-                        'compare' => '=',
-                    ),
-                ),
-            );
-            $ids = get_posts($args);
-
-            $value = count($ids);
-
-            set_transient($name, $value);
-        }
-
-        return (int) $value;
+        return $value;
     }
 
     /**
-     * 统计文章访问次数
+     * 保存赞助总人数
      */
-    public function setPostViews($postID)
+    public function setTotalSupporters($uid, $value)
     {
-        $countKey = $this->viewsKey;
-        $count = get_post_meta($postID, $countKey, true);
-        if ($count == '') {
-            $count = 0;
-            delete_post_meta($postID, $countKey);
-            add_post_meta($postID, $countKey, 0);
-        } else {
-            $count++;
-            update_post_meta($postID, $countKey, $count);
-        }
+        $metaKey = $this->supportersMetaKey;
+
+        update_user_meta($uid, $metaKey, $value);
     }
 
     /**
-     * 统计用户主页访问次数
-     */
-    public function setUserViews($user_id)
-    {
-        $countKey = $this->viewsKey;
-        $count = get_user_meta($user_id, $countKey, true);
-        if ($count == '') {
-            $count = 0;
-            delete_user_meta($user_id, $countKey);
-            add_user_meta($user_id, $countKey, 0);
-        } else {
-            $count++;
-            update_user_meta($user_id, $countKey, $count);
-        }
-    }
-
-    /**
-     * 获取用户主页访问次数
+     * 获取文章访问次数（暂未启用）
      *
      * @return number or 0 if no items found.
      */
-    public function getPostViews($uid)
+    public function getPostViews($id)
     {
-        $countKey = $this->viewsKey;
+        $metaKey = $this->viewsMetaKey;
 
-        $views = (int) get_post_meta($uid, $countKey, true);
+        $value = (int) get_post_meta($id, $metaKey, true);
 
-        return $views;
+        return $value;
+    }
+
+    /**
+     * 统计文章访问次数（暂未启用）
+     */
+    public function setPostViews($id)
+    {
+        $metaKey = $this->viewsMetaKey;
+
+        $count = $this->getPostViews($id);
+        if ($count == '') {
+            $count = 0;
+            delete_post_meta($id, $metaKey);
+            add_post_meta($id, $metaKey, 0);
+        } else {
+            $count++;
+            update_post_meta($id, $metaKey, $count);
+        }
     }
 
     /**
@@ -141,10 +155,44 @@ class StatService extends BaseService
      */
     public function getUserViews($uid)
     {
-        $countKey = $this->viewsKey;
+        $metaKey = $this->viewsMetaKey;
 
-        $views = (int) get_user_meta($uid, $countKey, true);
+        $value = (int) get_user_meta($uid, $metaKey, true);
 
-        return $views;
+        return $value;
+    }
+
+    /**
+     * 统计用户主页访问次数
+     */
+    public function setUserViews($uid)
+    {
+        $metaKey = $this->viewsMetaKey;
+
+        $count = $this->getUserViews($uid);
+        if ($count == '') {
+            $count = 0;
+            delete_user_meta($uid, $metaKey);
+            add_user_meta($uid, $metaKey, 0);
+        } else {
+            $count++;
+            update_user_meta($uid, $metaKey, $count);
+        }
+    }
+
+    /**
+     * 重新计算全部统计结果
+     * 
+     * 访问量是自动实时统计的
+     */
+    public function refresh($uid)
+    {
+        // 总收入
+        $total_income = $this->calcTotalIncome($uid);
+        $this->setTotalIncome($uid, $total_income);
+
+        // 赞助总人数
+        $total_supporters = $this->calcTotalSupporters($uid);
+        $this->setTotalSupporters($uid, $total_supporters);
     }
 }
