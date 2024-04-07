@@ -7,6 +7,14 @@ use function Tonik\Theme\App\theme;
 
 class UserService extends BaseService
 {
+    protected $current_user_id = 0;
+    protected $followingKey = 'following'; // user_meta: following
+
+    public function __construct()
+    {
+        $this->current_user_id = wp_get_current_user()->ID;
+    }
+
     /**
      * 检查账号是否存在
      *
@@ -243,5 +251,113 @@ class UserService extends BaseService
         // return $result;
 
         return update_user_meta($uid, 'phone', $phone);
+    }
+
+    /**
+     * add_user_meta的数组版本
+     *
+     * @return true or false if update_user_meta failed
+     */
+    public function user_meta_push($uid, $key, $value)
+    {
+        $array = (array) get_user_meta($uid, $key, true);
+        $array = array_filter($array); // 数组去空值
+
+        // already did, just return
+        if (in_array($value, $array)) {
+            return true;
+        }
+
+        $array[] = $value;
+        // $array = array_unique($array); //数组去重
+
+        // 更新保存
+        $result = update_user_meta($uid, $key, $array);
+
+        // 返回结果
+        return $result;
+    }
+
+    /**
+     * delete_user_meta的数组版本
+     *
+     * @return true or false if update_user_meta failed
+     */
+    public function user_meta_pop($uid, $key, $value)
+    {
+        $array = (array) get_user_meta($uid, $key, true);
+        $array = array_filter($array); // 数组去空值
+
+        // already did, just return
+        if (empty($array)) {
+            return true;
+        }
+
+        // already did, just return
+        if (!in_array($value, $array)) {
+            return true;
+        }
+
+        $array = array_diff($array, array($value)); // 数组减法
+        $array = array_values($array); //获取键值
+        $array = empty($array) ? null : $array; // update_post_meta传空数组会返回false，需要特殊处理
+
+        // 更新保存
+        $result = update_user_meta($uid, $key, $array);
+
+        // 返回结果
+        return $result;
+    }
+
+    /**
+     * 当前用户关注指定用户
+     *
+     * @return true or false if failed
+     */
+    public function follow($user_id)
+    {
+        $meta = $this->user_meta_push($this->current_user_id, $this->followingKey, $user_id);
+
+        return $meta;
+    }
+
+    /**
+     * 当前用户取消关注指定用户
+     *
+     * @return true or false if failed
+     */
+    public function unFollow($user_id)
+    {
+        $meta = $this->user_meta_pop($this->current_user_id, $this->followingKey, $user_id);
+
+        return $meta;
+    }
+
+    /**
+     * 获取当前用户的关注列表
+     *
+     * @return array or false if failed
+     */
+    public function getFollowing()
+    {
+        $meta = get_user_meta($this->current_user_id, $this->followingKey, true);
+
+        return $meta;
+    }
+
+    /**
+     * 当前用户是否关注指定用户
+     *
+     * @return true or false
+     */
+    public function isFollowed($user_id)
+    {
+        $following = $this->getFollowing();
+
+        if (!is_array($following)) {
+            return false;
+        }
+
+        return in_array($user_id, $following);
     }
 }

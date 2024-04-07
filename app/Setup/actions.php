@@ -106,7 +106,7 @@ add_action('manage_donation_posts_custom_column', function ($column_name, $id) {
 }, 10, 2);
 
 /**
- * 打款 action handler.
+ * 打款 action handler，供队列调用
  *
  * @return integer
  */
@@ -785,7 +785,7 @@ add_action('test_queue', function ($account) {
  * https://developer.wordpress.org/reference/functions/sanitize_textarea_field/
  */
 add_action('rest_api_init', function () {
-    // 新增字段: creating, 正在创造什么？
+    // 新增创作字段: creating, 正在创造什么？
     register_rest_field('user', 'creating', array(
         'get_callback' => function ($object, $field, $request) {
             // Get field as single value from post meta.
@@ -812,24 +812,33 @@ add_action('rest_api_init', function () {
             ),
         ),
     ));
-
-    // 新增字段: avatar, 头像地址（不使用update_callback，单独上传后更新值）
+    // 新增创作字段: avatar, 头像地址（不使用update_callback，单独上传后更新值）
     register_rest_field('user', 'avatar', array(
         'get_callback' => function ($object, $field, $request) {
             // Get field as single value from post meta.
             return get_user_meta($object['id'], $field, true);
         },
     ));
-
-    // 新增字段: background, 封面图地址（不使用update_callback，单独上传后更新值）
+    // 新增创作字段: background, 封面图地址（不使用update_callback，单独上传后更新值）
     register_rest_field('user', 'background', array(
         'get_callback' => function ($object, $field, $request) {
             // Get field as single value from post meta.
             return get_user_meta($object['id'], $field, true);
         },
     ));
+    // 新增创作字段: registered, 注册时间（不使用update_callback，注册时自动更新）
+    register_rest_field('user', 'registered', array(
+        'get_callback' => function ($object, $field, $request) {
+            $user = get_user_by('id', $object['id']);
+            if ($user) {
+                $registered_date = date('Y-m-d', strtotime($user->user_registered));
+                return $registered_date;
+            }
+            return $user;
+        },
+    ));
 
-    // 新增字段: realname, 真实姓名，仅自己可见
+    // 新增收款字段: realname, 真实姓名，仅自己可见，仅自己可更新
     register_rest_field('user', 'realname', array(
         'get_callback' => function ($object, $field, $request) {
             $current_user = wp_get_current_user();
@@ -857,8 +866,7 @@ add_action('rest_api_init', function () {
             ),
         ),
     ));
-
-    // 新增字段: alipay, 支付宝账号，仅自己可见，仅自己可更新
+    // 新增收款字段: alipay, 支付宝账号，仅自己可见，仅自己可更新
     register_rest_field('user', 'alipay', array(
         'get_callback' => function ($object, $field, $request) {
             $current_user = wp_get_current_user();
@@ -878,8 +886,7 @@ add_action('rest_api_init', function () {
             'arg_options' => theme('args')->phoneOrEmail(true),
         ),
     ));
-
-    // 新增字段: wechat, 微信账号，仅自己可见
+    // 新增收款字段: wechat, 微信账号，仅自己可见，仅自己可更新
     register_rest_field('user', 'wechat', array(
         'get_callback' => function ($object, $field, $request) {
             $current_user = wp_get_current_user();
@@ -908,19 +915,7 @@ add_action('rest_api_init', function () {
         ),
     ));
 
-    // 新增字段: registered, 封面图地址（不使用update_callback，单独上传后更新值）
-    register_rest_field('user', 'registered', array(
-        'get_callback' => function ($object, $field, $request) {
-            $user = get_user_by('id', $object['id']);
-            if ($user) {
-                $registered_date = date('Y-m-d', strtotime($user->user_registered));
-                return $registered_date;
-            }
-            return $user;
-        },
-    ));
-
-    // 新增字段: total_income, 总收入（不使用update_callback，手动刷新时更新值）
+    // 新增统计字段: total_income, 总收入（不使用update_callback，手动刷新时更新值）
     register_rest_field('user', 'total_income', array(
         'get_callback' => function ($object, $field, $request) {
             $current_user = wp_get_current_user();
@@ -930,8 +925,7 @@ add_action('rest_api_init', function () {
             return $result;
         },
     ));
-
-    // 新增字段: total_supporters, 总打赏人数（不使用update_callback，手动刷新时更新值）
+    // 新增统计字段: total_supporters, 总打赏人数（不使用update_callback，手动刷新时更新值）
     register_rest_field('user', 'total_supporters', array(
         'get_callback' => function ($object, $field, $request) {
             $current_user = wp_get_current_user();
@@ -941,8 +935,7 @@ add_action('rest_api_init', function () {
             return $result;
         },
     ));
-
-    // 新增字段: total_views, 主页访问次数（不使用update_callback，手动刷新时更新值）
+    // 新增统计字段: total_views, 主页访问次数（不使用update_callback，手动刷新时更新值）
     register_rest_field('user', 'total_views', array(
         'get_callback' => function ($object, $field, $request) {
             $current_user = wp_get_current_user();
@@ -953,21 +946,62 @@ add_action('rest_api_init', function () {
         },
     ));
 
-    // 新增字段: to, 被打赏人id（不使用update_callback，有单独接口处理更新逻辑）
+    // 新增社交字段: following, 关注列表，仅自己可见和更新
+    register_rest_field('user', 'following', array(
+        'get_callback' => function ($object, $field, $request, $object_type) {
+            return theme('user')->getFollowing();
+        },
+        'update_callback' => function ($value, $object, $field, $request, $object_type) {
+            $method = $request->get_method();
+
+            theme('log')->debug('开始取消或增加关注', $method, $value);
+
+            // 判定为取消关注
+            if ($request->has_param('unFollow')) {
+                theme('log')->debug('取消关注', $value);
+
+                return theme('user')->unFollow($value);
+            }
+
+            // 判定为增加关注
+            theme('log')->debug('增加关注', $value);
+
+            return theme('user')->follow($value);
+        },
+        'schema' => array(
+            'type' => 'number',
+            'arg_options' => array(
+                'sanitize_callback' => function ($value) {
+                    return absint($value);
+                },
+                'validate_callback' => function ($value) {
+                    return is_numeric($value);
+                },
+            ),
+        ),
+    ));
+    // 新增社交字段: followed, 当前用户是否关注目标用户（不使用update_callback，仅读取）
+    register_rest_field('user', 'followed', array(
+        'get_callback' => function ($object, $field, $request) {
+            return theme('user')->isFollowed($object['id']);
+        },
+    ));
+
+    // 新增打赏字段: to, 被打赏人id（不使用update_callback，有单独接口处理更新逻辑）
     register_rest_field('donation', 'to', array(
         'get_callback' => function ($object, $field, $request) {
             // Get field as single value from post meta.
             return (int) get_post_meta($object['id'], $field, true);
         },
     ));
-    // 新增字段: amount, 金额（不使用update_callback，有单独接口处理更新逻辑）
+    // 新增打赏字段: amount, 金额（不使用update_callback，有单独接口处理更新逻辑）
     register_rest_field('donation', 'amount', array(
         'get_callback' => function ($object, $field, $request) {
             // Get field as single value from post meta.
             return (int) get_post_meta($object['id'], $field, true);
         },
     ));
-    // 新增字段: remark, 被打赏人id（不使用update_callback，有单独接口处理更新逻辑）
+    // 新增打赏字段: remark, 被打赏人id（不使用update_callback，有单独接口处理更新逻辑）
     register_rest_field('donation', 'remark', array(
         'get_callback' => function ($object, $field, $request) {
             // Get field as single value from post meta.

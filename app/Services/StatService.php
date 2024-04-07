@@ -157,19 +157,22 @@ class StatService extends BaseService
     {
         $metaKey = $this->viewsMetaKey;
 
-        $value = (int) get_user_meta($uid, $metaKey, true);
+        $value = get_user_meta($uid, $metaKey, true);
 
         return $value;
     }
 
     /**
-     * 统计用户主页访问次数
+     * 统计用户主页访问次数（自动+1，修正空值）
+     * 
+     * @return number or 0 if meta not exist
      */
     public function setUserViews($uid)
     {
         $metaKey = $this->viewsMetaKey;
 
         $count = $this->getUserViews($uid);
+        
         if ($count == '') {
             $count = 0;
             delete_user_meta($uid, $metaKey);
@@ -178,6 +181,8 @@ class StatService extends BaseService
             $count++;
             update_user_meta($uid, $metaKey, $count);
         }
+
+        return $count;
     }
 
     /**
