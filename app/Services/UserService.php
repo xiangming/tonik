@@ -342,7 +342,7 @@ class UserService extends BaseService
     {
         $meta = get_user_meta($this->current_user_id, $this->followingKey, true);
 
-        return $meta;
+        return $meta ? $meta : [];
     }
 
     /**
