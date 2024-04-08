@@ -50,7 +50,7 @@ class StatService extends BaseService
 
         $value = (int) get_user_meta($uid, $metaKey, true);
 
-        return $value;
+        return $value ? $value : 0;
     }
 
     /**
@@ -103,7 +103,7 @@ class StatService extends BaseService
 
         $value = (int) get_user_meta($uid, $metaKey, true);
 
-        return $value;
+        return $value ? $value : 0;
     }
 
     /**
@@ -127,7 +127,7 @@ class StatService extends BaseService
 
         $value = (int) get_post_meta($id, $metaKey, true);
 
-        return $value;
+        return $value ? $value : 0;
     }
 
     /**
@@ -138,6 +138,7 @@ class StatService extends BaseService
         $metaKey = $this->viewsMetaKey;
 
         $count = $this->getPostViews($id);
+
         if ($count == '') {
             $count = 0;
             delete_post_meta($id, $metaKey);
@@ -157,14 +158,14 @@ class StatService extends BaseService
     {
         $metaKey = $this->viewsMetaKey;
 
-        $value = get_user_meta($uid, $metaKey, true);
+        $value = (int) get_user_meta($uid, $metaKey, true);
 
-        return $value;
+        return $value ? $value : 0;
     }
 
     /**
      * 统计用户主页访问次数（自动+1，修正空值）
-     * 
+     *
      * @return number or 0 if meta not exist
      */
     public function setUserViews($uid)
@@ -172,7 +173,7 @@ class StatService extends BaseService
         $metaKey = $this->viewsMetaKey;
 
         $count = $this->getUserViews($uid);
-        
+
         if ($count == '') {
             $count = 0;
             delete_user_meta($uid, $metaKey);
@@ -187,8 +188,8 @@ class StatService extends BaseService
 
     /**
      * 重新计算全部统计结果
-     * 
-     * 访问量是自动实时统计的
+     *
+     * @return 数据对象 or 0 if meta not exist
      */
     public function refresh($uid)
     {
@@ -199,5 +200,17 @@ class StatService extends BaseService
         // 赞助总人数
         $total_supporters = $this->calcTotalSupporters($uid);
         $this->setTotalSupporters($uid, $total_supporters);
+
+        // 主页访问次数，是自动实时统计的，不需要计算
+        $total_views = $this->getUserViews($uid);
+
+        // 准备返回的数据
+        $result = [
+            'total_income' => $total_income,
+            'total_supporters' => $total_supporters,
+            'total_views' => $total_views,
+        ];
+
+        return $result;
     }
 }

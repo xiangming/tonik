@@ -688,16 +688,16 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
-    // 重新计算自己的数据统计结果（需要登录）
+    // 重新计算当前用户的数据统计结果（需要登录）
     register_rest_route(WP_V2_NAMESPACE, '/stat/refresh', array(
         'methods' => 'GET',
         'callback' => function ($request) {
             // 修改
             $current_user_id = get_current_user_id();
-            theme('stat')->refresh($current_user_id);
+            $data = theme('stat')->refresh($current_user_id);
 
             // 输出结果
-            resOK(true, '刷新成功');
+            resOK($data, '刷新成功');
             exit();
         },
         'permission_callback' => function ($request) {

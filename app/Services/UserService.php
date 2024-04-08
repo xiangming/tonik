@@ -354,7 +354,10 @@ class UserService extends BaseService
     {
         $following = $this->getFollowing();
 
+        theme('log')->debug('isFollowed', $following, $user_id);
+
         if (!is_array($following)) {
+            theme('log')->error('$following is not array', $following, $user_id);
             return false;
         }
 
