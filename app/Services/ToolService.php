@@ -21,6 +21,13 @@ class ToolService extends BaseService
         return $randomString;
     }
 
+    public function generateTradeNo()
+    {
+        $out_trade_no = date('YmdHis') . '00' . mt_rand(10000, 99999);
+
+        return $out_trade_no;
+    }
+
     // /**
     //  * 从 api 请求里面获取 jwt-token
     //  *

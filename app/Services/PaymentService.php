@@ -252,7 +252,7 @@ class PaymentService extends BaseService
 
         try {
             // 1. 生成打赏记录
-            $rs = theme('donation')->createDonation($orderPay['from_user_id'], $orderPay['to_user_id'], $orderPay['amount'], $orderPay['remark'], $orderPay['id']);
+            $rs = theme('donation')->createDonation($orderPay['from_user_id'], $orderPay['to_user_id'], $orderPay['id']);
 
             // 生成失败，提前退出
             if (!$rs['status']) {

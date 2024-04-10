@@ -10,18 +10,16 @@ class DonationService extends BaseService
      * 创建打赏记录
      * @param int $from_user_id  打赏人ID
      * @param int $to_user_id  被打赏人ID
-     * @param int $amount 打赏金额
-     * @param string $remark 打赏留言，可选
-     * @param string $orderId 关联订单，可选
+     * @param string $orderId 关联订单
      *
      * @return object donation_info
      */
-    public function createDonation($from_user_id, $to_user_id, $amount, $remark, $orderId)
+    public function createDonation($from_user_id, $to_user_id, $orderId)
     {
         theme('log')->log('createDonation start');
 
         // 生成支付通道订单号
-        $out_trade_no = date('YmdHis') . '00' . mt_rand(10000, 99999);
+        $out_trade_no = theme('tool')->generateTradeNo();
 
         $in_data = array(
             'post_author' => $from_user_id,
@@ -37,7 +35,7 @@ class DonationService extends BaseService
         if (is_wp_error($in_id)) {
             $errmsg = $in_id->get_error_message();
 
-            theme('log')->error($errmsg, 'createDonation');
+            theme('log')->error('createDonation', $errmsg);
 
             return $this->formatError($errmsg);
         }
@@ -47,31 +45,55 @@ class DonationService extends BaseService
             update_post_meta($in_id, 'to', $to_user_id);
         }
 
-        // 打赏金额
-        if (isset($amount)) {
-            update_post_meta($in_id, 'amount', $amount);
-        }
-
-        // 备注
-        if (isset($remark)) {
-            update_post_meta($in_id, 'remark', $remark);
-        }
-
         // 关联订单
         if (isset($orderId)) {
             update_post_meta($in_id, 'orderId', $orderId);
         }
+
+        // 打赏金额
+        $amount = get_post_meta($orderId, 'amount', true);
+
+        // 备注
+        $remark = get_post_meta($orderId, 'remark', true);
 
         $result = [
             'id' => $in_id,
             'orderId' => $orderId,
             'out_trade_no' => $out_trade_no,
             'amount' => $amount,
-            'identity' => get_user_meta($to_user_id, 'alipay', true), // 使用创作者入驻字段-收款账号
-            'name' => get_user_meta($to_user_id, 'name', true), // 使用创作者入驻字段-真实姓名
+            'remark' => $remark,
+            'identity' => get_user_meta($to_user_id, 'alipay', true), // 用于打款，创作者收款账号
+            'name' => get_user_meta($to_user_id, 'name', true), // 用于打款，创作者真实姓名
         ];
 
-        theme('log')->log($result, 'createDonation success');
+        theme('log')->log('createDonation success', $result);
+
+        return $this->format($result);
+    }
+
+    public function getDonationById($id)
+    {
+        // 支付单号
+        $out_trade_no = get_the_title($id);
+
+        // 关联订单号
+        $orderId = get_post_meta($id, 'orderId', true);
+
+        // 打赏金额
+        $amount = (int) get_post_meta($orderId, 'amount', true);
+
+        // 备注
+        $remark = get_post_meta($orderId, 'remark', true);
+
+        $result = [
+            'id' => $id,
+            'out_trade_no' => $out_trade_no,
+            'orderId' => $orderId,
+            'amount' => $amount,
+            'remark' => $remark,
+        ];
+
+        theme('log')->log('getDonationById success', $result);
 
         return $this->format($result);
     }

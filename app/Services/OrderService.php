@@ -38,8 +38,7 @@ class OrderService extends BaseService
         // TODO: 地址验证
 
         // 生成支付通道订单号
-        // $out_trade_no = date('YmdHis') . '-' . $productId . '-' . $from_user_id . '-' . $to_user_id . '-' . rand(1000, 9999); // 注意总长度不能超过32位
-        $out_trade_no = date('YmdHis') . '00' . mt_rand(10000, 99999);
+        $out_trade_no = theme('tool')->generateTradeNo(); // 注意总长度不能超过32位
 
         // 创建订单
         $in_data = array(

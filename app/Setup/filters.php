@@ -183,6 +183,23 @@ add_filter('rest_donation_query', function ($args, $request) {
 }, 99, 2);
 
 /**
+ * /wp/v2/orders?after_nice=-30 days
+ *
+ * from: https://wordpress.stackexchange.com/questions/407736/pull-in-all-posts-from-the-last-two-weeks-using-rest-api
+ */
+add_filter('rest_orders_query', function ($args, $request) {
+    if ($before = $request->get_param('before_nice')) {
+        $args['date_query']['before'] = $before;
+    }
+
+    if ($after = $request->get_param('after_nice')) {
+        $args['date_query']['after'] = $after;
+    }
+
+    return $args;
+}, 99, 2);
+
+/**
  * WP默认不返回没有发表过内容的用户数据，比如：http://localhost/wp/api/wp/v2/users/3217
  *
  * 具体细节：https://wordpress.stackexchange.com/questions/331042/unable-to-get-the-info-of-the-user-which-doesnt-have-created-any-post-via-rest
