@@ -945,6 +945,30 @@ add_action('rest_api_init', function () {
             return $result;
         },
     ));
+    // 新增统计字段: total_posts, 已发布的动态数量（不使用update_callback，仅读取）
+    register_rest_field('user', 'total_posts', array(
+        'get_callback' => function ($object, $field, $request) {
+            $result = count_user_posts($object['id'], 'post', true);
+
+            return (int) $result;
+        },
+    ));
+    // 新增统计字段: hasPayment, 收款信息是否完整（不使用update_callback，仅读取）
+    register_rest_field('user', 'hasPayment', array(
+        'get_callback' => function ($object, $field, $request) {
+            $result = theme('user')->hasPayment($object['id']);
+
+            return $result;
+        },
+    ));
+    // 新增统计字段: hasSupporters, 是否有被打赏的记录（不使用update_callback，仅读取）
+    register_rest_field('user', 'hasSupporters', array(
+        'get_callback' => function ($object, $field, $request) {
+            $result = theme('user')->hasSupporters($object['id']);
+
+            return $result;
+        },
+    ));
 
     // 新增社交字段: following, 关注列表，仅自己可见和更新
     register_rest_field('user', 'following', array(
@@ -1019,7 +1043,6 @@ add_action('rest_api_init', function () {
         },
     ));
 
-    
     // 新增订单字段: name, 服务名称（不使用update_callback，仅读取）
     register_rest_field('orders', 'name', array(
         'get_callback' => function ($object, $field, $request) {

@@ -9,6 +9,8 @@ class UserService extends BaseService
 {
     protected $current_user_id = 0;
     protected $followingKey = 'following'; // user_meta: following
+    protected $realnameKey = 'realname'; // user_meta: realname
+    protected $alipayKey = 'alipay'; // user_meta: alipay
 
     public function __construct()
     {
@@ -362,5 +364,38 @@ class UserService extends BaseService
         }
 
         return in_array($user_id, $following);
+    }
+
+    /**
+     * 指定用户是否完成收款信息设置
+     *
+     * @return true or false
+     */
+    public function hasPayment($user_id)
+    {
+        $realname = get_user_meta($user_id, $this->realnameKey, true);
+        $alipay = get_user_meta($user_id, $this->alipayKey, true);
+
+        theme('log')->debug('hasPayment', $user_id, $realname, $alipay);
+
+        if (empty($realname) || empty($alipay)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 指定用户是否有被打赏的记录
+     *
+     * @return true or false
+     */
+    public function hasSupporters($user_id)
+    {
+        $total_supporters = theme('stat')->calcTotalSupporters($user_id);
+
+        theme('log')->debug('hasSupporters', $user_id, $total_supporters);
+
+        return $total_supporters > 0;
     }
 }
