@@ -969,6 +969,37 @@ add_action('rest_api_init', function () {
             return $result;
         },
     ));
+    // 新增统计字段: hideGuide, 是否隐藏新手引导（需登录态，仅能更新自己）
+    register_rest_field('user', 'hideGuide', array(
+        'get_callback' => function ($object, $field, $request) {
+            $current_user = wp_get_current_user();
+
+            // Get field as single value from post meta.
+            return (bool) get_user_meta($current_user->ID, $field, true);
+        },
+        'update_callback' => function ($value, $object, $field) {
+            $current_user = wp_get_current_user();
+
+            // Update the field/meta value.
+            update_user_meta($current_user->ID, $field, $value);
+        },
+        'schema' => array(
+            'type' => 'number',
+            'arg_options' => array(
+                'sanitize_callback' => function ($value) {
+                    // Make the value safe for storage.
+                    return (int) $value;
+                },
+                'validate_callback' => function ($value) {
+                    return is_numeric($value);
+                },
+                'validate_callback' => function ($value) {
+                    // Valid if it's [1,0]
+                    return in_array((int) $value, [1, 0]);
+                },
+            ),
+        ),
+    ));
 
     // 新增社交字段: following, 关注列表，仅自己可见和更新
     register_rest_field('user', 'following', array(
