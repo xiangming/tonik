@@ -33,15 +33,32 @@ add_filter('theme/index/sidebar/visibility', 'Tonik\Theme\App\Setup\show_index_s
 add_filter('theme/single/sidebar/visibility', 'Tonik\Theme\App\Setup\show_index_sidebar');
 
 /**
- * Shortens posts excerpts to 60 words.
+ * Shortens posts excerpts to 200 words.
  *
  * @return integer
  */
 function modify_excerpt_length()
 {
-    return 60;
+    return 200;
 }
 add_filter('excerpt_length', 'Tonik\Theme\App\Setup\modify_excerpt_length');
+
+/**
+ * Filter the excerpt "read more" string.
+ *
+ * @param string $more "Read more" excerpt string.
+ * @return string (Maybe) modified "read more" excerpt string.
+ */
+function modify_excerpt_more($more)
+{
+    return '...';
+}
+add_filter('excerpt_more', 'Tonik\Theme\App\Setup\modify_excerpt_more');
+
+/**
+ * 去掉excerpt里面的<p></p>
+ */
+remove_filter( 'the_excerpt', 'wpautop' );
 
 /**
  * rewrite 'wp-json' REST API prefix with 'api'

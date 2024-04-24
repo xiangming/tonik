@@ -598,8 +598,7 @@ add_action('rest_api_init', function () {
             $method = $parameters['method']; // 支付通道
             $out_trade_no = $parameters['out_trade_no']; // 第三方单号
 
-            $paymentService = theme('payment');
-            $rs = $paymentService->find($method, $out_trade_no);
+            $rs = theme('payment')->find($method, $out_trade_no);
 
             // 输出结果
             $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
@@ -634,7 +633,7 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
-    // 请求后端检查支付结果
+    // 请求后端检查支付结果并触发支付成功后的相关操作
     register_rest_route(WP_V2_NAMESPACE, '/payment/check', array(
         'methods' => 'POST',
         'callback' => function ($request) {
@@ -688,7 +687,7 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
-    // 重新计算当前用户的数据统计结果（需要登录）
+    // 重新计算当前用户的数据统计结果（需登录态，仅可更新自己）
     register_rest_route(WP_V2_NAMESPACE, '/stat/refresh', array(
         'methods' => 'GET',
         'callback' => function ($request) {
@@ -831,8 +830,8 @@ add_action('rest_api_init', function () {
         'get_callback' => function ($object, $field, $request) {
             $user = get_user_by('id', $object['id']);
             if ($user) {
-                $registered_date = date('Y-m-d', strtotime($user->user_registered));
-                return $registered_date;
+                // $registered_date = date('Y-m-d', strtotime($user->user_registered));
+                return $user->user_registered;
             }
             return $user;
         },
@@ -851,7 +850,6 @@ add_action('rest_api_init', function () {
 
             // Update the field/meta value.
             update_user_meta($current_user->ID, $field, $value);
-            // update_user_meta($object->ID, $field, $value);
         },
         'schema' => array(
             'type' => 'string',
@@ -879,7 +877,6 @@ add_action('rest_api_init', function () {
 
             // Update the field/meta value.
             update_user_meta($current_user->ID, $field, $value);
-            // update_user_meta($object->ID, $field, $value);
         },
         'schema' => array(
             'type' => 'string',
@@ -899,7 +896,6 @@ add_action('rest_api_init', function () {
 
             // Update the field/meta value.
             update_user_meta($current_user->ID, $field, $value);
-            // update_user_meta($object->ID, $field, $value);
         },
         'schema' => array(
             'type' => 'string',
@@ -915,7 +911,7 @@ add_action('rest_api_init', function () {
         ),
     ));
 
-    // 新增统计字段: total_income, 总收入（不使用update_callback，手动刷新时更新值）
+    // 新增统计字段: total_income, 总收入（不使用update_callback，通过刷新接口更新）
     register_rest_field('user', 'total_income', array(
         'get_callback' => function ($object, $field, $request) {
             $current_user = wp_get_current_user();
@@ -925,7 +921,7 @@ add_action('rest_api_init', function () {
             return $result;
         },
     ));
-    // 新增统计字段: total_supporters, 总打赏人数（不使用update_callback，手动刷新时更新值）
+    // 新增统计字段: total_supporters, 总打赏人数（不使用update_callback，通过刷新接口更新）
     register_rest_field('user', 'total_supporters', array(
         'get_callback' => function ($object, $field, $request) {
             $current_user = wp_get_current_user();
@@ -935,7 +931,7 @@ add_action('rest_api_init', function () {
             return $result;
         },
     ));
-    // 新增统计字段: total_views, 主页访问次数（不使用update_callback，手动刷新时更新值）
+    // 新增统计字段: total_views, 主页访问次数（不使用update_callback，通过刷新接口更新）
     register_rest_field('user', 'total_views', array(
         'get_callback' => function ($object, $field, $request) {
             $current_user = wp_get_current_user();
@@ -969,7 +965,7 @@ add_action('rest_api_init', function () {
             return $result;
         },
     ));
-    // 新增统计字段: hideGuide, 是否隐藏新手引导（需登录态，仅能更新自己）
+    // 新增统计字段: hideGuide, 是否隐藏新手引导（需登录态，仅自己可见，仅自己可更新）
     register_rest_field('user', 'hideGuide', array(
         'get_callback' => function ($object, $field, $request) {
             $current_user = wp_get_current_user();
@@ -1001,7 +997,7 @@ add_action('rest_api_init', function () {
         ),
     ));
 
-    // 新增社交字段: following, 关注列表，仅自己可见和更新
+    // 新增社交字段: following, 关注列表（需登录态，仅自己可见，仅自己可更新）
     register_rest_field('user', 'following', array(
         'get_callback' => function ($object, $field, $request, $object_type) {
             return theme('user')->getFollowing();
