@@ -187,6 +187,31 @@ class StatService extends BaseService
     }
 
     /**
+     * 更新contribution的值，可增可减
+     */
+    public function updateUserContribution($user_id, $creator_id, $amount)
+    {
+        $meta_value = get_user_meta($creator_id, 'contribution', true);
+        // just assign this key a new value
+        $meta_value[$user_id] += $amount;
+        // Then just save it again.
+        update_user_meta($creator_id, 'contribution', $meta_value);
+    }
+
+    /**
+     * 获取A打赏给B的总金额
+     *
+     * @param   user_id    普通用户ID
+     * @param   creator_id 创作者ID
+     */
+    public function getUserContribution($user_id, $creator_id)
+    {
+        $contribution = get_user_meta($creator_id, 'contribution', true);
+
+        return (int) $contribution[$user_id];
+    }
+
+    /**
      * 重新计算全部统计结果
      *
      * @return 数据对象 or 0 if meta not exist

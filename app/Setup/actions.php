@@ -611,30 +611,30 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
 
-    // 查询订单的支付结果（布尔值）
-    register_rest_route(WP_V2_NAMESPACE, '/payment/query', array(
-        'methods' => 'POST',
-        'callback' => function ($request) {
-            $parameters = $request->get_json_params();
+    // // 查询订单的支付结果（布尔值）
+    // register_rest_route(WP_V2_NAMESPACE, '/payment/query', array(
+    //     'methods' => 'POST',
+    //     'callback' => function ($request) {
+    //         $parameters = $request->get_json_params();
 
-            $method = $parameters['method']; // 支付通道
-            $out_trade_no = $parameters['out_trade_no']; // 第三方单号
+    //         $method = $parameters['method']; // 支付通道
+    //         $out_trade_no = $parameters['out_trade_no']; // 第三方单号
 
-            $rs = theme('payment')->query($method, $out_trade_no);
+    //         $rs = theme('payment')->query($method, $out_trade_no);
 
-            // 输出结果
-            $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
-            exit();
-        },
-        'args' => array(
-            'method' => theme('args')->method(true),
-            'out_trade_no' => theme('args')->out_trade_no(true),
-        ),
-        'permission_callback' => '__return_true',
-    ));
+    //         // 输出结果
+    //         $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
+    //         exit();
+    //     },
+    //     'args' => array(
+    //         'method' => theme('args')->method(true),
+    //         'out_trade_no' => theme('args')->out_trade_no(true),
+    //     ),
+    //     'permission_callback' => '__return_true',
+    // ));
 
     // 请求后端检查支付结果并触发支付成功后的相关操作
-    register_rest_route(WP_V2_NAMESPACE, '/payment/check', array(
+    register_rest_route(WP_V2_NAMESPACE, '/payment/query', array(
         'methods' => 'POST',
         'callback' => function ($request) {
             $parameters = $request->get_json_params();
@@ -784,6 +784,39 @@ add_action('test_queue', function ($account) {
  * https://developer.wordpress.org/reference/functions/sanitize_textarea_field/
  */
 add_action('rest_api_init', function () {
+    // 新增内容字段: permission, 谁可以看
+    register_rest_field('post', 'permission', array(
+        'get_callback' => function ($object, $field, $request) {
+            // Get field as single value from post meta.
+            return (int) get_post_meta($object['id'], $field, true);
+        },
+        'update_callback' => function ($value, $object, $field) {
+            // Update the field/meta value.
+            update_post_meta($object->ID, $field, $value);
+        },
+        'schema' => array(
+            'type' => 'number',
+            'arg_options' => array(
+                'sanitize_callback' => function ($value) {
+                    return absint($value);
+                },
+                'validate_callback' => function ($value) {
+                    return is_numeric($value);
+                },
+            ),
+        ),
+    ));
+    // 新增内容字段: lock, 当前用户是否可以看（需要登录态，仅读取，不更新）
+    register_rest_field('post', 'lock', array(
+        'get_callback' => function ($object, $field, $request) {
+            // 当前登录用户是否能看
+            $current_user_id = wp_get_current_user()->ID;
+            $current_user_contribution = theme('stat')->getUserContribution($current_user_id, $object['author']);
+
+            return $current_user_contribution < $object['permission'];
+        },
+    ));
+
     // 新增创作字段: creating, 正在创造什么？
     register_rest_field('user', 'creating', array(
         'get_callback' => function ($object, $field, $request) {
@@ -987,11 +1020,8 @@ add_action('rest_api_init', function () {
                     return (int) $value;
                 },
                 'validate_callback' => function ($value) {
-                    return is_numeric($value);
-                },
-                'validate_callback' => function ($value) {
                     // Valid if it's [1,0]
-                    return in_array((int) $value, [1, 0]);
+                    return in_array($value, [1, 0]);
                 },
             ),
         ),

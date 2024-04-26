@@ -386,8 +386,8 @@ class PaymentService extends BaseService
             // }
 
             // 支付未成功
-            if ($rs['data']['trade_state'] != 'SUCCESS') {
-                return $this->format(false);
+            if ($rs['data']['trade_state'] === 'SUCCESS') {
+                return $this->format(true);
             }
         }
 
@@ -406,12 +406,12 @@ class PaymentService extends BaseService
             // [trade_status] => TRADE_CLOSED
 
             // 支付未成功
-            if ($rs['data']['trade_status'] != 'TRADE_SUCCESS') {
-                return $this->format(false);
+            if ($rs['data']['trade_status'] === 'TRADE_SUCCESS') {
+                return $this->format(true);
             }
         }
 
-        return $this->format(true);
+        return $this->format(false);
     }
 
     // 转账到支付宝账户

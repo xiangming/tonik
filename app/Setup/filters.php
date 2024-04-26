@@ -58,7 +58,7 @@ add_filter('excerpt_more', 'Tonik\Theme\App\Setup\modify_excerpt_more');
 /**
  * 去掉excerpt里面的<p></p>
  */
-remove_filter( 'the_excerpt', 'wpautop' );
+remove_filter('the_excerpt', 'wpautop');
 
 /**
  * rewrite 'wp-json' REST API prefix with 'api'
@@ -131,7 +131,7 @@ add_filter('manage_donation_posts_columns', function ($columns) {
 function _modify_rest_prepare($response, $post, $request)
 {
     $_data = $response->data;
-    $uid = $post->post_author;
+    $author_uid = $post->post_author;
 
     // // My custom fields that I want to include in the WP API v2 responce
     // $fields = ['job_title', 'job_city', 'job_highlight'];
@@ -139,14 +139,21 @@ function _modify_rest_prepare($response, $post, $request)
     //   $_data[$field] = get_post_meta( $pid, $field, true );
     // }
 
-    // 获取用户数据
-    $user = get_userdata($uid);
-    $_data['author_name'] = $user->display_name;
-    $_data['author_slug'] = $user->user_nicename;
+    // 将author_name和author_slug显示到post接口，方便前端展示
+    $author = get_userdata($author_uid);
+    $_data['author_name'] = $author->display_name;
+    $_data['author_slug'] = $author->user_nicename;
 
-    // $user = wp_get_current_user();
-    // $bookmarks = (array) get_user_meta($user->ID, 'bookmarks', true);
-    // $_data['bookmarked'] = in_array($pid, $bookmarks);
+    // 当该post有权限要求时，根据当前用户贡献度来过滤正文和摘要
+    if ($_data['permission'] > 0) {
+        $current_user_id = wp_get_current_user()->ID;
+        $current_user_contribution = theme('stat')->getUserContribution($current_user_id, $author_uid);
+        
+        if ($current_user_contribution < $_data['permission']) {
+            $_data['content'] = false;
+            $_data['excerpt'] = false;
+        }
+    }
 
     $response->data = $_data;
     return $response;
@@ -166,6 +173,7 @@ add_filter('rest_prepare_comment', function ($response, $post, $request) {
     // 获取parent用户数据
     $parent = get_comment($_data['parent']);
     $_data['parent_name'] = $parent->comment_author;
+
     // "comment_ID": "5",
     // "comment_post_ID": "11",
     // "comment_author": "Arvin",
@@ -245,7 +253,7 @@ add_filter('get_usernumposts', function ($count) {
     return $count > 0 ? $count : 1;
 });
 
-// 全部REST-API触发
+// REST-API触发这个钩子
 add_filter('rest_pre_echo_response', function ($response, $handler, $request) {
     // 仅/wp/v2/users?slug=xxx下操作
     if ($request->get_route() === '/wp/v2/users' && $request->has_param('slug')) {
