@@ -56,8 +56,9 @@ function modify_excerpt_more($more)
 add_filter('excerpt_more', 'Tonik\Theme\App\Setup\modify_excerpt_more');
 
 /**
- * 去掉excerpt里面的<p></p>
+ * 去掉content和excerpt里面的<p></p>
  */
+remove_filter('the_content', 'wpautop');
 remove_filter('the_excerpt', 'wpautop');
 
 /**
@@ -148,7 +149,7 @@ function _modify_rest_prepare($response, $post, $request)
     if ($_data['permission'] > 0) {
         $current_user_id = wp_get_current_user()->ID;
         $current_user_contribution = theme('stat')->getUserContribution($current_user_id, $author_uid);
-        
+
         if ($current_user_contribution < $_data['permission']) {
             $_data['content'] = false;
             $_data['excerpt'] = false;
