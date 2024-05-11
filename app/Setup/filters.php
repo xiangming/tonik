@@ -145,14 +145,14 @@ function _modify_rest_prepare($response, $post, $request)
     $_data['author_name'] = $author->display_name;
     $_data['author_slug'] = $author->user_nicename;
 
-    // 当该post有权限要求时，根据当前用户贡献度来过滤正文和摘要
-    if ($_data['permission'] > 0) {
+    // 当该post有权限要求且当前用户没有权限时，则根据当前用户贡献度来过滤正文和摘要
+    if ($_data['permission'] > 0 && !current_user_can('edit_post', $_data['id'])) {
         $current_user_id = wp_get_current_user()->ID;
         $current_user_contribution = theme('stat')->getUserContribution($current_user_id, $author_uid);
 
         if ($current_user_contribution < $_data['permission']) {
             $_data['content'] = false;
-            $_data['excerpt'] = false;
+            // $_data['excerpt'] = false;
         }
     }
 

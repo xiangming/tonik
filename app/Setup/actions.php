@@ -10,7 +10,6 @@ use function Tonik\Theme\App\resOK;
 use function Tonik\Theme\App\theme;
 
 define('WP_V2_NAMESPACE', '/wp/v2'); // WP REST API 内置命名空间
-define('FEE_RATE', 0.06); // 平台费率
 
 /*
 |-----------------------------------------------------------
@@ -140,7 +139,7 @@ function transfer($donation)
     theme('log')->log($donation, 'donation transfer start');
 
     // 计算扣除平台手续费后的待结算金额
-    $donation['amount'] = theme('tool')->settledAmount($donation['amount'], FEE_RATE);
+    $donation['amount'] = theme('tool')->settledAmount($donation['amount'], $_ENV['FEE_RATE']);
 
     // 执行打款（当前只支持alipay）
     $rs = $paymentService->transfer('alipay', $donation['out_trade_no'], $donation['amount'], $donation['identity'], $donation['name']);
