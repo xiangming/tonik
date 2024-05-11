@@ -15,7 +15,7 @@ class OrderService extends BaseService
     }
 
     /**
-     * 创建订单
+     * 创建内部订单（非第三方订单）
      *
      * @param   [string]  $type    服务类型：打赏（donation）、购买（buy）、充值（recharge）等
      * @param   [string]  $amount  金额
@@ -29,7 +29,7 @@ class OrderService extends BaseService
      */
     public function createOrder($type, $amount, $name, $remark, $related, $method, $author_id)
     {
-        theme('log')->log('OrderService createOrder start');
+        theme('log')->log('OrderService->createOrder() start', $type, $amount, $name, $remark, $related, $method, $author_id);
 
         // TODO: 格式化商品数据等
 
@@ -58,7 +58,7 @@ class OrderService extends BaseService
         if (is_wp_error($in_id)) {
             $errmsg = $in_id->get_error_message();
 
-            theme('log')->error($errmsg, 'OrderService createOrder');
+            theme('log')->error('OrderService->createOrder() error', $errmsg);
 
             return $this->formatError($errmsg);
         }
@@ -106,7 +106,7 @@ class OrderService extends BaseService
             'method' => $method,
         ];
 
-        theme('log')->log($result, 'OrderService createOrder success');
+        theme('log')->log('OrderService->createOrder() success', $result);
 
         return $this->format($result);
     }

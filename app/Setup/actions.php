@@ -561,17 +561,16 @@ add_action('rest_api_init', function () {
             // 1. 创建order
             $name = '打赏-' . $to; // 支付通道显示的标题
             $orderService = theme('order');
-            $rs = $orderService->createOrder('donation', $amount, $name, $remark, $to_user_id, $method, $from_user_id);
+            $order = $orderService->createOrder('donation', $amount, $name, $remark, $to_user_id, $method, $from_user_id);
 
             // 创建订单失败
-            if (!$rs['status']) {
-                resError($rs['msg']);
+            if (!$order['status']) {
+                resError($order['msg']);
                 exit();
             }
 
             // 2. 调取第三方支付
-            $paymentService = theme('payment');
-            $rs = $paymentService->pay($method, $device, $rs['data']);
+            $rs = theme('payment')->pay($method, $device, $order['data']);
 
             // 3. 输出结果
             $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);

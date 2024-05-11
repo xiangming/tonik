@@ -127,10 +127,10 @@ class PaymentService extends BaseService
      */
     public function pay($paymentName = 'alipay', $device = 'scan', $orderPay = [], $recharge = false, $config = 'default')
     {
-        theme('log')->log('PaymentService pay start');
+        theme('log')->log('PaymentService->pay() start', $paymentName, $device, $orderPay, $recharge);
 
         if (empty($orderPay)) {
-            theme('log')->error('$orderPay empty', 'PaymentService pay');
+            theme('log')->error('PaymentService->pay() $orderPay empty');
 
             return $this->formatError('订单信息错误');
         }
@@ -177,16 +177,31 @@ class PaymentService extends BaseService
 
         try {
             // $this->setConfig($paymentName, $device, $config);
+
             $result = Pay::$paymentName($this->config)->$device($this->payData);
+
             if (in_array($device, ['app', 'wap', 'web'])) {
                 return $this->format($result->getBody()->getContents());
             }
 
-            theme('log')->log($result, 'PaymentService pay success');
+            // {
+            //     "code": "10000",
+            //     "msg": "Success",
+            //     "out_trade_no": "202405110537330060945",
+            //     "qr_code": "https://qr.alipay.com/bax09992uhstk0ytb44v305f"
+            // }
+
+            // 第三方支付接口返回字段检查
+            // 支付宝失败
+            if (empty($result['out_trade_no']) || empty($result['qr_code'])) {
+                throw new \Exception('第三方支付接口返回字段错误');
+            }
+
+            theme('log')->log('PaymentService->pay() success', $result);
 
             return $this->format($result);
         } catch (\Exception $e) {
-            theme('log')->error($e->getMessage(), 'PaymentService pay');
+            theme('log')->error('PaymentService->pay() error', $e->getMessage());
 
             return $this->formatError('调取支付失败');
         }
@@ -283,10 +298,10 @@ class PaymentService extends BaseService
      */
     public function find($paymentName = 'alipay', $out_trade_no = null)
     {
-        theme('log')->log('PaymentService find start');
+        theme('log')->log('PaymentService->find() start');
 
         if (empty($out_trade_no)) {
-            theme('log')->error('$out_trade_no empty', 'PaymentService find');
+            theme('log')->error('PaymentService->find() $out_trade_no empt');
 
             return $this->formatError('$out_trade_no empty');
         }
@@ -303,11 +318,11 @@ class PaymentService extends BaseService
             //     return $this->format($result->getBody()->getContents());
             // }
 
-            theme('log')->log($result, 'PaymentService find success');
+            theme('log')->log('PaymentService->find() success', $result);
 
             return $this->format($result);
         } catch (\Exception $e) {
-            theme('log')->error($e->getMessage(), 'PaymentService find');
+            theme('log')->error('PaymentService->find() error', $e->getMessage());
 
             return $this->formatError('查询支付结果失败');
         }
@@ -320,10 +335,10 @@ class PaymentService extends BaseService
      */
     public function query($paymentName = 'alipay', $out_trade_no = null)
     {
-        theme('log')->log('PaymentService query start');
+        theme('log')->log('PaymentService->query() start', $paymentName, $out_trade_no);
 
         if (empty($out_trade_no)) {
-            theme('log')->error('$out_trade_no empty', 'PaymentService query');
+            theme('log')->error('PaymentService->query() $out_trade_no empty');
 
             return $this->formatError('$out_trade_no empty');
         }
@@ -334,7 +349,7 @@ class PaymentService extends BaseService
             return $this->formatError($rs['msg']);
         }
 
-        theme('log')->log($rs, 'PaymentService query success');
+        theme('log')->log('PaymentService->query() success', $rs);
 
         // 判断是否支付成功
         if ($paymentName == 'wechat') {
@@ -385,7 +400,7 @@ class PaymentService extends BaseService
             //     // TODO: delete order post
             // }
 
-            // 支付未成功
+            // 支付成功
             if ($rs['data']['trade_state'] === 'SUCCESS') {
                 return $this->format(true);
             }
@@ -405,7 +420,7 @@ class PaymentService extends BaseService
             // [trade_no] => 2023122722001454541434248869
             // [trade_status] => TRADE_CLOSED
 
-            // 支付未成功
+            // 支付成功
             if ($rs['data']['trade_status'] === 'TRADE_SUCCESS') {
                 return $this->format(true);
             }
@@ -417,21 +432,29 @@ class PaymentService extends BaseService
     // 转账到支付宝账户
     public function transfer($paymentName = 'alipay', $out_trade_no = null, $amount = null, $identity = null, $name = null)
     {
-        theme('log')->log('PaymentService transfer start');
+        theme('log')->log('PaymentService->transfer() start', $paymentName, $out_trade_no, $amount, $identity, $name);
 
         if (empty($out_trade_no)) {
+            theme('log')->error('PaymentService->transfer() $out_trade_no empty');
+
             return $this->formatError('$out_trade_no empty');
         }
 
         if (empty($amount)) {
+            theme('log')->error('PaymentService->transfer() $amount empty');
+
             return $this->formatError('$amount empty');
         }
 
         if (empty($identity)) {
+            theme('log')->error('PaymentService->transfer() $identity empty');
+
             return $this->formatError('$identity empty');
         }
 
         if (empty($name)) {
+            theme('log')->error('PaymentService->transfer() $name empty');
+
             return $this->formatError('$name empty');
         }
 
@@ -450,13 +473,16 @@ class PaymentService extends BaseService
 
         try {
             // $this->setConfig($paymentName, $device, $config);
+
             $result = Pay::$paymentName($this->config)->transfer($this->orderData);
 
-            theme('log')->log($result, 'PaymentService transfer success');
+            // TODO: 检查第三方返回值，是否真的转账成功
+
+            theme('log')->log('PaymentService->transfer() success', $result);
 
             return $this->format($result);
         } catch (\Exception $e) {
-            theme('log')->error($e->getMessage(), 'PaymentService transfer');
+            theme('log')->error('PaymentService->transfer() error', $e->getMessage());
 
             return $this->formatError('转账失败');
         }
@@ -465,7 +491,7 @@ class PaymentService extends BaseService
     // 修改配置
     public function setConfig($paymentName, $device = 'web', $config = 'default')
     {
-        theme('log')->debug('PaymentService setConfig start');
+        theme('log')->debug('PaymentService->setConfig() start');
 
         // TODO: 给证书加上绝对链接
     }
@@ -479,28 +505,31 @@ class PaymentService extends BaseService
      */
     public function notify($paymentName = 'alipay', $device = 'scan', $config = 'default')
     {
-        theme('log')->log('PaymentService notify start');
+        theme('log')->log('PaymentService->notify() start', $paymentName, $device, $config);
 
         // $this->setConfig($paymentName, $device, $config);
+
         $result = Pay::$paymentName($this->config)->callback(null, ['_config' => $config]);
 
-        theme('log')->debug($result, 'PaymentService notify callback $result');
+        theme('log')->debug('PaymentService->notify() 第三方返回值', $result);
 
         try {
             // 判断是否支付成功，未成功则提前退出
+
             // FIXME: 下面的字段是yansongda v3.1的，可能不正确
             if ($paymentName == 'wechat') {
                 if ($result->event_type != 'TRANSACTION.SUCCESS' && $result->resource['ciphertext']['trade_state'] != 'SUCCESS') {
-                    theme('log')->error('notify->event_type != TRANSACTION', 'PaymentService notify');
+                    theme('log')->error('PaymentService->notify() $result->event_type != TRANSACTION.SUCCESS');
 
                     throw new \Exception('wechat pay error - ' . $result->resource['ciphertext']['out_trade_no']);
                 }
                 $trade_no = $result->resource['ciphertext']['transaction_id'];
                 $out_trade_no = $result->resource['ciphertext']['out_trade_no'];
             }
+
             if ($paymentName == 'alipay') {
                 if ($result->trade_status != 'TRADE_SUCCESS') {
-                    theme('log')->error('notify->trade_status != TRADE_SUCCESS', 'PaymentService notify');
+                    theme('log')->error('PaymentService->notify() notify->trade_status != TRADE_SUCCESS');
 
                     throw new \Exception('alipay pay error - ' . $result->out_trade_no);
                 }
@@ -517,9 +546,9 @@ class PaymentService extends BaseService
             // }
 
             if (empty($out_trade_no)) {
-                theme('log')->error('out_trade_no not found', 'PaymentService notify');
+                theme('log')->error('PaymentService->notify() $out_trade_no empty');
 
-                throw new \Exception('out_trade_no not found');
+                throw new \Exception('$out_trade_no empty');
             }
 
             // // TODO: 使用队列处理第三方回调
@@ -544,12 +573,12 @@ class PaymentService extends BaseService
                 throw new \Exception($paySuccessData['msg']);
             }
 
-            theme('log')->log('PaymentService notify sucess');
+            theme('log')->log('PaymentService->notify() success');
 
             // 第三方支付需要返回指定信息给回调服务器
             return Pay::$paymentName($this->config)->success();
         } catch (\Exception $e) {
-            theme('log')->error($e->getMessage(), 'PaymentService notify');
+            theme('log')->error('PaymentService->notify() error', $e->getMessage());
 
             return $this->formatError($e->getMessage());
         }
