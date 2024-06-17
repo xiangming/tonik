@@ -209,16 +209,18 @@ add_filter('rest_donation_query', function ($args, $request) {
 }, 99, 2);
 
 /**
- * /wp/v2/orders?after_nice=-30 days
+ * 使用nice_after来绕过REST不支持strtotime日期格式的问题
+ * 
+ * 比如：/wp/v2/orders?nice_after=-30 days
  *
- * from: https://wordpress.stackexchange.com/questions/407736/pull-in-all-posts-from-the-last-two-weeks-using-rest-api
+ * https://developer.wordpress.org/reference/classes/wp_query/#date-parameters
  */
 add_filter('rest_orders_query', function ($args, $request) {
-    if ($before = $request->get_param('before_nice')) {
+    if ($before = $request->get_param('nice_before')) {
         $args['date_query']['before'] = $before;
     }
 
-    if ($after = $request->get_param('after_nice')) {
+    if ($after = $request->get_param('nice_after')) {
         $args['date_query']['after'] = $after;
     }
 
