@@ -43,21 +43,6 @@ fans 项目 WEB 服务器：
 
 > 注意！开发功能时，尽量与业务解耦并形成独立的文件，已方便其他项目移植使用。
 
-## 部署
-
-以 fans 项目为例：
-
-```bash
-git checkout master
-git merge develop --squash
-
-# 部署到测试环境
-git push dev master:master
-
-# 部署到生产环境
-git push release master:master
-```
-
 ## 如何使用
 
 ### 安装插件
@@ -84,7 +69,7 @@ define('JWT_AUTH_CORS_ENABLE', true);
 ### 安装 PHP 依赖
 
 ```bash
-composer install
+sudo -u www composer update
 ```
 
 ### 安装前端依赖
@@ -102,6 +87,21 @@ yarn prod
 ```
 
 > 注意！如果不生成主题文件，将导致严重错误，进而网站无法访问。
+
+## 如何部署
+
+以 fans 项目为例：
+
+```bash
+git checkout master
+git merge develop --squash
+
+# 部署到测试环境
+git push dev master:master
+
+# 部署到生产环境
+git push release master:master
+```
 
 ## Tonik 功能
 

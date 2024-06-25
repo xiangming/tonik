@@ -215,7 +215,7 @@ add_filter('rest_donation_query', function ($args, $request) {
  *
  * https://developer.wordpress.org/reference/classes/wp_query/#date-parameters
  */
-add_filter('rest_orders_query', function ($args, $request) {
+function _modify_rest_query($args, $request) {
     if ($before = $request->get_param('nice_before')) {
         $args['date_query']['before'] = $before;
     }
@@ -225,7 +225,10 @@ add_filter('rest_orders_query', function ($args, $request) {
     }
 
     return $args;
-}, 99, 2);
+}
+add_filter('rest_post_query', 'Tonik\Theme\App\Setup\_modify_rest_query', 99, 2);
+add_filter('rest_orders_query', 'Tonik\Theme\App\Setup\_modify_rest_query', 99, 2);
+add_filter('rest_donation_query', 'Tonik\Theme\App\Setup\_modify_rest_query', 99, 2);
 
 /**
  * WP默认不返回没有发表过内容的用户数据，比如：http://localhost/wp/api/wp/v2/users/3217
