@@ -942,8 +942,8 @@ add_action('rest_api_init', function () {
         ),
     ));
 
-    // 新增统计字段: total_income, 总收入（不使用update_callback，通过刷新接口更新）
-    register_rest_field('user', 'total_income', array(
+    // 新增用户统计字段: income, 总收入（不使用update_callback，通过刷新接口更新）
+    register_rest_field('user', 'income', array(
         'get_callback' => function ($object, $field, $request) {
             $current_user = wp_get_current_user();
 
@@ -952,8 +952,8 @@ add_action('rest_api_init', function () {
             return $result;
         },
     ));
-    // 新增统计字段: total_supporters, 总打赏人数（不使用update_callback，通过刷新接口更新）
-    register_rest_field('user', 'total_supporters', array(
+    // 新增用户统计字段: supporters, 总打赏人数（不使用update_callback，通过刷新接口更新）
+    register_rest_field('user', 'supporters', array(
         'get_callback' => function ($object, $field, $request) {
             $current_user = wp_get_current_user();
 
@@ -962,8 +962,8 @@ add_action('rest_api_init', function () {
             return $result;
         },
     ));
-    // 新增统计字段: total_views, 主页访问次数（不使用update_callback，通过刷新接口更新）
-    register_rest_field('user', 'total_views', array(
+    // 新增用户统计字段: views, 主页访问次数（不使用update_callback，通过刷新接口更新）
+    register_rest_field('user', 'views', array(
         'get_callback' => function ($object, $field, $request) {
             $current_user = wp_get_current_user();
 
@@ -972,15 +972,15 @@ add_action('rest_api_init', function () {
             return $result;
         },
     ));
-    // 新增统计字段: total_posts, 已发布的动态数量（不使用update_callback，仅读取）
-    register_rest_field('user', 'total_posts', array(
+    // 新增用户统计字段: posts, 已发布的动态数量（不使用update_callback，仅读取）
+    register_rest_field('user', 'posts', array(
         'get_callback' => function ($object, $field, $request) {
             $result = count_user_posts($object['id'], 'post', true);
 
             return (int) $result;
         },
     ));
-    // 新增统计字段: hasPayment, 收款信息是否完整（不使用update_callback，仅读取）
+    // 新增用户统计字段: hasPayment, 收款信息是否完整（不使用update_callback，仅读取）
     register_rest_field('user', 'hasPayment', array(
         'get_callback' => function ($object, $field, $request) {
             $result = theme('user')->hasPayment($object['id']);
@@ -988,7 +988,7 @@ add_action('rest_api_init', function () {
             return $result;
         },
     ));
-    // 新增统计字段: hasSupporters, 是否有被打赏的记录（不使用update_callback，仅读取）
+    // 新增用户统计字段: hasSupporters, 是否有被打赏的记录（不使用update_callback，仅读取）
     register_rest_field('user', 'hasSupporters', array(
         'get_callback' => function ($object, $field, $request) {
             $result = theme('user')->hasSupporters($object['id']);
@@ -996,7 +996,7 @@ add_action('rest_api_init', function () {
             return $result;
         },
     ));
-    // 新增统计字段: hideGuide, 是否隐藏新手引导（需登录态，仅自己可见，仅自己可更新）
+    // 新增用户统计字段: hideGuide, 是否隐藏新手引导（需登录态，仅自己可见，仅自己可更新）
     register_rest_field('user', 'hideGuide', array(
         'get_callback' => function ($object, $field, $request) {
             $current_user = wp_get_current_user();

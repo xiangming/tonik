@@ -261,7 +261,7 @@ add_filter('get_usernumposts', function ($count) {
 
 // REST-API触发这个钩子
 add_filter('rest_pre_echo_response', function ($response, $handler, $request) {
-    // 仅/wp/v2/users?slug=xxx下操作
+    // 仅/wp/v2/users?slug=xxx下触发，统计主页访问次数
     if ($request->get_route() === '/wp/v2/users' && $request->has_param('slug')) {
         $slugs = $request->get_param('slug');
 
@@ -270,6 +270,18 @@ add_filter('rest_pre_echo_response', function ($response, $handler, $request) {
 
         if ($user) {
             theme('stat')->setUserViews($user->ID);
+        }
+    }
+
+    // 仅/wp/v2/posts?slug=xxx下触发，统计文章访问次数
+    if ($request->get_route() === '/wp/v2/posts' && $request->has_param('slug')) {
+        $slugs = $request->get_param('slug');
+
+        //* Get the ID
+        $post = get_post_by('slug', $slugs[0]);
+
+        if ($post) {
+            theme('stat')->setPostViews($post->ID);
         }
     }
 

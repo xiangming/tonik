@@ -65,6 +65,8 @@ class StatService extends BaseService
 
     /**
      * 计算赞助总人数（先使用post_count代替）
+     * 
+     * 当前只统计donation，shop等没有计入
      *
      * @return number or 0 if no items found.
      */
@@ -93,7 +95,7 @@ class StatService extends BaseService
     }
 
     /**
-     * 获取赞助总人数（先使用post_count代替）
+     * 获取赞助总人数
      *
      * @return number or 0 if no items found.
      */
@@ -117,7 +119,7 @@ class StatService extends BaseService
     }
 
     /**
-     * 获取文章访问次数（暂未启用）
+     * 获取文章访问次数
      *
      * @return number or 0 if no items found.
      */
@@ -131,7 +133,7 @@ class StatService extends BaseService
     }
 
     /**
-     * 统计文章访问次数（暂未启用）
+     * 统计文章访问次数（自动+1，修正空值）
      */
     public function setPostViews($id)
     {
@@ -231,9 +233,9 @@ class StatService extends BaseService
 
         // 准备返回的数据
         $result = [
-            'total_income' => $total_income,
-            'total_supporters' => $total_supporters,
-            'total_views' => $total_views,
+            'income' => $total_income,
+            'supporters' => $total_supporters,
+            'views' => $total_views,
         ];
 
         return $result;
