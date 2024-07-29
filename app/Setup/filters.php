@@ -173,7 +173,9 @@ add_filter('rest_prepare_comment', function ($response, $post, $request) {
 
     // 获取parent用户数据
     $parent = get_comment($_data['parent']);
-    $_data['parent_name'] = $parent->comment_author;
+    if ($parent) {
+        $_data['parent_name'] = $parent->comment_author;
+    }
 
     // "comment_ID": "5",
     // "comment_post_ID": "11",
@@ -210,12 +212,13 @@ add_filter('rest_donation_query', function ($args, $request) {
 
 /**
  * 使用nice_after来绕过REST不支持strtotime日期格式的问题
- * 
+ *
  * 比如：/wp/v2/orders?nice_after=-30 days
  *
  * https://developer.wordpress.org/reference/classes/wp_query/#date-parameters
  */
-function _modify_rest_query($args, $request) {
+function _modify_rest_query($args, $request)
+{
     if ($before = $request->get_param('nice_before')) {
         $args['date_query']['before'] = $before;
     }
@@ -278,10 +281,10 @@ add_filter('rest_pre_echo_response', function ($response, $handler, $request) {
         $slugs = $request->get_param('slug');
 
         //* Get the ID
-        $post = get_post_by('slug', $slugs[0]);
+        $post_id = current($response)['id'];
 
-        if ($post) {
-            theme('stat')->setPostViews($post->ID);
+        if ($post_id) {
+            theme('stat')->setPostViews($post_id);
         }
     }
 
