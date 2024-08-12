@@ -258,10 +258,6 @@ add_filter('rest_donation_query', 'Tonik\Theme\App\Setup\_modify_rest_query', 99
 //     return $response;
 // }, 10, 3);
 
-add_filter('get_usernumposts', function ($count) {
-    return $count > 0 ? $count : 1;
-});
-
 // REST-API触发这个钩子
 add_filter('rest_pre_echo_response', function ($response, $handler, $request) {
     // 仅/wp/v2/users?slug=xxx下触发，统计主页访问次数
