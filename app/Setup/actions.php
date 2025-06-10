@@ -842,21 +842,21 @@ add_action('rest_api_init', function () {
             ),
         ),
     ));
-    // 新增创作字段: avatar, 头像地址（不使用update_callback，单独上传后更新值）
+    // 新增字段: avatar, 头像地址（不使用update_callback，单独上传后更新值）
     register_rest_field('user', 'avatar', array(
         'get_callback' => function ($object, $field, $request) {
             // Get field as single value from post meta.
             return get_user_meta($object['id'], $field, true);
         },
     ));
-    // 新增创作字段: background, 封面图地址（不使用update_callback，单独上传后更新值）
+    // 新增字段: background, 封面图地址（不使用update_callback，单独上传后更新值）
     register_rest_field('user', 'background', array(
         'get_callback' => function ($object, $field, $request) {
             // Get field as single value from post meta.
             return get_user_meta($object['id'], $field, true);
         },
     ));
-    // 新增创作字段: registered, 注册时间（不使用update_callback，注册时自动更新）
+    // 新增字段: registered, 注册时间（不使用update_callback，注册时自动更新）
     register_rest_field('user', 'registered', array(
         'get_callback' => function ($object, $field, $request) {
             $user = get_user_by('id', $object['id']);
@@ -868,7 +868,7 @@ add_action('rest_api_init', function () {
         },
     ));
 
-    // 新增收款字段: realname, 真实姓名，仅自己可见，仅自己可更新
+    // 新增字段: realname, 真实姓名，仅自己可见，仅自己可更新（需要token）
     register_rest_field('user', 'realname', array(
         'get_callback' => function ($object, $field, $request) {
             $current_user = wp_get_current_user();
@@ -895,7 +895,88 @@ add_action('rest_api_init', function () {
             ),
         ),
     ));
-    // 新增收款字段: alipay, 支付宝账号，仅自己可见，仅自己可更新
+    // 新增字段: gender, 性别，仅自己可见，仅自己可更新（需要token）
+    register_rest_field('user', 'gender', array(
+        'get_callback' => function ($object, $field, $request) {
+            $current_user = wp_get_current_user();
+
+            // Get field as single value from post meta, return false if current user not found
+            return get_user_meta($current_user->ID, $field, true);
+        },
+        'update_callback' => function ($value, $object, $field) {
+            $current_user = wp_get_current_user();
+
+            // Update the field/meta value.
+            update_user_meta($current_user->ID, $field, $value);
+        },
+        'schema' => array(
+            'type' => 'string',
+            'arg_options' => array(
+                'sanitize_callback' => function ($value) {
+                    // Make the value safe for storage.
+                    return sanitize_text_field($value);
+                },
+                'validate_callback' => function ($value) {
+                    return is_string($value);
+                },
+            ),
+        ),
+    ));
+    // 新增字段: birthday 生日 仅自己可见，仅自己可更新（需要token）
+    register_rest_field('user', 'birthday', array(
+        'get_callback' => function ($object, $field, $request) {
+            $current_user = wp_get_current_user();
+
+            // Get field as single value from post meta, return false if current user not found
+            return get_user_meta($current_user->ID, $field, true);
+        },
+        'update_callback' => function ($value, $object, $field) {
+            $current_user = wp_get_current_user();
+
+            // Update the field/meta value.
+            update_user_meta($current_user->ID, $field, $value);
+        },
+        'schema' => array(
+            'type' => 'string',
+            'arg_options' => array(
+                'sanitize_callback' => function ($value) {
+                    // Make the value safe for storage.
+                    return sanitize_text_field($value);
+                },
+                'validate_callback' => function ($value) {
+                    return is_string($value);
+                },
+            ),
+        ),
+    ));
+    // 新增字段: city 居住地，格式：['19', '19-2'] 仅自己可见，仅自己可更新（需要token）
+    register_rest_field('user', 'city', array(
+        'get_callback' => function ($object, $field, $request) {
+            $current_user = wp_get_current_user();
+
+            // Get field as single value from post meta, return false if current user not found
+            return get_user_meta($current_user->ID, $field, true);
+        },
+        'update_callback' => function ($value, $object, $field) {
+            $current_user = wp_get_current_user();
+
+            // Update the field/meta value.
+            update_user_meta($current_user->ID, $field, $value);
+        },
+        'schema' => array(
+            'type' => 'string',
+            'arg_options' => array(
+                'sanitize_callback' => function ($value) {
+                    // Make the value safe for storage.
+                    return sanitize_text_field($value);
+                },
+                'validate_callback' => function ($value) {
+                    return is_string($value);
+                },
+            ),
+        ),
+    ));
+    // 新增字段: alipay, 支付宝账号，仅自己可见，仅自己可更新（需要token）
     register_rest_field('user', 'alipay', array(
         'get_callback' => function ($object, $field, $request) {
             $current_user = wp_get_current_user();
@@ -914,8 +995,35 @@ add_action('rest_api_init', function () {
             'arg_options' => theme('args')->phoneOrEmail(true),
         ),
     ));
-    // 新增收款字段: wechat, 微信账号，仅自己可见，仅自己可更新
+    // 新增字段: wechat, 微信号，仅自己可见，仅自己可更新（需要token）
     register_rest_field('user', 'wechat', array(
+        'get_callback' => function ($object, $field, $request) {
+            $current_user = wp_get_current_user();
+
+            // Get field as single value from post meta, return false if current user not found
+            return get_user_meta($current_user->ID, $field, true);
+        },
+        'update_callback' => function ($value, $object, $field) {
+            $current_user = wp_get_current_user();
+
+            // Update the field/meta value.
+            update_user_meta($current_user->ID, $field, $value);
+        },
+        'schema' => array(
+            'type' => 'string',
+            'arg_options' => array(
+                'sanitize_callback' => function ($value) {
+                    // Make the value safe for storage.
+                    return sanitize_text_field($value);
+                },
+                'validate_callback' => function ($value) {
+                    return is_string($value);
+                },
+            ),
+        ),
+    ));
+    // 新增字段: QQ号，仅自己可见，仅自己可更新（需要token）
+    register_rest_field('user', 'qq', array(
         'get_callback' => function ($object, $field, $request) {
             $current_user = wp_get_current_user();
 

@@ -61,6 +61,11 @@ function add_theme_supports()
         'gallery',
         'caption',
     ]);
+
+    /**
+     * 这段代码会启用WordPress的九种内置文章格式。
+     */
+    add_theme_support('post-formats', array('aside', 'chat', 'gallery', 'image', 'link', 'quote', 'status', 'video', 'audio'));
 }
 add_action('after_setup_theme', 'Tonik\Theme\App\Setup\add_theme_supports');
 
