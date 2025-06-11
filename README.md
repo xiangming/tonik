@@ -41,7 +41,7 @@ fans 项目 WEB 服务器：
 - [https://github.com/qingwuit/qwshop](https://github.com/qingwuit/qwshop)
 - [Refactor service provider](https://github.com/tonik/theme/issues/27)
 
-> 注意！开发功能时，尽量与业务解耦并形成独立的文件，已方便其他项目移植使用。
+> 注意！开发功能时，尽量与业务解耦并形成独立的文件，以方便其他项目移植使用。
 
 ## 如何使用
 
