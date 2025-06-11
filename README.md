@@ -1,6 +1,6 @@
-# Chu — WordPress Theme
+# Tonik — WordPress Theme
 
-基础设施后端主题，目前实现的基础设施能力：
+后端服务主题，目前实现的基础设施能力：
 
 - [x] 短信发送
 - [x] 邮件发送
@@ -45,7 +45,7 @@ fans 项目 WEB 服务器：
 
 ## 如何使用
 
-### 安装插件
+### 安装插件（已经内置）
 
 ssh 到服务器的 plugins 目录，安装依赖的插件：
 
@@ -100,7 +100,7 @@ git merge develop --squash
 git push dev master:master
 
 # 部署到生产环境
-git push release master:master
+git push prod master:master
 ```
 
 ## Tonik 功能
