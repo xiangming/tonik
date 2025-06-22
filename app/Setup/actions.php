@@ -44,10 +44,10 @@ add_action('rest_api_init', function () {
 
     /* then add your own filter */
     add_filter('rest_pre_serve_request', function ($value) {
-        $origin = get_http_origin();
+        $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
 
         if ($origin) {
-            $my_sites = array('http://localhost:3000', 'http://localhost:3300', 'https://chuchuang.work');
+            $my_sites = array('http://localhost:1400', 'https://dashang.me');
             if (in_array($origin, $my_sites)) {
                 $origin = esc_url_raw($origin);
                 header('Access-Control-Allow-Origin: ' . $origin);
@@ -61,8 +61,8 @@ add_action('rest_api_init', function () {
         }
 
         return $value;
-    }, 11, 1);
-}, 15);
+    }, 10, 1);
+}, 10);
 
 /**
  * 定制管理后台文章列表列内容
