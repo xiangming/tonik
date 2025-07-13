@@ -47,7 +47,7 @@ add_action('rest_api_init', function () {
         $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
 
         if ($origin) {
-            $my_sites = array('http://localhost:1400', 'https://dashang.me');
+            $my_sites = array('http://localhost:1300', 'http://localhost:1400', 'https://dashang.me', 'https://zayue.com');
             if (in_array($origin, $my_sites)) {
                 $origin = esc_url_raw($origin);
                 header('Access-Control-Allow-Origin: ' . $origin);
