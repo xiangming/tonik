@@ -95,11 +95,9 @@ function asset_path($file)
  */
 function resOK($data = null, $message = 'success', $code = 0)
 {
-    print_r(json_encode(['code' => $code, 'message' => $message, 'data' => $data]));
-    return;
+    return new WP_REST_Response(['code' => $code, 'message' => $message, 'data' => $data], 200);
 }
 function resError($message = 'error', $data = null, $code = 1)
 {
-    print_r(json_encode(['code' => $code, 'message' => $message, 'data' => $data]));
-    return;
+    return new WP_REST_Response(['code' => $code, 'message' => $message, 'data' => $data], 400);
 }

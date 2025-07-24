@@ -282,15 +282,13 @@ add_action('rest_api_init', function () {
 
             // 发送失败
             if (!$rs['status']) {
-                resError($rs['msg']);
-                exit();
+                return resError($rs['msg']);
             }
 
             // 保存验证码，用于下次验证
             theme('tool')->saveCacheCode($account, $rs['data']);
 
-            resOK(true, '发送成功');
-            exit();
+            return resOK(true, '发送成功');
         },
         'args' => array(
             'account' => theme('args')->account(true),
@@ -314,8 +312,7 @@ add_action('rest_api_init', function () {
             // 验证码通过，则检查用户是否存在
             $uid = theme('user')->exists($account);
             if ($uid) {
-                resError('用户已经存在，请勿重复注册');
-                exit();
+                return resError('用户已经存在，请勿重复注册');
             }
 
             // 创建账号
@@ -323,12 +320,10 @@ add_action('rest_api_init', function () {
 
             // 创建失败
             if (!$rs['status']) {
-                resError($rs['msg']);
-                exit();
+                return resError($rs['msg']);
             }
 
-            resOK(true, '注册成功');
-            exit();
+            return resOK(true, '注册成功');
         },
         'args' => array(
             'account' => theme('args')->account(true),
@@ -354,15 +349,13 @@ add_action('rest_api_init', function () {
             // 验证码通过，则检查用户是否存在
             $uid = theme('user')->exists($account);
             if (!$uid) {
-                resError('用户不存在');
-                exit();
+                return resError('用户不存在');
             }
 
             // 修改密码
             theme('user')->updatePassword($uid, $password);
 
-            resOK(true, '重置成功');
-            exit();
+            return resOK(true, '重置成功');
         },
         'args' => array(
             'account' => theme('args')->account(true),
@@ -384,8 +377,7 @@ add_action('rest_api_init', function () {
             $current_user_id = get_current_user_id();
             theme('user')->updatePassword($current_user_id, $password);
 
-            resOK(true, '修改成功');
-            exit();
+            return resOK(true, '修改成功');
         },
         'args' => array(
             'password' => theme('args')->password(true),
@@ -411,16 +403,14 @@ add_action('rest_api_init', function () {
             // 验证码通过，则检查新的手机号有没有绑定过其他账号
             $user_exist = theme('user')->exists($phone);
             if ($user_exist) {
-                resError('手机号已绑定其他账号');
-                exit();
+                return resError('手机号已绑定其他账号');
             }
 
             // 修改
             $current_user_id = get_current_user_id();
             theme('user')->updatePhone($current_user_id, $phone);
 
-            resOK(true, '绑定成功');
-            exit();
+            return resOK(true, '绑定成功');
         },
         'args' => array(
             'phone' => theme('args')->phone(true),
@@ -447,16 +437,14 @@ add_action('rest_api_init', function () {
             // 验证码通过，则检查新的邮箱有没有绑定过其他账号
             $user_exist = theme('user')->exists($email);
             if ($user_exist) {
-                resError('邮箱已绑定其他账号');
-                exit();
+                return resError('邮箱已绑定其他账号');
             }
 
             // 修改
             $current_user_id = get_current_user_id();
             theme('user')->updateEmail($current_user_id, $email);
 
-            resOK(true, '绑定成功');
-            exit();
+            return resOK(true, '绑定成功');
         },
         'args' => array(
             'email' => theme('args')->email(true),
@@ -477,12 +465,10 @@ add_action('rest_api_init', function () {
 
             $user_id = theme('user')->exists($account);
             if ($user_id) {
-                resOK(true, '用户已经存在');
-                exit();
+                return resOK(true, '用户已经存在');
             }
 
-            resOK(false, '可以注册');
-            exit();
+            return resOK(false, '可以注册');
         },
         'args' => array(
             'account' => theme('args')->account(true),
@@ -505,16 +491,13 @@ add_action('rest_api_init', function () {
                     wp_delete_user($user_id);
 
                     theme('log')->debug('用户删除成功', $user_id, $account);
-                    resOK(true, '用户删除成功');
-                    exit();
+                    return resOK(true, '用户删除成功');
                 }
 
-                resOK(false, '抱歉，您不能删除该用户');
-                exit();
+                return resOK(false, '抱歉，您不能删除该用户');
             }
 
-            resOK(false, '用户不存在');
-            exit();
+            return resOK(false, '用户不存在');
         },
         'args' => array(
             'account' => theme('args')->account(true),
@@ -545,8 +528,7 @@ add_action('rest_api_init', function () {
                 $from_user_id = theme('user')->exists($from);
                 // 填写的打赏记录绑定账号不存在，则提示用户注册
                 if (!$from_user_id) {
-                    resError('打赏记录绑定账号不存在，请先注册');
-                    exit();
+                    return resError('打赏记录绑定账号不存在，请先注册');
                 }
             }
 
@@ -554,8 +536,7 @@ add_action('rest_api_init', function () {
             $to_user_id = theme('user')->exists($to);
             // 不存在，退出
             if (!$to_user_id) {
-                resError('被打赏人不存在');
-                exit();
+                return resError('被打赏人不存在');
             }
 
             // 1. 创建order
@@ -565,16 +546,14 @@ add_action('rest_api_init', function () {
 
             // 创建订单失败
             if (!$order['status']) {
-                resError($order['msg']);
-                exit();
+                return resError($order['msg']);
             }
 
             // 2. 调取第三方支付
             $rs = theme('payment')->pay($method, $device, $order['data']);
 
             // 3. 输出结果
-            $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
-            exit();
+            return $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
         },
         'args' => array(
             'from' => theme('args')->account(false), // 可选
@@ -599,8 +578,7 @@ add_action('rest_api_init', function () {
             $rs = theme('payment')->find($method, $out_trade_no);
 
             // 输出结果
-            $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
-            exit();
+            return $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
         },
         'args' => array(
             'method' => theme('args')->method(true),
@@ -643,8 +621,7 @@ add_action('rest_api_init', function () {
             $rs = theme('payment')->query($method, $out_trade_no);
 
             if (!$rs['data']) {
-                resOK(false, '订单未支付');
-                exit();
+                return resOK(false, '订单未支付');
             }
 
             // 支付成功，执行paySuccess操作（无论成功与否都往下继续执行）
@@ -662,8 +639,7 @@ add_action('rest_api_init', function () {
                 theme('log')->error($e->getMessage(), '/payment/check');
             }
 
-            resOK(true, '订单支付成功');
-            exit();
+            return resOK(true, '订单支付成功');
         },
         'args' => array(
             'method' => theme('args')->method(true),
@@ -679,8 +655,7 @@ add_action('rest_api_init', function () {
             $rs = theme('payment')->notify('alipay');
 
             // 输出结果
-            $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
-            exit();
+            return $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
         },
         'permission_callback' => '__return_true',
     ));
@@ -694,8 +669,7 @@ add_action('rest_api_init', function () {
             $data = theme('stat')->refresh($current_user_id);
 
             // 输出结果
-            resOK($data, '刷新成功');
-            exit();
+            return resOK($data, '刷新成功');
         },
         'permission_callback' => function ($request) {
             return is_user_logged_in();
@@ -744,8 +718,7 @@ add_action('rest_api_init', function () {
             // $queue->schedule_single(strtotime("+2 minutes"), 'test_queue', [$account]);
 
             // 输出结果
-            $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
-            exit();
+            return $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
         },
         'args' => array(
             'account' => theme('args')->account(true),
