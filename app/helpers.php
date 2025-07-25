@@ -95,9 +95,9 @@ function asset_path($file)
  */
 function resOK($data = null, $message = 'success', $code = 0)
 {
-    return new WP_REST_Response(['code' => $code, 'message' => $message, 'data' => $data], 200);
+    return new \WP_REST_Response(['code' => $code, 'message' => $message, 'data' => $data], 200);
 }
 function resError($message = 'error', $data = null, $code = 1)
 {
-    return new WP_REST_Response(['code' => $code, 'message' => $message, 'data' => $data], 400);
+    return new \WP_REST_Response(['code' => $code, 'message' => $message, 'data' => $data], 400);
 }
