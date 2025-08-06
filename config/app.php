@@ -92,6 +92,7 @@ return [
         'Services/ToolService.php',
         'Services/UserService.php',
         'Services/StatService.php',
+        'Setup/user-meta.php',
         'Setup/actions.php',
         'Setup/filters.php',
         'Setup/supports.php',
