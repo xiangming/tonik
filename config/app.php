@@ -1,6 +1,6 @@
 <?php
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
-$dotenv->load();
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../', ['.env.local', '.env.prod', '.env']);
+$dotenv->safeLoad();
 
 return [
     /*
