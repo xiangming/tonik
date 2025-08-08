@@ -93,6 +93,7 @@ return [
         'Services/UserService.php',
         'Services/StatService.php',
         'Setup/user-meta.php',
+        'Setup/post-meta.php',
         'Setup/actions.php',
         'Setup/filters.php',
         'Setup/supports.php',

@@ -755,39 +755,6 @@ add_action('test_queue', function ($account) {
  * https://developer.wordpress.org/reference/functions/sanitize_textarea_field/
  */
 add_action('rest_api_init', function () {
-    // 新增内容字段: permission, 谁可以看
-    register_rest_field('post', 'permission', array(
-        'get_callback' => function ($object, $field, $request) {
-            // Get field as single value from post meta.
-            return (int) get_post_meta($object['id'], $field, true);
-        },
-        'update_callback' => function ($value, $object, $field) {
-            // Update the field/meta value.
-            update_post_meta($object->ID, $field, $value);
-        },
-        'schema' => array(
-            'type' => 'number',
-            'arg_options' => array(
-                'sanitize_callback' => function ($value) {
-                    return absint($value);
-                },
-                'validate_callback' => function ($value) {
-                    return is_numeric($value);
-                },
-            ),
-        ),
-    ));
-    // 新增内容字段: lock, 当前用户是否可以看（需要登录态，仅读取，不更新）
-    register_rest_field('post', 'lock', array(
-        'get_callback' => function ($object, $field, $request) {
-            // 当前登录用户是否能看
-            $current_user_id = wp_get_current_user()->ID;
-            $current_user_contribution = theme('stat')->getUserContribution($current_user_id, $object['author']);
-
-            return $current_user_contribution < $object['permission'];
-        },
-    ));
-
 
     // 新增打赏字段: to, 被打赏人id（不使用update_callback，有单独接口处理更新逻辑）
     register_rest_field('donation', 'to', array(
