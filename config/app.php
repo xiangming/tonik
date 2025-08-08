@@ -95,6 +95,7 @@ return [
         'Setup/user-meta.php',
         'Setup/post-meta.php',
         'Setup/donation-meta.php',
+        'Setup/orders-meta.php',
         'Setup/actions.php',
         'Setup/filters.php',
         'Setup/supports.php',
