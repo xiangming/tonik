@@ -755,38 +755,7 @@ add_action('test_queue', function ($account) {
  * https://developer.wordpress.org/reference/functions/sanitize_textarea_field/
  */
 add_action('rest_api_init', function () {
-
-    // 新增打赏字段: to, 被打赏人id（不使用update_callback，有单独接口处理更新逻辑）
-    register_rest_field('donation', 'to', array(
-        'get_callback' => function ($object, $field, $request) {
-            // Get field as single value from post meta.
-            return (int) get_post_meta($object['id'], $field, true);
-        },
-    ));
-    // 新增打赏字段: amount, 金额（不使用update_callback，有单独接口处理更新逻辑）
-    register_rest_field('donation', 'amount', array(
-        'get_callback' => function ($object, $field, $request) {
-            $rs = theme('donation')->getDonationById($object['id']);
-
-            if (!$rs['data']) {
-                return false;
-            }
-
-            return $rs['data']['amount'];
-        },
-    ));
-    // 新增打赏字段: remark, 留言（不使用update_callback，有单独接口处理更新逻辑）
-    register_rest_field('donation', 'remark', array(
-        'get_callback' => function ($object, $field, $request) {
-            $rs = theme('donation')->getDonationById($object['id']);
-
-            if (!$rs['data']) {
-                return false;
-            }
-
-            return $rs['data']['remark'];
-        },
-    ));
+    // Donation 字段现在由 Setup/donation-meta.php 统一管理
 
     // 新增订单字段: name, 服务名称（不使用update_callback，仅读取）
     register_rest_field('orders', 'name', array(

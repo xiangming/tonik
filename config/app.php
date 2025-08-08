@@ -94,6 +94,7 @@ return [
         'Services/StatService.php',
         'Setup/user-meta.php',
         'Setup/post-meta.php',
+        'Setup/donation-meta.php',
         'Setup/actions.php',
         'Setup/filters.php',
         'Setup/supports.php',
