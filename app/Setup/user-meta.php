@@ -20,12 +20,12 @@ function register_user_fields()
         ),
         'avatar' => array(
             'description' => '头像地址',
-            'editable' => false, // 只读，通过单独上传接口更新
+            'editable' => true,
             'sanitize_callback' => 'esc_url_raw',
         ),
         'background' => array(
             'description' => '封面图地址',
-            'editable' => false, // 只读，通过单独上传接口更新
+            'editable' => true,
             'sanitize_callback' => 'esc_url_raw',
         ),
         'gender' => array(
