@@ -7,25 +7,26 @@ namespace Tonik\Theme\App\Structure;
 | Theme Custom Post Types
 |-----------------------------------------------------------
 |
-| This file is for registering your theme post types.
-| Custom post types allow users to easily create
-| and manage various types of content.
+| 此文件用于注册通用的自定义文章类型
+| 
+| 项目特定的 Post Types（如 orders, donation）
+| 在 app/Projects/{ProjectName}/Structure/posttypes.php 中注册
 |
  */
 
 use function Tonik\Theme\App\config;
 
 /**
- * Registers `book` custom post type.
+ * 注册通用自定义文章类型
  * 
  * https://developer.wordpress.org/reference/functions/register_post_type/
- * 
  * https://developer.wordpress.org/resource/dashicons/
  *
  * @return void
  */
 function register_post_types()
 {
+    // Book - 示例自定义文章类型（通用）
     register_post_type('book', [
         'description' => __('Collection of books.', config('textdomain')),
         'public' => true,
@@ -45,55 +46,6 @@ function register_post_types()
             'parent_item_colon' => __('Parent Books:', config('textdomain')),
             'not_found' => __('No books found.', config('textdomain')),
             'not_found_in_trash' => __('No books found in Trash.', config('textdomain')),
-        ],
-    ]);
-
-    register_post_type('orders', [
-        'description' => __('Collection of orders.', config('textdomain')),
-        'public' => true,
-        'supports' => ['title', 'author', 'custom-fields'],
-        'show_in_rest' => true, // 将自动生成一组类似posts的接口
-        'menu_icon' => 'dashicons-text',
-        'labels' => [
-            'name' => _x('Orders', 'post type general name', config('textdomain')),
-            'singular_name' => _x('Order', 'post type singular name', config('textdomain')),
-            'menu_name' => _x('Orders', 'admin menu', config('textdomain')),
-            'name_admin_bar' => _x('Order', 'add new on admin bar', config('textdomain')),
-            'add_new' => _x('Add New', 'donation', config('textdomain')),
-            'add_new_item' => __('Add New Order', config('textdomain')),
-            'new_item' => __('New Order', config('textdomain')),
-            'edit_item' => __('Edit Order', config('textdomain')),
-            'view_item' => __('View Order', config('textdomain')),
-            'all_items' => __('All Orders', config('textdomain')),
-            'search_items' => __('Search Orders', config('textdomain')),
-            'parent_item_colon' => __('Parent Orders:', config('textdomain')),
-            'not_found' => __('No orders found.', config('textdomain')),
-            'not_found_in_trash' => __('No orders found in Trash.', config('textdomain')),
-        ],
-    ]);
-
-    register_post_type('donation', [
-        'description' => __('Collection of donations.', config('textdomain')),
-        'public' => true,
-        'supports' => ['title', 'author', 'custom-fields'],
-        'show_in_rest' => true, // 将自动生成一组类似posts的接口
-        'rest_base' => 'donations',
-        'menu_icon' => 'dashicons-coffee',
-        'labels' => [
-            'name' => _x('Donations', 'post type general name', config('textdomain')),
-            'singular_name' => _x('Donation', 'post type singular name', config('textdomain')),
-            'menu_name' => _x('Donations', 'admin menu', config('textdomain')),
-            'name_admin_bar' => _x('Donation', 'add new on admin bar', config('textdomain')),
-            'add_new' => _x('Add New', 'donation', config('textdomain')),
-            'add_new_item' => __('Add New Donation', config('textdomain')),
-            'new_item' => __('New Donation', config('textdomain')),
-            'edit_item' => __('Edit Donation', config('textdomain')),
-            'view_item' => __('View Donation', config('textdomain')),
-            'all_items' => __('All Donations', config('textdomain')),
-            'search_items' => __('Search Donations', config('textdomain')),
-            'parent_item_colon' => __('Parent Donations:', config('textdomain')),
-            'not_found' => __('No donations found.', config('textdomain')),
-            'not_found_in_trash' => __('No donations found in Trash.', config('textdomain')),
         ],
     ]);
 }

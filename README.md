@@ -9,9 +9,27 @@
 - [x] 微信和支付宝支付
 - [ ] 对象存储 token 下发
 
-依赖此主题的产品主题，使用分支开发，方便基础代码共享：
+## 🎯 架构设计
 
-- [x] 打赏项目：fans/master
+### 基础设施层（所有项目共享）
+- `app/Services/` - 通用服务（日志、邮件、短信、支付等）
+- `app/Http/` - HTTP 层
+- `app/Setup/` - 通用设置
+- `app/Structure/` - 通用结构
+
+### 项目层（项目特定代码）
+- `app/Projects/Fans/` - Fans 项目（打赏系统）
+- `app/Projects/Project2/` - 未来的项目2
+- 详见 [app/Projects/README.md](app/Projects/README.md)
+
+### 配置方式
+通过环境变量 `ACTIVE_PROJECT` 控制加载哪个项目：
+
+```bash
+# .env.local
+ACTIVE_PROJECT=Fans  # 加载 Fans 项目
+# ACTIVE_PROJECT=     # 不加载任何项目（纯净基础环境）
+```
 
 ## 分支管理
 
@@ -23,10 +41,12 @@
 - develop: 主分支，跟踪 [origin](git@github.com:xiangming/tonik.git)的 develop 分支。
 - feature/xxx: 独立功能需求开发分支，跟踪 [origin](git@github.com:xiangming/tonik.git)的 feature/xxx 分支。
 
-fans 项目 WEB 服务器：
+项目 GIT 服务器：
 
-- 测试环境：[dev](ssh://git@165.154.22.106:7000/home/data/git/dev.git)
-- 生产环境：[release](ssh://git@165.154.22.106:7000/home/data/git/release.git)
+- 测试环境：[dev](ssh://git@114.215.191.162:1162/home/data/git/dev.git)
+- work生产环境：[prod](ssh://git@114.215.191.162:1162/home/data/git/prod.git)
+- fans生产环境：[fans](ssh://git@114.215.191.162:1162/home/data/git/fans.git)
+- zayue生产环境：[zayue](ssh://git@114.215.191.162:1162/home/data/git/zayue.git)
 
 每次部署，使用 Tag 打版本号。
 
@@ -100,7 +120,7 @@ git merge develop --squash
 git push dev master:master
 
 # 部署到生产环境
-git push prod master:master
+git push fans master:master
 ```
 
 ## Tonik 功能

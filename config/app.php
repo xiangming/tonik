@@ -72,34 +72,40 @@ return [
     | own files to this array which you would like to autoload.
     |
     | 注意加载有先后顺序
+    | 
+    | 项目特定代码（如 Fans 项目）通过 Projects 目录管理，不在此加载
      */
     'autoload' => [
+        // Traits
         'Traits/ResourceTrait.php',
+        'Traits/TimeTrait.php',
+        
+        // Helpers
         'helpers.php',
+        
+        // HTTP Layer
         'Http/assets.php',
         'Http/ajaxes.php',
+        
+        // Core Services (通用基础设施)
         'Services/BaseService.php',
         'Services/ArgsService.php',
         'Services/LogService.php',
         'Services/CaptchaMessage.php',
-        'Services/DonationService.php',
         'Services/MailService.php',
-        'Services/OrderService.php',
         'Services/PaymentService.php',
         'Services/WechatPayService.php',
         'Services/QueueService.php',
         'Services/SmsService.php',
         'Services/ToolService.php',
-        'Services/UserService.php',
-        'Services/StatService.php',
-        'Setup/user-meta.php',
-        'Setup/post-meta.php',
-        'Setup/donation-meta.php',
-        'Setup/orders-meta.php',
+        
+        // Setup (通用设置)
         'Setup/actions.php',
         'Setup/filters.php',
         'Setup/supports.php',
         'Setup/services.php',
+        
+        // Structure (通用结构)
         'Structure/navs.php',
         'Structure/widgets.php',
         'Structure/sidebars.php',
@@ -108,6 +114,8 @@ return [
         'Structure/taxonomies.php',
         'Structure/shortcodes.php',
         'Structure/thumbnails.php',
+        
+        // Validators
         'Validators/Validator.php',
     ],
 ];

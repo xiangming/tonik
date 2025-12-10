@@ -7,43 +7,34 @@ namespace Tonik\Theme\App\Setup;
 | Theme Custom Services
 |-----------------------------------------------------------
 |
-| This file is for registering your third-parity services
-| or custom logic within theme container, so they can
-| be easily used for a theme template files later.
+| 此文件用于注册通用的基础服务
+| 
+| 项目特定的服务（如 Fans 项目）在 app/Projects/{ProjectName}/bootstrap.php 中注册
 |
  */
 
 use App\Services\ArgsService;
-use App\Services\DonationService;
 use App\Services\LogService;
 use App\Services\MailService;
-use App\Services\OrderService;
 use App\Services\PaymentService;
 use App\Services\QueueService;
 use App\Services\SmsService;
-use App\Services\StatService;
 use App\Services\ToolService;
-use App\Services\UserService;
 use function Tonik\Theme\App\theme;
 use Tonik\Gin\Foundation\Theme;
 use WP_Query;
 
 /**
- * Binds services
+ * 注册通用基础服务
  *
- * 通过theme方法快速获取：theme('books');
+ * 通过 theme() 方法快速获取：theme('log'), theme('mail') 等
  *
  * @return void
  */
 function bind_services()
 {
     /**
-     * Binds service for retrieving posts of specific post type.
-     *
-     * @param \Tonik\Gin\Foundation\Theme $theme  Instance of the service container
-     * @param array $parameters  Parameters passed on service resolving
-     *
-     * @return \WP_Post[]
+     * 示例：绑定特定文章类型查询服务
      */
     theme()->bind('books', function (Theme $theme, $parameters) {
         return new WP_Query([
@@ -51,48 +42,39 @@ function bind_services()
         ]);
     });
 
+    // 工具服务
     theme()->bind('tool', function (Theme $theme, $parameters) {
         return new ToolService();
     });
 
+    // 队列服务
     theme()->bind('queue', function (Theme $theme, $parameters) {
         return new QueueService();
     });
 
+    // 短信服务
     theme()->bind('sms', function (Theme $theme, $parameters) {
         return new SmsService();
     });
 
+    // 邮件服务
     theme()->bind('mail', function (Theme $theme, $parameters) {
         return new MailService();
     });
 
+    // 日志服务
     theme()->bind('log', function (Theme $theme, $parameters) {
         return new LogService();
     });
 
+    // 参数服务
     theme()->bind('args', function (Theme $theme, $parameters) {
         return new ArgsService();
     });
 
-    theme()->bind('order', function (Theme $theme, $parameters) {
-        return new OrderService();
-    });
-
+    // 支付服务（通用支付基础）
     theme()->bind('payment', function (Theme $theme, $parameters) {
         return new PaymentService();
-    });
-
-    theme()->bind('donation', function (Theme $theme, $parameters) {
-        return new DonationService();
-    });
-
-    theme()->bind('user', function (Theme $theme, $parameters) {
-        return new UserService();
-    });
-
-    theme()->bind('stat', function (Theme $theme, $parameters) {
-        return new StatService();
     });
 }
 add_action('init', 'Tonik\Theme\App\Setup\bind_services');
