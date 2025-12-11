@@ -13,10 +13,8 @@ namespace Tonik\Theme\App\Setup;
 |
  */
 
-use App\Services\ArgsService;
 use App\Services\LogService;
 use App\Services\MailService;
-use App\Services\PaymentService;
 use App\Services\QueueService;
 use App\Services\SmsService;
 use App\Services\ToolService;
@@ -65,16 +63,6 @@ function bind_services()
     // 日志服务
     theme()->bind('log', function (Theme $theme, $parameters) {
         return new LogService();
-    });
-
-    // 参数服务
-    theme()->bind('args', function (Theme $theme, $parameters) {
-        return new ArgsService();
-    });
-
-    // 支付服务（通用支付基础）
-    theme()->bind('payment', function (Theme $theme, $parameters) {
-        return new PaymentService();
     });
 }
 add_action('init', 'Tonik\Theme\App\Setup\bind_services');

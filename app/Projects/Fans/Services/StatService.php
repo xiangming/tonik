@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Services;
+namespace App\Projects\Fans\Services;
+
+use \App\Services\BaseService;
 
 class StatService extends BaseService
 {

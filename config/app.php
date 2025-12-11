@@ -89,11 +89,9 @@ return [
         
         // Core Services (通用基础设施)
         'Services/BaseService.php',
-        'Services/ArgsService.php',
         'Services/LogService.php',
         'Services/CaptchaMessage.php',
         'Services/MailService.php',
-        'Services/PaymentService.php',
         'Services/WechatPayService.php',
         'Services/QueueService.php',
         'Services/SmsService.php',

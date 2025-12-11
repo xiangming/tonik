@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Services;
+namespace App\Projects\Fans\Services;
 
+use \App\Services\BaseService;
 use function Tonik\Theme\App\theme;
 
 class DonationService extends BaseService

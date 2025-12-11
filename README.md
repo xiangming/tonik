@@ -89,13 +89,16 @@ define('JWT_AUTH_CORS_ENABLE', true);
 ### 安装 PHP 依赖
 
 ```bash
-sudo -u www composer update
+composer install
+
+# 插件的依赖
+cd "/Users/arvin/Local Sites/wp-dev/app/public/wp-content/themes/tonik/plugin-deps/wp-api-jwt-auth" && composer install
 ```
 
 ### 安装前端依赖
 
 ```bash
-yarn
+pnpm install
 ```
 
 ### 生成主题文件

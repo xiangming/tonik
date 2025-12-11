@@ -14,10 +14,10 @@ return [
      * 
      * 通常一个环境只运行一个项目
      * 
-     * 可选值：'Fans', 'Project2', null
-     * null 表示不加载任何项目特定代码（纯净基础环境）
+     * 可选值：'Fans', 'Project2', false
+     * false 表示不加载任何项目特定代码（纯净基础环境）
      */
-    'active' => env('ACTIVE_PROJECT', null),
+    'active' => $_ENV['ACTIVE_PROJECT'] ?? false,
     
     /**
      * 项目代码根路径
