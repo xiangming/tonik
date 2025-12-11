@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Projects\Fans\Services;
+namespace App\Services;
 
 use \App\Services\BaseService;
 use function Tonik\Theme\App\theme;
@@ -266,22 +266,11 @@ class PaymentService extends BaseService
 
         // TODO:增加销量 - 其他支付回调的时候也要处理一遍
 
-        try {
-            // 1. 生成打赏记录
-            $rs = theme('donation')->createDonation($orderPay['from_user_id'], $orderPay['to_user_id'], $orderPay['id']);
-
-            // 生成失败，提前退出
-            if (!$rs['status']) {
-                return $this->formatError($rs['msg']);
-            }
-
-            // 2. 打赏记录创建后，加入打款队列
-            theme('queue')->add_async('transfer', [$rs['data']]);
-        } catch (\Exception $e) {
-            theme('log')->error($e->getMessage(), 'PaymentService paySuccess');
-
-            return $this->formatError('生成打赏记录并加入打款队列出错');
-        }
+        // 触发项目特定的支付成功处理 hook
+        // 允许各个项目注册自己的支付成功处理逻辑
+        // Hook: payment_success_{order_type}
+        // 例如：donation 类型订单会触发 payment_success_donation
+        do_action('payment_success_' . $orderPay['type'], $orderPay, $paymentName);
 
         theme('log')->log('PaymentService paySuccess success');
 

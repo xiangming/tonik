@@ -13,11 +13,15 @@ namespace Tonik\Theme\App\Setup;
 |
  */
 
+use App\Services\ArgsService;
 use App\Services\LogService;
 use App\Services\MailService;
+use App\Services\OrderService;
+use App\Services\PaymentService;
 use App\Services\QueueService;
 use App\Services\SmsService;
 use App\Services\ToolService;
+use App\Services\UserService;
 use function Tonik\Theme\App\theme;
 use Tonik\Gin\Foundation\Theme;
 use WP_Query;
@@ -26,6 +30,8 @@ use WP_Query;
  * 注册通用基础服务
  *
  * 通过 theme() 方法快速获取：theme('log'), theme('mail') 等
+ *
+ * 注意：使用 after_setup_theme hook（优先级5）确保在 rest_api_init 之前注册
  *
  * @return void
  */
@@ -43,6 +49,26 @@ function bind_services()
     // 工具服务
     theme()->bind('tool', function (Theme $theme, $parameters) {
         return new ToolService();
+    });
+
+    // 参数验证服务
+    theme()->bind('args', function (Theme $theme, $parameters) {
+        return new ArgsService();
+    });
+
+    // 支付服务
+    theme()->bind('payment', function (Theme $theme, $parameters) {
+        return new PaymentService();
+    });
+
+    // 订单服务
+    theme()->bind('order', function (Theme $theme, $parameters) {
+        return new OrderService();
+    });
+
+    // 用户服务（基础版本，项目可以覆盖）
+    theme()->bind('user', function (Theme $theme, $parameters) {
+        return new UserService();
     });
 
     // 队列服务
@@ -65,7 +91,7 @@ function bind_services()
         return new LogService();
     });
 }
-add_action('init', 'Tonik\Theme\App\Setup\bind_services');
+add_action('after_setup_theme', 'Tonik\Theme\App\Setup\bind_services', 5);
 
 /**
  * 发送短信接口

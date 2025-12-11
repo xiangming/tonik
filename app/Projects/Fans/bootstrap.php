@@ -14,12 +14,13 @@
 
 namespace Tonik\Theme\App\Projects\Fans;
 
-use App\Projects\Fans\Services\ArgsService;
+use App\Services\ArgsService;
+use App\Services\OrderService;
+use App\Services\PaymentService;
 use App\Projects\Fans\Services\DonationService;
-use App\Projects\Fans\Services\OrderService;
-use App\Projects\Fans\Services\PaymentService;
 use App\Projects\Fans\Services\StatService;
-use App\Projects\Fans\Services\UserService;
+use App\Projects\Fans\Services\FansUserService;
+use App\Projects\Fans\Handlers\FansPaymentHandler;
 use function Tonik\Theme\App\theme;
 use Tonik\Gin\Foundation\Theme;
 
@@ -34,6 +35,7 @@ $dependencies = [
     '/app/Traits/ResourceTrait.php',
     '/app/Traits/TimeTrait.php',
     '/app/Services/BaseService.php',
+    '/app/Services/UserService.php',
     '/app/Validators/Validator.php',
 ];
 
@@ -48,12 +50,10 @@ foreach ($dependencies as $dep) {
 // 1. 自动加载服务类
 // ============================================
 $service_files = [
-    'Services/ArgsService.php',
     'Services/DonationService.php',
-    'Services/OrderService.php',
-    'Services/PaymentService.php',
     'Services/StatService.php',
-    'Services/UserService.php',
+    'Services/FansUserService.php',
+    'Handlers/FansPaymentHandler.php',
 ];
 
 foreach ($service_files as $file) {
@@ -66,25 +66,11 @@ foreach ($service_files as $file) {
 // ============================================
 // 2. 注册服务到容器
 // ============================================
-add_action('init', function () {
-    // 参数服务
-    theme()->bind('args', function (Theme $theme, $parameters) {
-        return new ArgsService();
-    });
-    
+// 使用 after_setup_theme hook（优先级10）确保在基础服务注册后，但在 init 之前
+add_action('after_setup_theme', function () {
     // 打赏服务
     theme()->bind('donation', function (Theme $theme, $parameters) {
         return new DonationService();
-    });
-    
-    // 订单服务
-    theme()->bind('order', function (Theme $theme, $parameters) {
-        return new OrderService();
-    });
-    
-    // 支付服务
-    theme()->bind('payment', function (Theme $theme, $parameters) {
-        return new PaymentService();
     });
     
     // 统计服务
@@ -92,14 +78,19 @@ add_action('init', function () {
         return new StatService();
     });
     
-    // 用户服务（Fans 项目扩展版本）
+    // 用户服务（Fans 项目扩展版本，覆盖基础 user 服务）
     theme()->bind('user', function (Theme $theme, $parameters) {
-        return new UserService();
+        return new FansUserService();
     });
-}, 5);
+}, 10);
 
 // ============================================
-// 3. 加载自定义文章类型（在 bootstrap 阶段就加载，以便 init hook 生效）
+// 3. 注册支付成功 hook 处理器
+// ============================================
+add_action('payment_success_donation', [FansPaymentHandler::class, 'handleDonationPaymentSuccess'], 10, 2);
+
+// ============================================
+// 4. 加载自定义文章类型（在 bootstrap 阶段就加载，以便 init hook 生效）
 // ============================================
 $posttypes_file = $project_dir . '/Structure/posttypes.php';
 if (file_exists($posttypes_file)) {
@@ -107,7 +98,7 @@ if (file_exists($posttypes_file)) {
 }
 
 // ============================================
-// 4. 加载项目特定的 Actions 和 Filters
+// 5. 加载项目特定的 Actions 和 Filters
 // ============================================
 if (file_exists($project_dir . '/Setup/actions.php')) {
     require_once $project_dir . '/Setup/actions.php';
@@ -118,7 +109,7 @@ if (file_exists($project_dir . '/Setup/filters.php')) {
 }
 
 // ============================================
-// 5. 加载 REST API 字段注册
+// 6. 加载 REST API 字段注册
 // ============================================
 add_action('rest_api_init', function () use ($project_dir) {
     $rest_field_files = [
@@ -137,7 +128,7 @@ add_action('rest_api_init', function () use ($project_dir) {
 });
 
 // ============================================
-// 6. 项目初始化完成日志
+// 7. 项目初始化完成日志
 // ============================================
 add_action('init', function () {
     if (function_exists('theme') && theme('log')) {

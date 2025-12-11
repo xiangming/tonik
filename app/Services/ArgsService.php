@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Projects\Fans\Services;
+namespace App\Services;
 
 use \App\Services\BaseService;
-use \App\Validators\Validator;
+use App\Validators\Validator;
 use function Tonik\Theme\App\theme;
 
 class ArgsService extends BaseService

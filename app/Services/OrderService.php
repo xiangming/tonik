@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Projects\Fans\Services;
+namespace App\Services;
 
 use \App\Services\BaseService;
 use function Tonik\Theme\App\theme;

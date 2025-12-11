@@ -28,11 +28,11 @@ function register_donation_fields()
         'get_callback' => function ($object) {
             $donation_data = theme('donation')->getDonationById($object['id']);
             
-            if (!$donation_data['data']) {
+            if (!$donation_data['status'] || empty($donation_data['data'])) {
                 return 0;
             }
             
-            return (float) $donation_data['data']['amount'];
+            return (float) ($donation_data['data']['amount'] ?? 0);
         },
         'schema' => array(
             'type' => 'number',
@@ -46,11 +46,11 @@ function register_donation_fields()
         'get_callback' => function ($object) {
             $donation_data = theme('donation')->getDonationById($object['id']);
             
-            if (!$donation_data['data']) {
+            if (!$donation_data['status'] || empty($donation_data['data'])) {
                 return '';
             }
             
-            return sanitize_text_field($donation_data['data']['remark']);
+            return sanitize_text_field($donation_data['data']['remark'] ?? '');
         },
         'schema' => array(
             'type' => 'string',

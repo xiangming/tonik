@@ -146,11 +146,12 @@ function _modify_rest_prepare($response, $post, $request)
     $_data['author_slug'] = $author->user_nicename;
 
     // 当该post有权限要求且当前用户没有权限时，则根据当前用户贡献度来过滤正文和摘要
-    if ($_data['permission'] > 0 && !current_user_can('edit_post', $_data['id'])) {
+    $permission = $_data['permission'] ?? 0; // null 合并运算符：如果不存在或为 null，默认为 0
+    if ($permission > 0 && !current_user_can('edit_post', $_data['id'])) {
         $current_user_id = wp_get_current_user()->ID;
         $current_user_contribution = theme('stat')->getUserContribution($current_user_id, $author_uid);
 
-        if ($current_user_contribution < $_data['permission']) {
+        if ($current_user_contribution < $permission) {
             $_data['content'] = false;
             // $_data['excerpt'] = false;
         }
@@ -167,12 +168,18 @@ add_filter('rest_prepare_comment', function ($response, $post, $request) {
     $_data = $response->data;
 
     // 获取用户数据
-    $user = get_userdata($_data['author']);
-    // $_data['author_name'] = $user->display_name;
-    $_data['author_slug'] = $user->user_nicename;
+    $author_id = $_data['author'] ?? 0;
+    if ($author_id) {
+        $user = get_userdata($author_id);
+        if ($user) {
+            // $_data['author_name'] = $user->display_name;
+            $_data['author_slug'] = $user->user_nicename;
+        }
+    }
 
     // 获取parent用户数据
-    $parent = get_comment($_data['parent']);
+    $parent_id = $_data['parent'] ?? 0;
+    $parent = $parent_id ? get_comment($parent_id) : null;
     if ($parent) {
         $_data['parent_name'] = $parent->comment_author;
     }
