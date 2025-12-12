@@ -21,6 +21,17 @@ use App\Projects\Fans\Services\DonationService;
 use App\Projects\Fans\Services\StatService;
 use App\Projects\Fans\Services\FansUserService;
 use App\Projects\Fans\Handlers\FansPaymentHandler;
+use App\Projects\Fans\Api\UserApi;
+use App\Projects\Fans\Api\DonationApi;
+use App\Projects\Fans\Api\StatApi;
+use App\Projects\Fans\Filters\PostFilter;
+use App\Projects\Fans\Filters\CommentFilter;
+use App\Projects\Fans\Filters\DonationFilter;
+use App\Projects\Fans\Filters\OrdersFilter;
+use App\Projects\Fans\Meta\DonationMeta;
+use App\Projects\Fans\Meta\OrdersMeta;
+use App\Projects\Fans\Meta\PostMeta;
+use App\Projects\Fans\Meta\UserMeta;
 use function Tonik\Theme\App\theme;
 use Tonik\Gin\Foundation\Theme;
 
@@ -47,13 +58,24 @@ foreach ($dependencies as $dep) {
 }
 
 // ============================================
-// 1. 自动加载服务类
+// 1. 自动加载服务类和 API 类
 // ============================================
 $service_files = [
     'Services/DonationService.php',
     'Services/StatService.php',
     'Services/FansUserService.php',
     'Handlers/FansPaymentHandler.php',
+    'Api/UserApi.php',
+    'Api/DonationApi.php',
+    'Api/StatApi.php',
+    'Filters/PostFilter.php',
+    'Filters/CommentFilter.php',
+    'Filters/DonationFilter.php',
+    'Filters/OrdersFilter.php',
+    'Meta/DonationMeta.php',
+    'Meta/OrdersMeta.php',
+    'Meta/PostMeta.php',
+    'Meta/UserMeta.php',
 ];
 
 foreach ($service_files as $file) {
@@ -98,33 +120,32 @@ if (file_exists($posttypes_file)) {
 }
 
 // ============================================
-// 5. 加载项目特定的 Actions 和 Filters
+// 5. 加载项目特定的 Actions 和注册 Filters
 // ============================================
 if (file_exists($project_dir . '/Setup/actions.php')) {
     require_once $project_dir . '/Setup/actions.php';
 }
 
-if (file_exists($project_dir . '/Setup/filters.php')) {
-    require_once $project_dir . '/Setup/filters.php';
-}
+// 注册项目特定的过滤器（CoreFilter 已在基础层注册）
+PostFilter::register();
+CommentFilter::register();
+DonationFilter::register();
+OrdersFilter::register();
 
 // ============================================
-// 6. 加载 REST API 字段注册
+// 6. 注册 REST API 字段和端点
 // ============================================
-add_action('rest_api_init', function () use ($project_dir) {
-    $rest_field_files = [
-        'Setup/donation-meta.php',
-        'Setup/orders-meta.php',
-        'Setup/user-meta.php',
-        'Setup/post-meta.php',
-    ];
+add_action('rest_api_init', function () {
+    // 注册 REST 字段
+    DonationMeta::register();
+    OrdersMeta::register();
+    PostMeta::register();
+    UserMeta::register();
     
-    foreach ($rest_field_files as $file) {
-        $path = $project_dir . '/' . $file;
-        if (file_exists($path)) {
-            require_once $path;
-        }
-    }
+    // 注册 REST API 端点（PaymentApi 已在基础层注册）
+    UserApi::register();
+    DonationApi::register();
+    StatApi::register();
 });
 
 // ============================================

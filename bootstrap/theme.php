@@ -34,6 +34,19 @@ $theme->bind('config', function () use ($config) {
 
 /*
  |-----------------------------------------------------------
+ | Load Core Filters
+ |-----------------------------------------------------------
+ |
+ | Load global filters (REST API config, JWT, etc.)
+ | These are shared across all projects.
+ |
+ */
+
+require_once get_template_directory() . '/app/Setup/filters.php';
+
+
+/*
+ |-----------------------------------------------------------
  | Load Project-Specific Code
  |-----------------------------------------------------------
  |
