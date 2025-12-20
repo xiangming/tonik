@@ -7,7 +7,21 @@
 - [x] 图形码
 - [x] 二维码
 - [x] 微信和支付宝支付
+- [x] 通用订单系统（5种订单类型）
+- [x] 多项目部署支持
 - [ ] 对象存储 token 下发
+
+**核心特性：**
+- ✅ 通用支付接口（支付宝/微信）
+- ✅ 订单管理系统（donation, membership, product, service, recharge）
+- ✅ 多项目架构（单代码库，多实例部署）
+- ✅ 完整的 REST API
+- ✅ JWT 认证
+
+**相关文档：**
+- [前端支付接入文档](docs/前端支付接入文档.md)
+- [前端新增功能清单](docs/前端改动清单.md)
+- [项目架构说明](app/Projects/README.md)
 
 ## 🎯 架构设计
 
@@ -30,6 +44,38 @@
 ACTIVE_PROJECT=Fans  # 加载 Fans 项目
 # ACTIVE_PROJECT=     # 不加载任何项目（纯净基础环境）
 ```
+
+### 多项目部署架构
+
+本主题支持**单代码库、多实例部署**的架构模式：
+
+```
+┌─────────────────────────────────────┐
+│  主题代码仓库 (GitHub/GitLab)       │
+│  ├── app/Services/   (通用层)       │
+│  ├── app/Projects/Fans/ (业务层)    │
+│  └── app/Projects/Work/ (业务层)    │
+└─────────────────────────────────────┘
+         │         │         │
+    git push   git push   git push
+         ↓         ↓         ↓
+   ┌─────────┐ ┌─────────┐ ┌─────────┐
+   │ WP实例1 │ │ WP实例2 │ │ WP实例3 │
+   │ Fans    │ │ Work    │ │ Dating  │
+   │ 独立DB  │ │ 独立DB  │ │ 独立DB  │
+   └─────────┘ └─────────┘ └─────────┘
+```
+
+**核心特点：**
+- ✅ **代码复用**：通用支付、订单系统所有项目共享
+- ✅ **数据隔离**：每个项目独立 WP 实例和数据库
+- ✅ **配置独立**：各项目独立配置支付账号
+- ✅ **灵活扩展**：新增项目只需创建 `app/Projects/NewProject/`
+
+**适用场景：**
+- 多个独立业务项目需要支付和订单能力
+- 各项目用户数据需要物理隔离
+- 需要统一维护支付相关代码
 
 ## 分支管理
 
@@ -113,6 +159,42 @@ yarn prod
 
 ## 如何部署
 
+### 新项目接入指南
+
+**步骤1：创建项目代码**
+```bash
+# 1. 创建项目目录
+mkdir -p app/Projects/Work/{Services,Setup,Api,Handlers}
+
+# 2. 创建 bootstrap.php（参考 Fans 项目）
+cp app/Projects/Fans/bootstrap.php app/Projects/Work/bootstrap.php
+# 修改命名空间和项目名称
+sed -i 's/Fans/Work/g' app/Projects/Work/bootstrap.php
+```
+
+**步骤2：部署 WP 实例**
+```bash
+# 1. 安装 WordPress
+# 2. 克隆/推送主题代码到 wp-content/themes/tonik
+git remote add work ssh://git@your-server/work.git
+git push work master:master
+
+# 3. 配置环境变量 (.env)
+ACTIVE_PROJECT=Work
+ALIPAY_APP_ID=work_alipay_xxx
+WECHAT_MCH_ID=work_wechat_xxx
+```
+
+**步骤3：测试验证**
+```bash
+# 访问 REST API
+curl https://api.work.chuchuang.work/api/wp/v2/payment/create
+```
+
+---
+
+### 现有项目部署
+
 以 fans 项目为例：
 
 ```bash
@@ -126,7 +208,15 @@ git push dev master:master
 git push fans master:master
 ```
 
-## Tonik 功能
+**环境配置：**
+- dev: 测试环境，`ACTIVE_PROJECT` 根据测试需求设置
+- fans: Fans 生产环境，`ACTIVE_PROJECT=Fans`
+- work: Work 生产环境，`ACTIVE_PROJECT=Work`
+- dating: Dating 生产环境，`ACTIVE_PROJECT=Dating`
+
+## 如何开发
+
+
 
 Tonik 主要是让 WordPress 开发更现代化。
 
