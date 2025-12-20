@@ -69,7 +69,6 @@ add_action('payment_success_membership', function ($orderPay, $paymentName) {
         // 更新会员信息
         update_user_meta($user_id, 'membership_expire', $new_expire);
         update_user_meta($user_id, 'membership_level', $level);
-        update_user_meta($user_id, 'is_member', true);
         
         theme('log')->log('Membership activated successfully', [
             'user_id' => $user_id,

@@ -83,5 +83,10 @@ add_filter('jwt_auth_token_before_dispatch', function ($data, $user) {
     // $avatar = get_avatar_url($user->ID);
     // $data['user_avatar'] = $avatar;
     $data['user_roles'] = $user->caps;
+    
+    // 添加会员信息
+    $data['membership_level'] = get_user_meta($user->ID, 'membership_level', true) ?: 'free';
+    $data['membership_expire'] = get_user_meta($user->ID, 'membership_expire', true);
+    
     return $data;
 }, 10, 3);
