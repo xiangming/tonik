@@ -59,13 +59,15 @@ class DonationApi
                 }
 
                 // 1. 创建order
-                $title = '打赏-' . $to; // 支付通道显示的标题
-                $custom_meta = [
+                $order = theme('order')->createOrder([
+                    'type' => 'donation',
+                    'amount' => $amount,
+                    'method' => $method,
+                    'title' => '打赏-' . $to,
+                    'remark' => $remark,
                     'from_user_id' => $from_user_id,
                     'to_user_id' => $to_user_id,
-                    'remark' => $remark,
-                ];
-                $order = theme('order')->createOrder('donation', $amount, $method, $title, $custom_meta);
+                ]);
 
                 if (!$order['status']) {
                     return resError($order['msg']);

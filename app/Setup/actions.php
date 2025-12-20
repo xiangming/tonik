@@ -109,28 +109,24 @@ add_action('rest_api_init', function () {
         'callback' => function ($request) {
             $parameters = $request->get_json_params();
 
-            $type = $parameters['type']; // 订单类型（必填）
-            $amount = $parameters['amount']; // 金额（必填）
-            $method = $parameters['method']; // 支付方式（必填）
-            $device = $parameters['device']; // 设备类型（必填）
-            $title = $parameters['title'] ?? null; // 订单标题（可选）
-            $custom_meta = $parameters['custom_meta'] ?? []; // 自定义meta字段（可选）
+            // 提取设备类型（只用于支付通道，不存订单）
+            $device = $parameters['device'] ?? null;
+            unset($parameters['device']);
 
-            // 1. 创建订单
-            $order = theme('order')->createOrder(
-                $type,
-                $amount,
-                $method,
-                $title,
-                $custom_meta
-            );
+            // 验证必填字段
+            if (empty($parameters['type']) || empty($parameters['amount']) || empty($parameters['method']) || empty($device)) {
+                return resError('缺少必填字段：type, amount, method, device');
+            }
+
+            // 1. 创建订单（直接传递所有参数）
+            $order = theme('order')->createOrder($parameters);
 
             if (!$order['status']) {
                 return resError($order['msg']);
             }
 
             // 2. 调取第三方支付
-            $rs = theme('payment')->pay($method, $device, $order['data']);
+            $rs = theme('payment')->pay($parameters['method'], $device, $order['data']);
 
             // 3. 返回支付结果
             return $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
@@ -139,7 +135,7 @@ add_action('rest_api_init', function () {
             'type' => array(
                 'required' => true,
                 'type' => 'string',
-                'description' => '订单类型（如：product, service, donation）',
+                'description' => '订单类型（如：product, service, donation, membership, recharge）',
                 'sanitize_callback' => 'sanitize_text_field',
             ),
             'amount' => theme('args')->amount(true),
@@ -151,12 +147,17 @@ add_action('rest_api_init', function () {
                 'description' => '订单标题（可选，默认自动生成）',
                 'sanitize_callback' => 'sanitize_text_field',
             ),
-            'custom_meta' => array(
+            'remark' => array(
                 'required' => false,
-                'type' => 'object',
-                'description' => '自定义字段（可选），根据订单类型传递：donation需要from_user_id/to_user_id, product需要product_id, service需要service_id',
-
+                'type' => 'string',
+                'description' => '订单备注/留言（可选），如买家留言、打赏留言等',
+                'sanitize_callback' => 'sanitize_textarea_field',
             ),
+            // 其他业务字段根据订单类型自由传递
+            // donation: from_user_id, to_user_id
+            // membership: plan_id, duration_months, level
+            // product: product_id, quantity, sku_id
+            // service: service_id, appointment_time, requirements
         ),
         'permission_callback' => '__return_true',
     ));

@@ -153,7 +153,7 @@ class PaymentService extends BaseService
         // 微信
         if ($paymentName == 'wechat') {
             $this->payData['out_trade_no'] = $orderPay['out_trade_no'];
-            $this->payData['description'] = $recharge ? $this->payData['name'] : $orderPay['name'];
+            $this->payData['description'] = $recharge ? $this->payData['name'] : $orderPay['title'];
             $this->payData['amount'] = [
                 'total' => $orderPay['amount'] * 100,
             ];
@@ -172,7 +172,7 @@ class PaymentService extends BaseService
         // 支付宝
         if ($paymentName == 'alipay') {
             $this->payData['out_trade_no'] = $orderPay['out_trade_no'];
-            $this->payData['subject'] = $recharge ? $this->payData['name'] : $orderPay['name'];
+            $this->payData['subject'] = $recharge ? $this->payData['name'] : $orderPay['title'];
             $this->payData['total_amount'] = $orderPay['amount'];
         }
 

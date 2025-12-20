@@ -18,21 +18,32 @@ class OrderService extends BaseService
     /**
      * 创建内部订单（非第三方订单）
      *
-     * @param   [string]  $type    订单类型：donation, membership, product, service, recharge
-     * @param   [string]  $amount  金额（分）
-     * @param   [string]  $method  支付方式（alipay/wechat）
-     * @param   [string]  $title   订单标题，可选（默认自动生成）
-     * @param   [array]   $custom_meta 自定义meta字段
-     *                                 - donation: from_user_id, to_user_id, remark
-     *                                 - membership: plan_id, duration_months, level
-     *                                 - product: product_id, quantity, sku_id
-     *                                 - service: service_id, appointment_time, requirements
+     * @param   array  $args  订单参数数组
+     *                        - type (string, required): 订单类型 (donation/membership/product/service/recharge)
+     *                        - amount (int, required): 金额（分）
+     *                        - method (string, required): 支付方式 (alipay/wechat)
+     *                        - title (string, optional): 订单标题，默认自动生成
+     *                        - remark (string, optional): 订单备注/留言
+     *                        - 其他业务字段: from_user_id, to_user_id, product_id, plan_id 等
      *
-     * @return  [object]    订单信息
+     * @return  array  订单信息
      */
-    public function createOrder($type, $amount, $method, $title = null, $custom_meta = [])
+    public function createOrder(array $args)
     {
-        theme('log')->log('OrderService->createOrder() start', $type, $amount, $method, $title, $custom_meta);
+        theme('log')->log('OrderService->createOrder() start', $args);
+        
+        // 提取核心字段
+        $type = $args['type'] ?? null;
+        $amount = $args['amount'] ?? null;
+        $method = $args['method'] ?? null;
+        $title = $args['title'] ?? null;
+        $remark = $args['remark'] ?? null;
+        
+        // 验证必填字段
+        if (!$type || !$amount || !$method) {
+            theme('log')->error('Missing required fields', 'OrderService->createOrder()');
+            return $this->formatError('缺少必填字段：type, amount, method');
+        }
         
         // 获取当前登录用户ID作为订单创建者
         $author_id = get_current_user_id();
@@ -74,16 +85,15 @@ class OrderService extends BaseService
             return $this->formatError($errmsg);
         }
 
-        // 保存核心字段
-        wp_set_object_terms($in_id, $type, 'order_type');  // 使用 taxonomy 管理类型
-        update_post_meta($in_id, 'amount', $amount);
-        update_post_meta($in_id, 'name', $title);
-        update_post_meta($in_id, 'method', $method);
+        // 保存订单类型（使用 taxonomy）
+        wp_set_object_terms($in_id, $type, 'order_type');
 
-        // 保存自定义meta字段（如 from_user_id, to_user_id, product_id, remark 等）
-        if (!empty($custom_meta) && is_array($custom_meta)) {
-            foreach ($custom_meta as $meta_key => $meta_value) {
-                update_post_meta($in_id, $meta_key, $meta_value);
+        // 保存所有字段到 post_meta（type 除外，已用 taxonomy 保存）
+        foreach ($args as $key => $value) {
+            if ($key === 'type') continue; // type 用 taxonomy 管理
+            
+            if (!empty($value)) {
+                update_post_meta($in_id, $key, $value);
             }
         }
 
@@ -94,7 +104,7 @@ class OrderService extends BaseService
             'out_trade_no' => $out_trade_no,
             'type' => $type,
             'amount' => $amount,
-            'name' => $title,
+            'title' => $title,
             'method' => $method,
         ];
 
@@ -256,7 +266,7 @@ class OrderService extends BaseService
             'status' => get_post_status($orderId),
             'from_user_id' => $order->post_author,
             'related_id' => $related_id,
-            'name' => get_post_meta($orderId, 'name', true),
+            'title' => get_post_meta($orderId, 'title', true),
             'amount' => get_post_meta($orderId, 'amount', true),
             'type' => $type,
             'remark' => get_post_meta($orderId, 'remark', true),
