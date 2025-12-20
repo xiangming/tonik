@@ -18,19 +18,29 @@ class OrderService extends BaseService
     /**
      * 创建内部订单（非第三方订单）
      *
-     * @param   [string]  $type    服务类型：打赏（donation）、购买（buy）、充值（recharge）等
-     * @param   [string]  $amount  金额
-     * @param   [string]  $name    购买的服务名称
-     * @param   [string]  $remark  备注/留言
-     * @param   [string]  $related 关联项目：被打赏人
-     * @param   [string]  $method  支付方式
-     * @param   [string]  $author_id 创建者，可选
+     * @param   [string]  $type    订单类型：donation, membership, product, service, recharge
+     * @param   [string]  $amount  金额（分）
+     * @param   [string]  $method  支付方式（alipay/wechat）
+     * @param   [string]  $title   订单标题，可选（默认自动生成）
+     * @param   [array]   $custom_meta 自定义meta字段
+     *                                 - donation: from_user_id, to_user_id, remark
+     *                                 - membership: plan_id, duration_months, level
+     *                                 - product: product_id, quantity, sku_id
+     *                                 - service: service_id, appointment_time, requirements
      *
      * @return  [object]    订单信息
      */
-    public function createOrder($type, $amount, $name, $remark, $related, $method, $author_id)
+    public function createOrder($type, $amount, $method, $title = null, $custom_meta = [])
     {
-        theme('log')->log('OrderService->createOrder() start', $type, $amount, $name, $remark, $related, $method, $author_id);
+        theme('log')->log('OrderService->createOrder() start', $type, $amount, $method, $title, $custom_meta);
+        
+        // 获取当前登录用户ID作为订单创建者
+        $author_id = get_current_user_id();
+
+        // 如果没有提供 title，自动生成默认标题
+        if (empty($title)) {
+            $title = ucfirst($type) . '订单';
+        }
 
         // TODO: 格式化商品数据等
 
@@ -64,34 +74,17 @@ class OrderService extends BaseService
             return $this->formatError($errmsg);
         }
 
-        // 金额
-        if (isset($amount)) {
-            update_post_meta($in_id, 'amount', $amount);
-        }
+        // 保存核心字段
+        wp_set_object_terms($in_id, $type, 'order_type');  // 使用 taxonomy 管理类型
+        update_post_meta($in_id, 'amount', $amount);
+        update_post_meta($in_id, 'name', $title);
+        update_post_meta($in_id, 'method', $method);
 
-        // 服务名称
-        if (isset($name)) {
-            update_post_meta($in_id, 'name', $name);
-        }
-
-        // 服务类型
-        if (isset($type)) {
-            update_post_meta($in_id, 'type', $type);
-        }
-
-        // 备注
-        if (isset($remark)) {
-            update_post_meta($in_id, 'remark', $remark);
-        }
-
-        // 关联项目
-        if (isset($related)) {
-            update_post_meta($in_id, 'related', $related);
-        }
-
-        // 支付通道
-        if (isset($method)) {
-            update_post_meta($in_id, 'method', $method);
+        // 保存自定义meta字段（如 from_user_id, to_user_id, product_id, remark 等）
+        if (!empty($custom_meta) && is_array($custom_meta)) {
+            foreach ($custom_meta as $meta_key => $meta_value) {
+                update_post_meta($in_id, $meta_key, $meta_value);
+            }
         }
 
         // TODO: 执行成功则删除购物车
@@ -99,11 +92,9 @@ class OrderService extends BaseService
         $result = [
             'id' => $in_id,
             'out_trade_no' => $out_trade_no,
-            'amount' => $amount,
-            'name' => $name,
             'type' => $type,
-            'remark' => $remark,
-            'related' => $related,
+            'amount' => $amount,
+            'name' => $title,
             'method' => $method,
         ];
 
@@ -245,14 +236,29 @@ class OrderService extends BaseService
 
         $order = $orders[0];
         $orderId = $order->ID;
+        
+        // 从 taxonomy 获取订单类型
+        $terms = wp_get_object_terms($orderId, 'order_type');
+        $type = !empty($terms) && !is_wp_error($terms) ? $terms[0]->slug : '';
+        
+        // 根据订单类型获取关联ID
+        $related_id = null;
+        if ($type === 'donation') {
+            $related_id = get_post_meta($orderId, 'to_user_id', true);
+        } elseif ($type === 'product') {
+            $related_id = get_post_meta($orderId, 'product_id', true);
+        } elseif ($type === 'service') {
+            $related_id = get_post_meta($orderId, 'service_id', true);
+        }
+        
         $result = [
             'id' => $orderId,
             'status' => get_post_status($orderId),
             'from_user_id' => $order->post_author,
-            'to_user_id' => get_post_meta($orderId, 'related', true),
+            'related_id' => $related_id,
             'name' => get_post_meta($orderId, 'name', true),
             'amount' => get_post_meta($orderId, 'amount', true),
-            'type' => get_post_meta($orderId, 'type', true),
+            'type' => $type,
             'remark' => get_post_meta($orderId, 'remark', true),
         ];
 

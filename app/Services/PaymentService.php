@@ -257,19 +257,13 @@ class PaymentService extends BaseService
         // 更新最终成功的支付通道
         update_post_meta($orderPay['id'], 'method', $paymentName);
 
-        // 如果是充值，生成余额变动记录
-        if ($orderPay['type'] == 'recharge') {
-            return $this->format();
-        }
-
-        // 如果不是充值
-
-        // TODO:增加销量 - 其他支付回调的时候也要处理一遍
-
         // 触发项目特定的支付成功处理 hook
         // 允许各个项目注册自己的支付成功处理逻辑
         // Hook: payment_success_{order_type}
-        // 例如：donation 类型订单会触发 payment_success_donation
+        // 例如：
+        //   - donation 类型订单会触发 payment_success_donation
+        //   - recharge 类型订单会触发 payment_success_recharge
+        //   - product 类型订单会触发 payment_success_product
         do_action('payment_success_' . $orderPay['type'], $orderPay, $paymentName);
 
         theme('log')->log('PaymentService paySuccess success');

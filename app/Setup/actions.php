@@ -22,6 +22,66 @@ function theme_activation()
 }
 add_action('after_switch_theme', 'Tonik\Theme\App\Setup\theme_activation');
 
+/**
+ * 处理余额充值支付成功
+ */
+add_action('payment_success_recharge', function ($orderPay, $paymentName) {
+    theme('log')->log('Recharge payment success', $orderPay, $paymentName);
+    
+    try {
+        // TODO: 实现余额充值逻辑
+        // theme('balance')->addRecord($orderPay['from_user_id'], $orderPay['amount'], 'recharge', $orderPay['id']);
+        
+        theme('log')->log('Recharge processed successfully');
+    } catch (\Exception $e) {
+        theme('log')->error($e->getMessage(), 'payment_success_recharge');
+    }
+}, 10, 2);
+
+/**
+ * 处理会员订阅支付成功
+ * 
+ * 支持功能：
+ * - 新开通会员
+ * - 延长已有会员期限（续费）
+ * - 多级别会员管理
+ */
+add_action('payment_success_membership', function ($orderPay, $paymentName) {
+    theme('log')->log('Membership payment success', $orderPay, $paymentName);
+    
+    try {
+        $user_id = $orderPay['from_user_id'];
+        $order_id = $orderPay['id'];
+        
+        // 获取会员计划信息
+        $plan_id = get_post_meta($order_id, 'plan_id', true);
+        $duration_months = get_post_meta($order_id, 'duration_months', true) ?: 1;
+        $level = get_post_meta($order_id, 'level', true) ?: 'basic';
+        
+        // 计算新的到期时间（如果已是会员，则延长）
+        $current_expire = get_user_meta($user_id, 'membership_expire', true);
+        $base_time = ($current_expire && strtotime($current_expire) > time()) 
+            ? strtotime($current_expire) 
+            : time();
+        
+        $new_expire = date('Y-m-d H:i:s', strtotime("+{$duration_months} months", $base_time));
+        
+        // 更新会员信息
+        update_user_meta($user_id, 'membership_expire', $new_expire);
+        update_user_meta($user_id, 'membership_level', $level);
+        update_user_meta($user_id, 'is_member', true);
+        
+        theme('log')->log('Membership activated successfully', [
+            'user_id' => $user_id,
+            'level' => $level,
+            'expire' => $new_expire,
+            'order_id' => $order_id
+        ]);
+    } catch (\Exception $e) {
+        theme('log')->error($e->getMessage(), 'payment_success_membership');
+    }
+}, 10, 2);
+
 /*
 |-----------------------------------------------------------
 | Payment REST API Endpoints
@@ -37,6 +97,70 @@ use function Tonik\Theme\App\resOK;
 use function Tonik\Theme\App\theme;
 
 add_action('rest_api_init', function () {
+    /**
+     * 创建订单并发起支付（通用接口）
+     * POST /wp/v2/payment/create
+     * 
+     * 适用于所有项目的支付场景
+     * 各项目通过 order_type 区分业务类型
+     */
+    register_rest_route('/wp/v2', '/payment/create', array(
+        'methods' => 'POST',
+        'callback' => function ($request) {
+            $parameters = $request->get_json_params();
+
+            $type = $parameters['type']; // 订单类型（必填）
+            $amount = $parameters['amount']; // 金额（必填）
+            $method = $parameters['method']; // 支付方式（必填）
+            $device = $parameters['device']; // 设备类型（必填）
+            $title = $parameters['title'] ?? null; // 订单标题（可选）
+            $custom_meta = $parameters['custom_meta'] ?? []; // 自定义meta字段（可选）
+
+            // 1. 创建订单
+            $order = theme('order')->createOrder(
+                $type,
+                $amount,
+                $method,
+                $title,
+                $custom_meta
+            );
+
+            if (!$order['status']) {
+                return resError($order['msg']);
+            }
+
+            // 2. 调取第三方支付
+            $rs = theme('payment')->pay($method, $device, $order['data']);
+
+            // 3. 返回支付结果
+            return $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
+        },
+        'args' => array(
+            'type' => array(
+                'required' => true,
+                'type' => 'string',
+                'description' => '订单类型（如：product, service, donation）',
+                'sanitize_callback' => 'sanitize_text_field',
+            ),
+            'amount' => theme('args')->amount(true),
+            'method' => theme('args')->method(true),
+            'device' => theme('args')->device(true),
+            'title' => array(
+                'required' => false,
+                'type' => 'string',
+                'description' => '订单标题（可选，默认自动生成）',
+                'sanitize_callback' => 'sanitize_text_field',
+            ),
+            'custom_meta' => array(
+                'required' => false,
+                'type' => 'object',
+                'description' => '自定义字段（可选），根据订单类型传递：donation需要from_user_id/to_user_id, product需要product_id, service需要service_id',
+
+            ),
+        ),
+        'permission_callback' => '__return_true',
+    ));
+
     /**
      * 查询订单的支付结果（返回支付通道原始对象）
      * POST /wp/v2/payment/find
@@ -110,6 +234,20 @@ add_action('rest_api_init', function () {
         'methods' => 'GET',
         'callback' => function ($request) {
             $rs = theme('payment')->notify('alipay');
+
+            return $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
+        },
+        'permission_callback' => '__return_true',
+    ));
+
+    /**
+     * 微信支付通知回调
+     * POST /wp/v2/payment/wechat/notify
+     */
+    register_rest_route('/wp/v2', '/payment/wechat/notify', array(
+        'methods' => 'POST',
+        'callback' => function ($request) {
+            $rs = theme('payment')->notify('wechat');
 
             return $rs['status'] ? resOK($rs['data']) : resError($rs['msg']);
         },

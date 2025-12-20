@@ -41,9 +41,9 @@ class DonationService extends BaseService
             return $this->formatError($errmsg);
         }
 
-        // 被打赏人
+        // 被打赏人（收款人）
         if (isset($to_user_id)) {
-            update_post_meta($in_id, 'to', $to_user_id);
+            update_post_meta($in_id, 'to_user_id', $to_user_id);
         }
 
         // 关联订单
