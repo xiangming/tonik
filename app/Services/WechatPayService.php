@@ -40,7 +40,7 @@ class WechatPayService
         $order = [
             'out_trade_no' => $out_trade_no,
             'body' => $body,
-            'total_fee' => $total_fee * 100, // 单位：分 ==> 元
+            'total_fee' => $total_fee * 100, // 元转分（微信支付单位为分）
             // 'openid' => 'onkVf1FjWS5SBIixxxxxxx', // 转账时需要
         ];
 

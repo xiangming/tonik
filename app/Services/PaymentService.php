@@ -150,12 +150,12 @@ class PaymentService extends BaseService
             $this->payData['name'] = '在线充值';
         }
 
-        // 微信
+        // 微信（金额单位：分，需要将元转换为分）
         if ($paymentName == 'wechat') {
             $this->payData['out_trade_no'] = $orderPay['out_trade_no'];
             $this->payData['description'] = $recharge ? $this->payData['name'] : $orderPay['title'];
             $this->payData['amount'] = [
-                'total' => $orderPay['amount'] * 100,
+                'total' => intval($orderPay['amount'] * 100), // 元转分
             ];
 
             // 小程序和公众号需要openID
@@ -169,11 +169,11 @@ class PaymentService extends BaseService
             }
         }
 
-        // 支付宝
+        // 支付宝（金额单位：元，直接使用）
         if ($paymentName == 'alipay') {
             $this->payData['out_trade_no'] = $orderPay['out_trade_no'];
             $this->payData['subject'] = $recharge ? $this->payData['name'] : $orderPay['title'];
-            $this->payData['total_amount'] = $orderPay['amount'];
+            $this->payData['total_amount'] = $orderPay['amount']; // 元
         }
 
         try {

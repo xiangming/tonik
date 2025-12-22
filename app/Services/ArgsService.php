@@ -151,9 +151,9 @@ class ArgsService extends BaseService
             'required' => $required,
             'type' => "number",
             // 'default' => 10,
-            'minimum' => 1,
-            'maximum' => 5000,
-            "description" => "金额。",
+            'minimum' => 0.01,
+            // 'maximum' => 5000,  // 移除通用限制，由各项目自行控制
+            "description" => "金额（元）。",
             // 'sanitize_callback' => 'sanitize_text_field',
         ];
     }

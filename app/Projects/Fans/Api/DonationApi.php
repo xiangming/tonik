@@ -82,7 +82,10 @@ class DonationApi
             'args' => array(
                 'from' => theme('args')->account(false), // 可选
                 'to' => theme('args')->account(true),
-                'amount' => theme('args')->amount(true),
+                'amount' => array_merge(
+                    theme('args')->amount(true),
+                    ['maximum' => 5000, 'description' => '打赏金额（元），最多 5000 元']
+                ),
                 'remark' => theme('args')->remark(false), // 可选
                 'method' => theme('args')->method(true),
                 'device' => theme('args')->device(true),

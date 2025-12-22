@@ -91,7 +91,11 @@ add_action('manage_donation_posts_custom_column', function ($column_name, $id) {
 
     if ($column_name == 'amount') {
         $amount = get_post_meta($id, "amount", true);
-        echo $amount;
+        if ($amount) {
+            echo '¥' . number_format($amount, 2);
+        } else {
+            echo '—';
+        }
     }
 
     if ($column_name == 'time') {

@@ -20,7 +20,7 @@ class OrderService extends BaseService
      *
      * @param   array  $args  订单参数数组
      *                        - type (string, required): 订单类型 (donation/membership/product/service/recharge)
-     *                        - amount (int, required): 金额（分）
+     *                        - amount (number, required): 金额（元），如 199 表示 199 元
      *                        - method (string, required): 支付方式 (alipay/wechat)
      *                        - title (string, optional): 订单标题，默认自动生成
      *                        - remark (string, optional): 订单备注/留言

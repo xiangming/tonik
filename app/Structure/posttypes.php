@@ -104,7 +104,7 @@ function orders_custom_column_content($column, $post_id)
         case 'order_amount':
             $amount = get_post_meta($post_id, 'amount', true);
             if ($amount) {
-                echo '¥' . number_format($amount / 100, 2);
+                echo '¥' . number_format($amount, 2); // 金额单位已经是元
             } else {
                 echo '-';
             }
