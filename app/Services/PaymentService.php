@@ -181,8 +181,12 @@ class PaymentService extends BaseService
 
             $result = Pay::$paymentName($this->config)->$device($this->payData);
 
+            // app/wap/web 返回 HTML 表单，需要包装成统一格式
             if (in_array($device, ['app', 'wap', 'web'])) {
-                return $this->format($result->getBody()->getContents());
+                return $this->format([
+                    'out_trade_no' => $orderPay['out_trade_no'],
+                    'payment_form' => $result->getBody()->getContents()
+                ]);
             }
 
             // {
