@@ -66,6 +66,21 @@ if (!empty($active_project)) {
     }
 }
 
+/*
+ |-----------------------------------------------------------
+ | Load Analytics API
+ |-----------------------------------------------------------
+ |
+ | Load analytics REST API endpoints for tracking views,
+ | clicks, trends and top content across all projects.
+ |
+ */
+
+$analytics_api = __DIR__ . '/../app/Http/analytics.php';
+if (file_exists($analytics_api)) {
+    require_once $analytics_api;
+}
+
 
 /*
  |-----------------------------------------------------------

@@ -16,6 +16,9 @@
 - [ ] 移除 from_user_id 冗余（统一使用 post_author）
 - [ ] 统一 name → title 字段命名
 - [ ] getOrderByNo() 移除 related_id 抽象层，直接返回具体字段
+- [ ] **审查 OrderService 和 PaymentService 的日志记录（避免生产环境日志爆炸）**
+  - 建议：只保留 error 级别日志，删除 debug/log 操作日志
+  - 原因：每笔订单/支付触发大量日志，生产环境会导致磁盘爆满
 
 ### Phase 3（长期）
 - [ ] 会员权益管理系统

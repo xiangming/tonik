@@ -13,6 +13,7 @@ namespace Tonik\Theme\App\Setup;
 |
  */
 
+use App\Services\AnalyticsService;
 use App\Services\ArgsService;
 use App\Services\LogService;
 use App\Services\MailService;
@@ -54,6 +55,11 @@ function bind_services()
     // 参数验证服务
     theme()->bind('args', function (Theme $theme, $parameters) {
         return new ArgsService();
+    });
+
+    // 分析服务（通用）
+    theme()->bind('analytics', function (Theme $theme, $parameters) {
+        return new AnalyticsService();
     });
 
     // 支付服务
