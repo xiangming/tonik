@@ -24,16 +24,11 @@ Token 获取方式：使用 `/wp-json/jwt-auth/v1/token` 端点登录获取。
 
 ```json
 {
-  "title": "测试线索",
+  "title": "test@example.com",
   "status": "publish",
   "meta": {
-    "lead_product_id": "prod_123",
-    "lead_user_id": 1,
-    "lead_source": "api_test",
-    "lead_contact_name": "张三",
-    "lead_contact_email": "test@example.com",
-    "lead_contact_phone": "13800138000",
-    "lead_message": "咨询产品详情"
+    "product_id": "prod_123",
+    "source": "api_test"
   }
 }
 ```
@@ -44,19 +39,12 @@ Token 获取方式：使用 `/wp-json/jwt-auth/v1/token` 端点登录获取。
 {
   "id": 4933,
   "title": {
-    "rendered": "测试线索"
+    "rendered": "test@example.com"
   },
   "status": "publish",
   "meta": {
-    "lead_product_id": "prod_123",
-    "lead_user_id": 1,
-    "lead_source": "api_test",
-    "lead_contact_name": "张三",
-    "lead_contact_email": "test@example.com",
-    "lead_contact_phone": "13800138000",
-    "lead_message": "咨询产品详情",
-    "lead_status": "pending",
-    "lead_assigned_to": 0
+    "product_id": "prod_123",
+    "source": "api_test"
   }
 }
 ```
@@ -81,8 +69,8 @@ Token 获取方式：使用 `/wp-json/jwt-auth/v1/token` 端点登录获取。
       "rendered": "测试线索"
     },
     "meta": {
-      "lead_product_id": "prod_123",
-      "lead_source": "api_test"
+      "product_id": "prod_123",
+      "source": "api_test"
     }
   }
 ]
@@ -110,12 +98,10 @@ Token 获取方式：使用 `/wp-json/jwt-auth/v1/token` 端点登录获取。
   "content": "这是网站的详细描述",
   "status": "publish",
   "meta": {
-    "site_url": "https://example.com",
-    "site_category": "博客",
-    "site_tags": "技术,教程",
-    "site_logo": "https://example.com/logo.png",
-    "site_screenshot": "https://example.com/screenshot.png",
-    "site_owner_id": 1
+    "site_data": "{\"url\":\"https://example.com\",\"category\":\"博客\"}",
+    "site_settings": "{\"featured\":false,\"status\":\"active\"}",
+    "user_input": "{\"tags\":\"技术,教程\"}",
+    "local_key": "unique_key_123"
   }
 }
 ```
@@ -133,14 +119,12 @@ Token 获取方式：使用 `/wp-json/jwt-auth/v1/token` 端点登录获取。
   },
   "status": "publish",
   "meta": {
-    "site_url": "https://example.com",
-    "site_category": "博客",
-    "site_tags": "技术,教程",
-    "site_logo": "https://example.com/logo.png",
-    "site_screenshot": "https://example.com/screenshot.png",
-    "site_owner_id": 1,
-    "site_status": "active",
-    "site_featured": false
+    "site_data": "{\"url\":\"https://example.com\",\"category\":\"博客\"}",
+    "site_settings": "{\"featured\":false,\"status\":\"active\"}",
+    "user_input": "{\"tags\":\"技术,教程\"}",
+    "local_key": "unique_key_123",
+    "site_views": 0,
+    "site_clicks": 0
   },
   "analytics": {
     "views": 0,
@@ -373,8 +357,10 @@ async function main() {
     title: '我的网站',
     status: 'publish',
     meta: {
-      site_url: 'https://mysite.com',
-      site_category: '技术博客',
+      site_data: JSON.stringify({
+        url: 'https://mysite.com',
+        category: '技术博客',
+      }),
     },
   });
   
@@ -476,28 +462,64 @@ function SiteDetail({ siteId }: { siteId: number }) {
 - 如需大量数据，建议使用分页请求
 - 避免频繁调用追踪接口（建议节流处理）
 
-### 4.3 Meta 字段说明
+### 4.3 字段说明
 
-**站点 Meta 字段：**
-- `site_url`: 站点 URL (必填)
-- `site_category`: 分类
-- `site_tags`: 标签（逗号分隔）
-- `site_logo`: Logo URL
-- `site_screenshot`: 截图 URL
-- `site_owner_id`: 所有者用户 ID
-- `site_status`: 状态 (active/inactive)
-- `site_featured`: 是否推荐 (true/false)
+#### 站点字段
 
-**线索 Meta 字段：**
-- `lead_product_id`: 产品 ID (必填)
-- `lead_user_id`: 用户 ID (必填)
-- `lead_source`: 来源
-- `lead_contact_name`: 联系人
-- `lead_contact_email`: 邮箱
-- `lead_contact_phone`: 电话
-- `lead_message`: 留言
-- `lead_status`: 状态 (pending/processing/completed/rejected)
-- `lead_assigned_to`: 分配给（用户 ID）
+**基础字段：**
+- `title`: 站点标题 (必填)
+- `content`: 站点描述
+- `status`: 发布状态 (publish, draft, pending, etc.)
+
+**自定义 Meta 字段：**
+- `site_data` (JSON string): 站点数据
+  - 可自由定义结构，如 `{"url":"https://...", "category":"..."}`
+- `site_settings` (JSON string): 站点设置
+  - 可自由定义结构，如 `{"featured":false, "status":"active"}`
+- `user_input` (JSON string): 用户输入数据
+  - 可自由定义结构，用于存储用户提交的表单数据
+- `local_key` (string): 本地唯一标识
+
+**Analytics Meta 字段（由系统自动维护）：**
+- `site_views` (integer): 总浏览量
+- `site_clicks` (integer): 总点击量
+- `site_views_today` (integer): 今日浏览量
+- `site_views_week` (integer): 本周浏览量
+- `site_views_month` (integer): 本月浏览量
+- `site_clicks_today` (integer): 今日点击量
+- `site_clicks_week` (integer): 本周点击量
+- `site_clicks_month` (integer): 本月点击量
+- `site_views_daily` (JSON string): 每日浏览详细数据
+- `site_clicks_daily` (JSON string): 每日点击详细数据
+- `site_last_viewed` (string): 最后浏览时间
+
+**Analytics 计算字段（只读，非 meta）：**
+- `analytics` (object): 统计数据汇总
+  - `views`: 总浏览量
+  - `clicks`: 总点击量
+  - `views_today`: 今日浏览量
+  - `views_week`: 本周浏览量
+  - `views_month`: 本月浏览量
+  - `clicks_today`: 今日点击量
+  - `clicks_week`: 本周点击量
+  - `clicks_month`: 本月点击量
+  - `conversion_rate`: 总转化率 (%)
+  - `conversion_rate_week`: 本周转化率 (%)
+  - `conversion_rate_month`: 本月转化率 (%)
+  - `last_viewed`: 最后浏览时间
+
+#### 线索字段
+
+**基础字段：**
+- `title`: 线索标题（通常填写邮箱）
+- `status`: 发布状态
+
+**自定义 Meta 字段：**
+- `product_id` (string): 关联的产品 ID
+- `source` (string): 线索来源
+- `ip_address` (string): 提交者 IP 地址（不在 REST 中暴露，仅后台可见）
+- `user_agent` (string): 用户代理（不在 REST 中暴露）
+- `referer` (string): 来源页面（不在 REST 中暴露）
 
 ### 4.4 Analytics 字段说明
 
