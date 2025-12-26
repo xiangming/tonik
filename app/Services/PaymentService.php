@@ -106,6 +106,11 @@ class PaymentService extends BaseService
         $this->config['alipay']['default']['alipay_public_cert_path'] = $_ENV['ALIPAY_PUBLIC_CERT_PATH'];
         $this->config['alipay']['default']['alipay_root_cert_path'] = $_ENV['ALIPAY_ROOT_CERT_PATH'];
         $this->config['alipay']['default']['notify_url'] = $_ENV['ALIPAY_NOTIFY_URL'];
+        
+        // return_url: 允许项目通过环境变量覆盖
+        if (!empty($_ENV['ALIPAY_RETURN_URL'])) {
+            $this->config['alipay']['default']['return_url'] = $_ENV['ALIPAY_RETURN_URL'];
+        }
 
         $this->config['wechat']['default']['mch_id'] = $_ENV['WECHAT_MCH_ID'];
         $this->config['wechat']['default']['mch_secret_key_v2'] = $_ENV['WECHAT_MCH_SECRET_KEY_V2'];
@@ -113,6 +118,9 @@ class PaymentService extends BaseService
         $this->config['wechat']['default']['mch_secret_cert'] = $_ENV['WECHAT_MCH_SECRET_CERT'];
         $this->config['wechat']['default']['mch_public_cert_path'] = $_ENV['WECHAT_MCH_SECRET_CERT_PATH'];
         $this->config['wechat']['default']['notify_url'] = $_ENV['WECHAT_NOTIFY_URL'];
+        
+        // 允许项目通过 filter 动态修改配置（如 return_url）
+        $this->config = apply_filters('payment_service_config', $this->config);
     }
 
     /**

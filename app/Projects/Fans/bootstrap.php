@@ -120,10 +120,14 @@ if (file_exists($posttypes_file)) {
 }
 
 // ============================================
-// 5. 加载项目特定的 Actions 和注册 Filters
+// 5. 加载项目特定的 Actions 和 Filters
 // ============================================
 if (file_exists($project_dir . '/Setup/actions.php')) {
     require_once $project_dir . '/Setup/actions.php';
+}
+
+if (file_exists($project_dir . '/Setup/filters.php')) {
+    require_once $project_dir . '/Setup/filters.php';
 }
 
 // 注册项目特定的过滤器（CoreFilter 已在基础层注册）
