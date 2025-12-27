@@ -504,8 +504,6 @@ class PaymentService extends BaseService
     {
         theme('log')->log('PaymentService->notify() start', $paymentName, $device, $config);
 
-        // $this->setConfig($paymentName, $device, $config);
-
         $result = Pay::$paymentName($this->config)->callback(null, ['_config' => $config]);
 
         theme('log')->debug('PaymentService->notify() 第三方返回值', $result);

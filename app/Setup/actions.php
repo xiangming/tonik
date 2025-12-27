@@ -269,10 +269,10 @@ add_action('rest_api_init', function () {
 
     /**
      * 支付宝通知回调
-     * GET /wp/v2/payment/alipay/notify
+     * POST /wp/v2/payment/alipay/notify
      */
     register_rest_route('/wp/v2', '/payment/alipay/notify', array(
-        'methods' => 'GET',
+        'methods' => 'POST',
         'callback' => function ($request) {
             $rs = theme('payment')->notify('alipay');
 
