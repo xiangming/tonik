@@ -181,7 +181,8 @@ class PaymentService extends BaseService
         if ($paymentName == 'alipay') {
             $this->payData['out_trade_no'] = $orderPay['out_trade_no'];
             $this->payData['subject'] = $recharge ? $this->payData['name'] : $orderPay['title'];
-            $this->payData['total_amount'] = $orderPay['amount']; // 元
+            // 格式化为2位小数，避免浮点数精度问题（如 0.1 显示为 0.10000000000000001）
+            $this->payData['total_amount'] = number_format($orderPay['amount'], 2, '.', '');
         }
 
         try {
