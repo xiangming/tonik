@@ -83,6 +83,47 @@ add_action('payment_success_membership', function ($orderPay, $paymentName) {
 
 /*
 |-----------------------------------------------------------
+| User Membership REST API Fields
+|-----------------------------------------------------------
+|
+| 注册会员字段到 REST API 用户对象
+| 使 /wp/v2/users/me 等接口可以返回会员信息
+|
+ */
+
+add_action('rest_api_init', function () {
+    register_rest_field('user', 'membership_level', array(
+        'get_callback' => function ($user) {
+            return get_user_meta($user['id'], 'membership_level', true) ?: 'free';
+        },
+        'update_callback' => function ($value, $user) {
+            return update_user_meta($user->ID, 'membership_level', $value);
+        },
+        'schema' => array(
+            'description' => '会员等级',
+            'type' => 'string',
+            'context' => array('view', 'edit'),
+        ),
+    ));
+    
+    register_rest_field('user', 'membership_expire', array(
+        'get_callback' => function ($user) {
+            return get_user_meta($user['id'], 'membership_expire', true);
+        },
+        'update_callback' => function ($value, $user) {
+            return update_user_meta($user->ID, 'membership_expire', $value);
+        },
+        'schema' => array(
+            'description' => '会员到期时间',
+            'type' => 'string',
+            'format' => 'date-time',
+            'context' => array('view', 'edit'),
+        ),
+    ));
+});
+
+/*
+|-----------------------------------------------------------
 | Payment REST API Endpoints
 |-----------------------------------------------------------
 |

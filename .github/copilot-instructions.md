@@ -4,6 +4,8 @@
 
 **Multi-Project WordPress Theme** built on [Tonik Framework](https://github.com/tonik/theme)
 
+**本地开发地址**: `http://wp.local/api/wp/v2/`
+
 ```
 ┌─ Shared Infrastructure (app/Services, app/Http)
 │  Payment, Mail, SMS, Queue, Analytics - reusable across all projects
