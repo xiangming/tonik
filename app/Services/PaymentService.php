@@ -26,8 +26,8 @@ class PaymentService extends BaseService
                 'alipay_public_cert_path' => '/Users/yansongda/pay/cert/alipayCertPublicKey_RSA2.crt',
                 // 必填-支付宝根证书 路径
                 'alipay_root_cert_path' => '/Users/yansongda/pay/cert/alipayRootCert.crt',
-                'return_url' => 'https://yansongda.cn/alipay/return',
-                'notify_url' => 'https://yansongda.cn/alipay/notify',
+                'return_url' => 'https://chuchuang.work/payment/result',
+                'notify_url' => 'https://api.prod.chuchuang.work/wp/v2/payment/alipay/notify',
                 // 选填-第三方应用授权token
                 'app_auth_token' => '',
                 // 选填-服务商模式下的服务商 id，当 mode 为 Pay::MODE_SERVICE 时使用该参数
@@ -56,7 +56,7 @@ class PaymentService extends BaseService
                 'mch_public_cert_path' => '',
                 // 必填-微信回调url
                 // 不能有参数，如?号，空格等，否则会无法正确回调
-                'notify_url' => 'https://yansongda.cn/wechat/notify',
+                'notify_url' => 'https://api.prod.chuchuang.work/wp/v2/payment/wechat/notify',
                 // 选填-公众号 的 app_id
                 // 可在 mp.weixin.qq.com 设置与开发->基本配置->开发者ID(AppID) 查看
                 'mp_app_id' => 'wx63b95a5ba3d10f69',
