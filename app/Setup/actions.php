@@ -1,6 +1,9 @@
 <?php
 
 namespace Tonik\Theme\App\Setup;
+use function Tonik\Theme\App\resError;
+use function Tonik\Theme\App\resOK;
+use function Tonik\Theme\App\theme;
 
 /*
 |-----------------------------------------------------------
@@ -48,29 +51,40 @@ add_action('payment_success_recharge', function ($orderPay, $paymentName) {
  */
 add_action('payment_success_membership', function ($orderPay, $paymentName) {
     theme('log')->log('Membership payment success', $orderPay, $paymentName);
-    
+
     try {
         $user_id = $orderPay['from_user_id'];
         $order_id = $orderPay['id'];
-        
+
         // 获取会员计划信息
         $plan_id = get_post_meta($order_id, 'plan_id', true);
         $duration_months = get_post_meta($order_id, 'duration_months', true) ?: 1;
         $level = get_post_meta($order_id, 'level', true) ?: 'basic';
-        
+
+        // 详细日志，便于排查
+        theme('log')->log('Membership params', [
+            'user_id' => $user_id,
+            'order_id' => $order_id,
+            'plan_id' => $plan_id,
+            'duration_months' => $duration_months,
+            'level' => $level
+        ]);
+
         // 计算新的到期时间（如果已是会员，则延长）
         $current_expire = get_user_meta($user_id, 'membership_expire', true);
-        $base_time = ($current_expire && strtotime($current_expire) > time()) 
-            ? strtotime($current_expire) 
+        $base_time = ($current_expire && strtotime($current_expire) > time())
+            ? strtotime($current_expire)
             : time();
-        
+
         $new_expire = date('Y-m-d H:i:s', strtotime("+{$duration_months} months", $base_time));
-        
-        // 更新会员信息
-        update_user_meta($user_id, 'membership_expire', $new_expire);
-        update_user_meta($user_id, 'membership_level', $level);
-        
-        theme('log')->log('Membership activated successfully', [
+
+        // 更新会员信息，并记录写入结果
+        $expire_result = update_user_meta($user_id, 'membership_expire', $new_expire);
+        $level_result = update_user_meta($user_id, 'membership_level', $level);
+
+        theme('log')->log('Membership update result', [
+            'expire_result' => $expire_result,
+            'level_result' => $level_result,
             'user_id' => $user_id,
             'level' => $level,
             'expire' => $new_expire,
@@ -132,9 +146,6 @@ add_action('rest_api_init', function () {
 |
  */
 
-use function Tonik\Theme\App\resError;
-use function Tonik\Theme\App\resOK;
-use function Tonik\Theme\App\theme;
 
 add_action('rest_api_init', function () {
     /**
