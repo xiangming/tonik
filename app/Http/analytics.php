@@ -14,6 +14,8 @@
 namespace App\Http;
 
 use function Tonik\Theme\App\theme;
+use function Tonik\Theme\App\resOK;
+use function Tonik\Theme\App\resError;
 
 /**
  * 注册 Analytics API 端点
@@ -41,21 +43,13 @@ add_action('rest_api_init', function () {
             
             // 参数验证
             if (!$post_type || !$post_id || !in_array($action, ['view', 'click'])) {
-                return new \WP_Error(
-                    'invalid_params',
-                    '参数错误：需要 post_type, post_id 和 action (view|click)',
-                    ['status' => 400]
-                );
+                return resError('参数错误：需要 post_type, post_id 和 action (view|click)', null, 'invalid_params');
             }
             
             // 验证文章是否存在
             $post = get_post($post_id);
             if (!$post || $post->post_type !== $post_type) {
-                return new \WP_Error(
-                    'post_not_found',
-                    '文章不存在',
-                    ['status' => 404]
-                );
+                return resError('文章不存在', null, 'post_not_found');
             }
             
             // 调用 AnalyticsService
@@ -67,11 +61,10 @@ add_action('rest_api_init', function () {
                 $analytics->trackClick($post_type, $post_id);
             }
             
-            return [
-                'success' => true,
+            return resOK([
                 'post_id' => $post_id,
                 'action' => $action,
-            ];
+            ], '追踪成功');
         },
         'permission_callback' => '__return_true', // 公开端点
         'args' => [
@@ -113,11 +106,7 @@ add_action('rest_api_init', function () {
             // 验证文章是否存在
             $post = get_post($post_id);
             if (!$post || $post->post_type !== $post_type) {
-                return new \WP_Error(
-                    'post_not_found',
-                    '文章不存在',
-                    ['status' => 404]
-                );
+                return resError('文章不存在', null, 'post_not_found');
             }
             
             $analytics = theme('analytics');
@@ -148,7 +137,7 @@ add_action('rest_api_init', function () {
                 'last_viewed' => get_post_meta($post_id, "{$prefix}_last_viewed", true),
             ];
             
-            return [
+            return resOK([
                 'post_id' => $post_id,
                 'post_type' => $post_type,
                 'trends' => [
@@ -156,7 +145,7 @@ add_action('rest_api_init', function () {
                     'clicks' => $clicks_trend,
                 ],
                 'stats' => $stats,
-            ];
+            ]);
         },
         'permission_callback' => '__return_true',
         'args' => [
@@ -188,22 +177,18 @@ add_action('rest_api_init', function () {
             
             // 验证 post_type 是否存在
             if (!post_type_exists($post_type)) {
-                return new \WP_Error(
-                    'invalid_post_type',
-                    '无效的文章类型',
-                    ['status' => 400]
-                );
+                return resError('无效的文章类型', null, 'invalid_post_type');
             }
             
             $analytics = theme('analytics');
             $top_content = $analytics->getTopContent($post_type, $period, $limit);
             
-            return [
+            return resOK([
                 'post_type' => $post_type,
                 'period' => $period,
                 'limit' => $limit,
                 'items' => $top_content,
-            ];
+            ]);
         },
         'permission_callback' => '__return_true',
         'args' => [
