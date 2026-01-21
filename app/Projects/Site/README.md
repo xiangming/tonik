@@ -1,11 +1,11 @@
-# Sites 项目
+# Site 项目
 
-Sites 项目提供线索管理和站点管理功能，集成了通用的 Analytics 服务。
+Site 项目提供线索管理和站点管理功能，集成了通用的 Analytics 服务。
 
 ## 📁 目录结构
 
 ```
-Sites/
+Site/
 ├── Structure/
 │   └── posttypes.php        # Lead & Site 自定义文章类型
 ├── Meta/
@@ -27,7 +27,7 @@ Sites/
 
 ```bash
 # .env 或 .env.local
-ACTIVE_PROJECT=Sites
+ACTIVE_PROJECT=Site
 ```
 
 ## 📦 功能模块
@@ -176,7 +176,7 @@ $stats = theme('analytics')->getAnalytics($site_id, 'site');
 
 ## 📊 Analytics 集成
 
-Sites 项目使用通用的 **AnalyticsService**（位于 `app/Services/AnalyticsService.php`）。
+Site 项目使用通用的 **AnalyticsService**（位于 `app/Services/AnalyticsService.php`）。
 
 **使用示例：**
 ```php
@@ -226,7 +226,7 @@ GET /wp-json/analytics/v1/site/top?limit=10&days=30
 ## 📝 注意事项
 
 1. **Analytics 是通用服务**
-   - 不要在 Sites 项目中重复实现统计功能
+   - 不要在 Site 项目中重复实现统计功能
    - 统一使用 `theme('analytics')` 进行数据追踪
    - 所有项目都可以使用相同的 Analytics API
 
@@ -242,7 +242,7 @@ GET /wp-json/analytics/v1/site/top?limit=10&days=30
 
 ## 🎯 与其他项目的关系
 
-- **独立性：** Sites 项目完全独立，可单独启用/禁用
+- **独立性：** Site 项目完全独立，可单独启用/禁用
 - **Analytics 共享：** 使用通用 AnalyticsService，与 Fans 等其他项目共享
 - **未来扩展：** 可以添加更多站点相关功能（SEO、性能监控等）
 

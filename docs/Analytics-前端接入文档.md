@@ -695,7 +695,7 @@ trackView('site', 123);
 
 - **服务类：** [app/Services/AnalyticsService.php](../app/Services/AnalyticsService.php)
 - **REST 端点：** [app/Http/analytics.php](../app/Http/analytics.php)
-- **使用示例：** [app/Projects/Sites/Structure/posttypes.php](../app/Projects/Sites/Structure/posttypes.php)（查看 `site` 类型如何注册 meta）
+- **使用示例：** [app/Projects/Site/Structure/posttypes.php](../app/Projects/Site/Structure/posttypes.php)（查看 `site` 类型如何注册 meta）
 
 ---
 

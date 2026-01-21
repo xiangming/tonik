@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Sites Project - Custom Post Types
+ * Site Project - Custom Post Types
  * 
- * 注册 Sites 项目的自定义文章类型
+ * 注册 Site 项目的自定义文章类型
  * - Lead (线索)
  * - Site (站点)
  */
 
-namespace App\Projects\Sites\Structure;
+namespace App\Projects\Site\Structure;
 
 /**
  * 注册 Lead 自定义文章类型
@@ -85,7 +85,7 @@ function register_lead_post_type()
         'sanitize_callback' => 'sanitize_text_field',
     ]);
 }
-add_action('init', 'App\Projects\Sites\Structure\register_lead_post_type');
+add_action('init', 'App\Projects\Site\Structure\register_lead_post_type');
 
 /**
  * 注册 Site 自定义文章类型
@@ -316,7 +316,7 @@ function register_site_post_type()
         'show_in_rest' => false,
     ]);
 }
-add_action('init', 'App\Projects\Sites\Structure\register_site_post_type');
+add_action('init', 'App\Projects\Site\Structure\register_site_post_type');
 
 /**
  * 自定义 Lead 后台列表列
@@ -332,7 +332,7 @@ function lead_custom_columns($columns)
     
     return $new_columns;
 }
-add_filter('manage_lead_posts_columns', 'App\Projects\Sites\Structure\lead_custom_columns');
+add_filter('manage_lead_posts_columns', 'App\Projects\Site\Structure\lead_custom_columns');
 
 /**
  * 填充 Lead 自定义列内容
@@ -352,7 +352,7 @@ function lead_custom_column_content($column, $post_id)
             break;
     }
 }
-add_action('manage_lead_posts_custom_column', 'App\Projects\Sites\Structure\lead_custom_column_content', 10, 2);
+add_action('manage_lead_posts_custom_column', 'App\Projects\Site\Structure\lead_custom_column_content', 10, 2);
 
 /**
  * 使 Lead 自定义列可排序
@@ -364,7 +364,7 @@ function lead_sortable_columns($columns)
     
     return $columns;
 }
-add_filter('manage_edit-lead_sortable_columns', 'App\Projects\Sites\Structure\lead_sortable_columns');
+add_filter('manage_edit-lead_sortable_columns', 'App\Projects\Site\Structure\lead_sortable_columns');
 
 /**
  * 自定义 Site 后台列表列
@@ -380,7 +380,7 @@ function site_custom_columns($columns)
     
     return $new_columns;
 }
-add_filter('manage_site_posts_columns', 'App\Projects\Sites\Structure\site_custom_columns');
+add_filter('manage_site_posts_columns', 'App\Projects\Site\Structure\site_custom_columns');
 
 /**
  * 填充 Site 自定义列内容
@@ -398,7 +398,7 @@ function site_custom_column_content($column, $post_id)
             break;
     }
 }
-add_action('manage_site_posts_custom_column', 'App\Projects\Sites\Structure\site_custom_column_content', 10, 2);
+add_action('manage_site_posts_custom_column', 'App\Projects\Site\Structure\site_custom_column_content', 10, 2);
 
 /**
  * 使 Site 自定义列可排序
@@ -410,7 +410,7 @@ function site_sortable_columns($columns)
     
     return $columns;
 }
-add_filter('manage_edit-site_sortable_columns', 'App\Projects\Sites\Structure\site_sortable_columns');
+add_filter('manage_edit-site_sortable_columns', 'App\Projects\Site\Structure\site_sortable_columns');
 
 /**
  * 处理自定义列排序
@@ -433,4 +433,4 @@ function site_orderby_meta($query)
         $query->set('orderby', 'meta_value_num');
     }
 }
-add_action('pre_get_posts', 'App\Projects\Sites\Structure\site_orderby_meta');
+add_action('pre_get_posts', 'App\Projects\Site\Structure\site_orderby_meta');

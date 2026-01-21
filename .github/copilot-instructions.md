@@ -12,7 +12,7 @@
 │
 └─ Project-Specific Code (app/Projects/{ProjectName})
    Fans: donation system, custom post types (donation, orders)
-   Sites: lead generation, site builder (lead, site post types)
+   Site: lead generation, site builder (lead, site post types)
 ```
 
 **Key Concept**: One codebase → Multiple deployments. Each WP instance runs one project via `ACTIVE_PROJECT=Fans` in `.env`.
@@ -28,7 +28,7 @@ app/
 │   │   ├── Structure/      # Custom post types (donation, orders)
 │   │   ├── Api/            # REST endpoints
 │   │   └── bootstrap.php   # Project initialization
-│   └── Sites/      # Site builder & lead gen
+│   └── Site/      # Site builder & lead gen
 ├── Http/           # REST API endpoints (shared)
 ├── Setup/          # WordPress hooks/filters
 └── Structure/      # Shared post types/taxonomies
@@ -41,7 +41,7 @@ app/
 **Critical Pattern**: Use `register_post_meta()` with `show_in_rest: true` for REST API exposure.
 
 ```php
-// Reference: app/Projects/Sites/Structure/posttypes.php
+// Reference: app/Projects/Site/Structure/posttypes.php
 register_post_meta('site', 'site_data', [
     'type' => 'string',
     'single' => true,
@@ -146,7 +146,7 @@ pnpm prod       # Production build (must run before deploying!)
 ```bash
 # .env or .env.local
 ACTIVE_PROJECT=Fans           # Load Fans project
-# ACTIVE_PROJECT=Sites        # Load Sites project
+# ACTIVE_PROJECT=Site        # Load Site project
 # ACTIVE_PROJECT=             # Pure base environment (no project)
 
 # Payment credentials (per project)

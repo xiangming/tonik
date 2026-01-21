@@ -561,5 +561,5 @@ function analyze_publish_time_effectiveness() {
 ## 🔗 相关文档
 
 - [AnalyticsService 完整文档](../app/Services/README.md)
-- [Sites 项目文档](../app/Projects/Sites/README.md)
+- [Site 项目文档](../app/Projects/Site/README.md)
 - [WordPress Cron 文档](https://developer.wordpress.org/plugins/cron/)

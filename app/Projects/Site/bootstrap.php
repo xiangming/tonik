@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Sites Project Bootstrap
+ * Site Project Bootstrap
  * 
- * Sites 项目启动文件
+ * Site 项目启动文件
  * 
  * 包含：
  * - Lead 系统（线索管理）
@@ -11,7 +11,7 @@
  * - Analytics 集成（使用通用 AnalyticsService）
  */
 
-namespace Tonik\Theme\App\Projects\Sites;
+namespace Tonik\Theme\App\Projects\Site;
 
 // 获取项目目录路径
 $project_dir = __DIR__;
@@ -78,7 +78,7 @@ add_action('rest_api_init', function () {
 // ============================================
 add_action('init', function () {
     if (function_exists('theme') && theme('log')) {
-        theme('log')->debug('Sites project loaded successfully', [
+        theme('log')->debug('Site project loaded successfully', [
             'cpts' => ['lead', 'site'],
             'meta_fields' => 'auto-registered via register_post_meta',
             'analytics' => 'using global AnalyticsService',
