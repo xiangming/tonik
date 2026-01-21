@@ -16,9 +16,11 @@ use function Tonik\Theme\App\config;
 
 /**
  * Registers `book_genre` custom taxonomy.
+ * 已禁用 - 如需使用请取消注释
  *
  * @return void
  */
+/*
 function register_book_genre_taxonomy()
 {
     register_taxonomy('book_genre', 'book', [
@@ -45,6 +47,7 @@ function register_book_genre_taxonomy()
     ]);
 }
 add_action('init', 'Tonik\Theme\App\Structure\register_book_genre_taxonomy');
+*/
 
 /**
  * 注册 order_type taxonomy 用于订单类型管理

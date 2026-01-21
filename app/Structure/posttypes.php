@@ -52,6 +52,8 @@ function register_post_types()
     ]);
 
     // Book - 示例自定义文章类型（通用）
+    // 已禁用 - 如需使用请取消注释
+    /*
     register_post_type('book', [
         'description' => __('Collection of books.', config('textdomain')),
         'public' => true,
@@ -73,6 +75,7 @@ function register_post_types()
             'not_found_in_trash' => __('No books found in Trash.', config('textdomain')),
         ],
     ]);
+    */
 }
 add_action('init', 'Tonik\Theme\App\Structure\register_post_types');
 
