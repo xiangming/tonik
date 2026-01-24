@@ -8,21 +8,10 @@
 
 namespace Tonik\Theme\App\Projects\Launch\Structure;
 
-/**
- * Add product terms details to REST API response
- * 
- * Adds complete category and tag information to products REST API responses
- * including name, slug, description for easy frontend consumption
- */
 function add_product_terms_to_rest_response($response, $post, $request) {
-    if ($post->post_type !== 'products') {
-        return $response;
-    }
-
     $data = $response->get_data();
 
-    // Get product category details
-    $categories = wp_get_post_terms($post->ID, 'product_category');
+    $categories = wp_get_post_terms($post->ID, 'category');
     $category_details = [];
     
     if (!is_wp_error($categories) && !empty($categories)) {
@@ -37,8 +26,7 @@ function add_product_terms_to_rest_response($response, $post, $request) {
         }
     }
 
-    // Get product tag details
-    $tags = wp_get_post_terms($post->ID, 'product_tag');
+    $tags = wp_get_post_terms($post->ID, 'post_tag');
     $tag_details = [];
     
     if (!is_wp_error($tags) && !empty($tags)) {
@@ -53,13 +41,11 @@ function add_product_terms_to_rest_response($response, $post, $request) {
         }
     }
 
-    // Add to response data
-    $data['product_categories_details'] = $category_details;
-    $data['product_tags_details'] = $tag_details;
+    $data['categories_details'] = $category_details;
+    $data['tags_details'] = $tag_details;
 
     $response->set_data($data);
     return $response;
 }
 
-// Register hook
-add_filter('rest_prepare_products', __NAMESPACE__ . '\\add_product_terms_to_rest_response', 10, 3);
+add_filter('rest_prepare_post', __NAMESPACE__ . '\\add_product_terms_to_rest_response', 10, 3);
