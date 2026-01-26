@@ -49,3 +49,25 @@ function add_product_terms_to_rest_response($response, $post, $request) {
 }
 
 add_filter('rest_prepare_post', __NAMESPACE__ . '\\add_product_terms_to_rest_response', 10, 3);
+
+/**
+ * Make sticky posts appear first in REST API
+ */
+function make_sticky_posts_first($args, $request) {
+    // Only apply to products endpoint
+    if ($request->get_route() !== '/wp/v2/products') {
+        return $args;
+    }
+
+    // Get sticky posts
+    $sticky_posts = get_option('sticky_posts');
+    
+    if (!empty($sticky_posts)) {
+        // WordPress will handle sticky posts ordering automatically
+        $args['ignore_sticky_posts'] = false;
+    }
+    
+    return $args;
+}
+
+add_filter('rest_post_query', __NAMESPACE__ . '\\make_sticky_posts_first', 10, 2);
