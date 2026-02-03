@@ -118,6 +118,50 @@ function register_product_meta_fields() {
     ]);
 }
 
+/**
+ * Add meta field sorting support for products REST API
+ * 
+ * Allows sorting by meta fields like product_views, product_clicks
+ * Usage: /wp/v2/products?orderby=product_views&order=desc
+ */
+function add_product_meta_sorting_support($args, $request) {
+    $orderby = $request->get_param('orderby');
+    
+    // List of meta fields that support sorting
+    $sortable_meta_fields = [
+        'product_views',
+        'product_clicks',
+    ];
+    
+    // Check if orderby is one of our custom meta fields
+    if (in_array($orderby, $sortable_meta_fields)) {
+        $args['meta_key'] = $orderby;
+        $args['orderby'] = 'meta_value_num'; // Use numeric sorting
+        
+        // Ensure order parameter is applied (defaults to DESC)
+        $order = $request->get_param('order');
+        if ($order) {
+            $args['order'] = strtoupper($order);
+        }
+    }
+    
+    return $args;
+}
+
+/**
+ * Register custom orderby parameters for REST API collection params
+ */
+function add_product_orderby_params($params) {
+    if (isset($params['orderby'])) {
+        $params['orderby']['enum'][] = 'product_views';
+        $params['orderby']['enum'][] = 'product_clicks';
+    }
+    
+    return $params;
+}
+
 // Register hooks
 add_action('init', __NAMESPACE__ . '\\modify_post_type_for_products');
 add_action('init', __NAMESPACE__ . '\\register_product_meta_fields');
+add_filter('rest_post_query', __NAMESPACE__ . '\\add_product_meta_sorting_support', 10, 2);
+add_filter('rest_post_collection_params', __NAMESPACE__ . '\\add_product_orderby_params');
