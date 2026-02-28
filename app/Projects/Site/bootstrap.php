@@ -17,6 +17,17 @@ namespace Tonik\Theme\App\Projects\Site;
 $project_dir = __DIR__;
 
 // ============================================
+// 0. Load shared modules
+// ============================================
+$modules = ['Analytics'];
+foreach ($modules as $module) {
+    $path = get_template_directory() . "/app/Modules/{$module}/bootstrap.php";
+    if (file_exists($path)) {
+        require_once $path;
+    }
+}
+
+// ============================================
 // 1. 加载自定义文章类型（包含 Meta 字段注册）
 // ============================================
 $posttypes_file = $project_dir . '/Structure/posttypes.php';

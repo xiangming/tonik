@@ -1,37 +1,14 @@
 <?php
 
-/**
- * Analytics Service
- * 
- * 通用数据分析服务
- * 为所有项目提供统一的数据追踪、统计和分析功能
- * 
- * 功能：
- * - 浏览量追踪（Views）
- * - 点击量追踪（Clicks）
- * - 自定义事件追踪
- * - 数据统计和报表
- * - 转化率计算
- * 
- * 使用示例：
- * ```php
- * // 追踪浏览
- * theme('analytics')->trackView('post', $post_id);
- * theme('analytics')->trackView('site', $site_id);
- * theme('analytics')->trackView('donation', $donation_id);
- * 
- * // 追踪点击
- * theme('analytics')->trackClick('post', $post_id);
- * 
- * // 获取统计数据
- * $stats = theme('analytics')->getAnalytics('post', $post_id);
- * ```
- */
+namespace App\Modules\Analytics\Services;
 
-namespace App\Services;
-
+use App\Services\BaseService;
 use App\Traits\TimeTrait;
 
+/**
+ * 通用数据分析服务，支持浏览/点击追踪、趋势查询和热门内容排名。
+ * 通过 theme('analytics') 调用。
+ */
 class AnalyticsService extends BaseService
 {
     use TimeTrait;
@@ -202,7 +179,7 @@ class AnalyticsService extends BaseService
     public function getStats($filters = [])
     {
         $post_type = $filters['post_type'] ?? 'post';
-        $date_range = $filters['date_range'] ?? 7; // 默认7天
+        $date_range = $filters['date_range'] ?? 7;
         
         $args = [
             'post_type' => $post_type,
@@ -211,7 +188,6 @@ class AnalyticsService extends BaseService
             'fields' => 'ids',
         ];
         
-        // 日期范围过滤
         if ($date_range) {
             $args['date_query'] = [
                 [
@@ -293,7 +269,6 @@ class AnalyticsService extends BaseService
             return [];
         }
         
-        // 获取最近N天的数据
         $result = [];
         for ($i = $days - 1; $i >= 0; $i--) {
             $date = date('Y-m-d', strtotime("-{$i} days"));
@@ -389,78 +364,42 @@ class AnalyticsService extends BaseService
         return true;
     }
 
-    /**
-     * 递增 Meta 字段值
-     * 
-     * @param int $post_id 文章ID
-     * @param string $meta_key Meta 键名
-     * @return bool 是否成功
-     */
     protected function incrementMeta($post_id, $meta_key)
     {
         $current = (int) get_post_meta($post_id, $meta_key, true);
         return update_post_meta($post_id, $meta_key, $current + 1);
     }
 
-    /**
-     * 更新今日计数（带日期检查）
-     * 
-     * @param int $post_id 文章ID
-     * @param string $meta_key Meta 键名
-     * @param string $today 今天日期
-     * @return bool 是否成功
-     */
     protected function updateDailyCount($post_id, $meta_key, $today)
     {
         $date_key = $meta_key . '_date';
         $stored_date = get_post_meta($post_id, $date_key, true);
         
         if ($stored_date !== $today) {
-            // 新的一天，重置计数
             update_post_meta($post_id, $date_key, $today);
             update_post_meta($post_id, $meta_key, 1);
         } else {
-            // 同一天，递增
             $this->incrementMeta($post_id, $meta_key);
         }
         
         return true;
     }
 
-    /**
-     * 更新周期计数（周/月）
-     * 
-     * @param int $post_id 文章ID
-     * @param string $meta_key Meta 键名
-     * @param string $period_start 周期开始日期
-     * @param string $period_type 周期类型 (week/month)
-     * @return bool 是否成功
-     */
     protected function updatePeriodCount($post_id, $meta_key, $period_start, $period_type)
     {
         $date_key = $meta_key . '_start';
         $stored_start = get_post_meta($post_id, $date_key, true);
         
         if ($stored_start !== $period_start) {
-            // 新的周期，重置计数
             update_post_meta($post_id, $date_key, $period_start);
             update_post_meta($post_id, $meta_key, 1);
         } else {
-            // 同一周期，递增
             $this->incrementMeta($post_id, $meta_key);
         }
         
         return true;
     }
 
-    /**
-     * 更新每日历史数据（JSON 存储，保留90天）
-     * 
-     * @param int $post_id 文章ID
-     * @param string $meta_key Meta 键名
-     * @param string $today 今天日期
-     * @return bool 是否成功
-     */
     protected function updateDailyHistory($post_id, $meta_key, $today)
     {
         $history = get_post_meta($post_id, $meta_key, true);
@@ -470,7 +409,6 @@ class AnalyticsService extends BaseService
             $data = [];
         }
         
-        // 递增今日计数
         if (!isset($data[$today])) {
             $data[$today] = 0;
         }
@@ -484,17 +422,9 @@ class AnalyticsService extends BaseService
             }
         }
         
-        // 保存 JSON
         return update_post_meta($post_id, $meta_key, wp_json_encode($data));
     }
 
-    /**
-     * 计算转化率
-     * 
-     * @param int $views 浏览量
-     * @param int $clicks 点击量
-     * @return float 转化率（百分比）
-     */
     protected function calculateConversionRate($views, $clicks)
     {
         if ($views == 0) {
@@ -504,41 +434,24 @@ class AnalyticsService extends BaseService
         return round(($clicks / $views) * 100, 2);
     }
 
-    /**
-     * 记录事件日志
-     * 
-     * @param string $event_type 事件类型
-     * @param array $data 事件数据
-     * @return bool 是否成功
-     */
     protected function logEvent($event_type, $data)
     {
         if (function_exists('theme') && theme('log')) {
             theme('log')->log("Analytics: {$event_type}", $data);
         }
         
-        // 未来可以扩展：保存到自定义数据表、发送到外部分析平台等
-        
         return true;
     }
 
-    /**
-     * 获取客户端IP地址
-     * 
-     * @return string IP地址
-     */
     protected function getClientIp()
     {
         $ip = '';
         
         if (isset($_SERVER['HTTP_CF_CONNECTING_IP'])) {
-            // Cloudflare
             $ip = $_SERVER['HTTP_CF_CONNECTING_IP'];
         } elseif (isset($_SERVER['HTTP_X_REAL_IP'])) {
-            // Nginx
             $ip = $_SERVER['HTTP_X_REAL_IP'];
         } elseif (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            // Proxy
             $ip = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0];
         } else {
             $ip = $_SERVER['REMOTE_ADDR'] ?? '';
