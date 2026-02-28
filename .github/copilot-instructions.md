@@ -165,14 +165,14 @@ WECHAT_MCH_ID=xxx
 
 ### Code Style
 - **PSR-12** for PHP
-- English for code/comments
-- Chinese for Git commits: `<type>: <description>`
+- English for code (variables, functions, class names)
+- Chinese for comments and Git commits: `<type>: <description>`
   - `feat: 新增会员订阅功能`
   - `fix: 修复支付回调错误`
   - `refactor: 重构打赏服务`
 
 ### File Organization
-- **Always code in English** (variables, functions, comments)
+- **Code in English** (variables, functions, class names), **comments in Chinese**
 - **Add blank lines** between logical code blocks
 - **Function-level comments only** for new code - preserve existing comments
 - **Namespace**: Match directory structure (`App\Projects\Fans\Services`)
