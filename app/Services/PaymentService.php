@@ -256,8 +256,6 @@ class PaymentService extends BaseService
 
         // 订单信息更新
 
-        // TODO: 保存 $trade_no 到订单，用于前端调用jsapi唤起支付
-
         // 更新订单状态为已支付（付款时间会自动更新）
         $rs = theme('tool')->updatePostStatus($orderPay['id'], 'publish');
         if (is_wp_error($rs)) {
@@ -560,6 +558,11 @@ class PaymentService extends BaseService
 
             // 1. 通过out_trade_no拿到orderInfo
             $rs = theme('order')->getOrderByNo($out_trade_no);
+
+            // 保存支付通道流水号（用于对账），trade_no 为支付宝/微信侧流水号
+            if (!empty($trade_no)) {
+                update_post_meta($rs['data']['id'], 'trade_no', $trade_no);
+            }
 
             // 2. 触发支付成功后的操作paySuccess
             $paySuccessData = theme('payment')->paySuccess($paymentName, $rs['data']);
