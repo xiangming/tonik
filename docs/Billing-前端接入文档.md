@@ -168,9 +168,9 @@ LTD 不是独立逻辑，而是 **100年有效期的年费用户**（`duration_m
 前端调用 `POST /api/wp/v2/payment/create`，后端支付回调触发：
 
 ```php
-add_action('payment_success_membership', function($order_id, $payment_data) {
-    $user_id = /* 从 order 读取 */;
-    $tier = $payment_data['tier'];  // monthly | yearly | ltd
+add_action('payment_success_membership', function($orderPay) {
+    $user_id = $orderPay['from_user_id'];
+    $tier = $orderPay['tier'];  // monthly | yearly | ltd
 
     $duration_months = match($tier) {
         'monthly' => 1,

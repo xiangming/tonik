@@ -246,31 +246,24 @@ class OrderService extends BaseService
 
         $order = $orders[0];
         $orderId = $order->ID;
-        
+
         // 从 taxonomy 获取订单类型
         $terms = wp_get_object_terms($orderId, 'order_type');
         $type = !empty($terms) && !is_wp_error($terms) ? $terms[0]->slug : '';
-        
-        // 根据订单类型获取关联ID
-        $related_id = null;
-        if ($type === 'donation') {
-            $related_id = get_post_meta($orderId, 'to_user_id', true);
-        } elseif ($type === 'product') {
-            $related_id = get_post_meta($orderId, 'product_id', true);
-        } elseif ($type === 'service') {
-            $related_id = get_post_meta($orderId, 'service_id', true);
-        }
-        
+
+        // 基础字段
         $result = [
-            'id' => $orderId,
-            'status' => get_post_status($orderId),
+            'id'           => $orderId,
+            'status'       => get_post_status($orderId),
             'from_user_id' => $order->post_author,
-            'related_id' => $related_id,
-            'title' => get_post_meta($orderId, 'title', true),
-            'amount' => get_post_meta($orderId, 'amount', true),
-            'type' => $type,
-            'remark' => get_post_meta($orderId, 'remark', true),
+            'type'         => $type,
         ];
+
+        // 展平所有 post_meta，不与任何业务类型耦合
+        $all_meta = get_post_meta($orderId);
+        foreach ($all_meta as $key => $values) {
+            $result[$key] = count($values) === 1 ? $values[0] : $values;
+        }
 
         theme('log')->log($result, 'OrderService getOrderByNo success');
 

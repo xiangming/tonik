@@ -65,11 +65,12 @@ add_action('user_register', function ($user_id) {
 });
 
 // 支付成功 Hook：订阅购买/续费后充值积分
-add_action('payment_success_membership', function ($order_id, $payment_data) {
-    $user_id = $payment_data['from_user_id'] ?? null;
-    $tier = $payment_data['tier'] ?? null;
+add_action('payment_success_membership', function ($orderPay) {
+    $user_id = $orderPay['from_user_id'] ?? null;
+    $tier = $orderPay['tier'] ?? null;
 
     if (!$user_id || !$tier) {
+        theme('log')->log('Billing hook: missing user_id or tier', $orderPay);
         return;
     }
 
@@ -84,4 +85,4 @@ add_action('payment_success_membership', function ($order_id, $payment_data) {
     if ($duration_months > 0) {
         theme('billing')->handleSubscriptionPurchase($user_id, $tier, $duration_months);
     }
-}, 10, 2);
+}, 10, 1);

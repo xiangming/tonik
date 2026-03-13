@@ -75,9 +75,9 @@ theme('billing')->handleSubscriptionRenewal($user_id, 'monthly');
 支付成功后在 `bootstrap.php` 中注册 Hook：
 
 ```php
-add_action('payment_success_membership', function($order_id, $payment_data) {
-    $user_id = /* 从 order 读取 */;
-    $tier = $payment_data['tier'];  // monthly | yearly | ltd
+add_action('payment_success_membership', function($orderPay) {
+    $user_id = $orderPay['from_user_id'];
+    $tier = $orderPay['tier'];  // monthly | yearly | ltd
     $duration_months = match($tier) {
         'monthly' => 1,
         'yearly'  => 12,
