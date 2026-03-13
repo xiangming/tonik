@@ -19,7 +19,7 @@ $project_dir = __DIR__;
 // ============================================
 // 0. Load shared modules
 // ============================================
-$modules = ['Analytics'];
+$modules = ['Analytics', 'Billing'];
 foreach ($modules as $module) {
     $path = get_template_directory() . "/app/Modules/{$module}/bootstrap.php";
     if (file_exists($path)) {
