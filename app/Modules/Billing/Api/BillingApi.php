@@ -9,7 +9,6 @@ use function Tonik\Theme\App\theme;
  *
  * - GET  /wp/v2/credits              获取用户积分信息
  * - POST /wp/v2/credits/consume      消耗用户积分
- * - GET  /wp/v2/billing/stats        获取计费统计（公开）
  */
 class BillingApi
 {
@@ -51,17 +50,6 @@ class BillingApi
                     'sanitize_callback' => 'absint',
                 ],
             ],
-        ]);
-
-        /**
-         * 获取计费统计信息（公开接口）
-         * 
-         * GET /wp-json/wp/v2/billing/stats
-         */
-        register_rest_route('wp/v2', '/billing/stats', [
-            'methods'             => 'GET',
-            'callback'            => [self::class, 'handleGetStats'],
-            'permission_callback' => '__return_true',
         ]);
 
         /**
@@ -121,17 +109,6 @@ class BillingApi
         if (is_wp_error($result)) {
             return $result;
         }
-        
-        return rest_ensure_response($result);
-    }
-
-    /**
-     * 处理获取统计信息请求
-     */
-    public static function handleGetStats($request)
-    {
-        $billing = theme('billing');
-        $result = $billing->getStats();
         
         return rest_ensure_response($result);
     }

@@ -120,46 +120,6 @@ class BillingService extends BaseService
     }
 
     /**
-     * 获取计费统计信息（公开接口）
-     * 
-     * @return array ['totalUsers' => int, 'ltdCount' => int]
-     */
-    public function getStats()
-    {
-        $prefix = $this->getPrefix();
-        $cache_key = "{$prefix}_billing_stats";
-        
-        // 尝试读取缓存
-        $cached = get_transient($cache_key);
-        if ($cached !== false) {
-            return $cached;
-        }
-        
-        // 统计总用户数
-        $user_count_data = count_users();
-        $total_users = $user_count_data['total_users'];
-        
-        // 统计LTD用户数
-        $ltd_users = get_users([
-            'meta_key' => "{$prefix}_tier",
-            'meta_value' => 'ltd',
-            'count_total' => true,
-            'fields' => 'ID'
-        ]);
-        $ltd_count = count($ltd_users);
-        
-        $result = [
-            'totalUsers' => (int) $total_users,
-            'ltdCount' => (int) $ltd_count
-        ];
-        
-        // 缓存60秒
-        set_transient($cache_key, $result, 60);
-        
-        return $result;
-    }
-
-    /**
      * 检查订阅是否过期（懒惰检查）
      * 如果已过期，自动降级为free
      * 
