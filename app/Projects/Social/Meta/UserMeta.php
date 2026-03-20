@@ -65,7 +65,7 @@ class UserMeta
             'schema' => ['type' => 'string', 'description' => '生日（YYYY-MM-DD）'],
         ]);
 
-        // ---- city ----
+        // ---- city：存储 GB adcode 区级 6 位码，如 440305 = 深圳南山区 ----
         register_rest_field('user', 'city', [
             'get_callback' => function ($obj) {
                 return get_user_meta($obj['id'], 'city', true) ?: '';
@@ -74,9 +74,11 @@ class UserMeta
                 if (get_current_user_id() !== $user->ID) {
                     return new \WP_Error('rest_forbidden', '无权编辑', ['status' => 403]);
                 }
-                return update_user_meta($user->ID, 'city', sanitize_text_field($value));
+                // 只接受 6 位纯数字（GB 行政区划码，区级）
+                $v = preg_match('/^\d{6}$/', $value) ? $value : '';
+                return update_user_meta($user->ID, 'city', $v);
             },
-            'schema' => ['type' => 'string', 'description' => '居住城市'],
+            'schema' => ['type' => 'string', 'description' => '城市 GB 行政区划码，区级 6 位（如 440305 = 深圳南山区）'],
         ]);
 
         // ---- 数组字段：photos ----
