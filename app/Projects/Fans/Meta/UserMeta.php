@@ -46,25 +46,6 @@ class UserMeta
                 'editable' => true,
                 'sanitize_callback' => 'esc_url_raw',
             ),
-            'gender' => array(
-                'description' => '性别',
-                'editable' => true,
-                'sanitize_callback' => function ($value) {
-                    return in_array($value, ['male', 'female', 'other']) ? $value : '';
-                },
-            ),
-            'birthday' => array(
-                'description' => '生日',
-                'editable' => true,
-                'sanitize_callback' => function ($value) {
-                    return preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) ? $value : '';
-                },
-            ),
-            'city' => array(
-                'description' => '居住地',
-                'editable' => true,
-                'sanitize_callback' => 'sanitize_text_field',
-            ),
             'hideGuide' => array(
                 'description' => '是否隐藏新手引导',
                 'editable' => true,
@@ -111,7 +92,6 @@ class UserMeta
             'realname' => '真实姓名',
             'alipay' => '支付宝账号',
             'wechat' => '微信号',
-            'qq' => 'QQ号',
         ];
         
         foreach ($private_fields as $field_name => $description) {
@@ -135,19 +115,14 @@ class UserMeta
                     }
                     
                     // 验证和清理数据
-                    switch ($field_name) {
-                        case 'alipay':
-                            if (is_email($value)) {
-                                $value = sanitize_email($value);
-                            } elseif (!preg_match('/^1[3-9]\d{9}$/', $value)) {
-                                $value = '';
-                            }
-                            break;
-                        case 'qq':
-                            $value = preg_match('/^\d{5,11}$/', $value) ? $value : '';
-                            break;
-                        default:
-                            $value = sanitize_text_field($value);
+                    if ($field_name === 'alipay') {
+                        if (is_email($value)) {
+                            $value = sanitize_email($value);
+                        } elseif (!preg_match('/^1[3-9]\d{9}$/', $value)) {
+                            $value = '';
+                        }
+                    } else {
+                        $value = sanitize_text_field($value);
                     }
                     
                     return update_user_meta($object->ID, $field_name, $value);
